@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { apiRequest } from "@/lib/utils/fetcher";
 
 export function LoginForm() {
   const router = useRouter();
@@ -34,6 +35,11 @@ export function LoginForm() {
       }
 
       const session = await getSession();
+
+      // Keranjang guest digabung ke keranjang customer (MOD-CART). Kegagalan
+      // di sini tidak menghalangi login.
+      await apiRequest("/api/cart/sync", { method: "POST" }).catch(() => null);
+
       router.replace(
         session?.user?.role === "STORE_ADMIN" ? "/admin/products" : "/",
       );

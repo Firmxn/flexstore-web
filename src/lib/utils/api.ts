@@ -39,3 +39,28 @@ export const notFound = (message = "Data tidak ditemukan") =>
 
 export const serverError = () =>
   apiError("INTERNAL_ERROR", "Terjadi kesalahan, coba lagi", 500);
+
+// Sinyal internal Next.js (bail out dari prerender, redirect, notFound) memakai
+// `digest` berawalan NEXT_ atau DYNAMIC_SERVER_USAGE. Sinyal ini harus
+// diteruskan apa adanya; menelannya sebagai 500 merusak alur framework.
+function isNextControlFlowError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const digest = (error as { digest?: unknown }).digest;
+  return (
+    typeof digest === "string" &&
+    (digest.startsWith("NEXT_") || digest === "DYNAMIC_SERVER_USAGE")
+  );
+}
+
+// Membungkus handler route supaya kegagalan tak terduga (Prisma/Redis) tidak
+// bocor sebagai 500 mentah. Detail hanya ke log, pesan generik ke klien
+// (SDD section 10: error messages generic to users, detailed to logs only).
+export function withRouteErrors(
+  handler: () => Promise<NextResponse>,
+): Promise<NextResponse> {
+  return handler().catch((error) => {
+    if (isNextControlFlowError(error)) throw error;
+    console.error("[api] unhandled route error", error);
+    return serverError();
+  });
+}

@@ -22,6 +22,7 @@ export type VariantRow = {
   name: string;
   price: string;
   stock: string;
+  weightGram: string;
 };
 
 export type ProductFormValues = {
@@ -38,7 +39,13 @@ export type ProductFormValues = {
 
 type Option = { id: string; name: string };
 
-const EMPTY_VARIANT: VariantRow = { sku: "", name: "", price: "", stock: "" };
+const EMPTY_VARIANT: VariantRow = {
+  sku: "",
+  name: "",
+  price: "",
+  stock: "",
+  weightGram: "1000",
+};
 
 export function ProductForm({
   categories,
@@ -109,6 +116,7 @@ export function ProductForm({
         name: variant.name,
         price: Number(variant.price),
         stock: Number(variant.stock),
+        weightGram: Number(variant.weightGram),
       })),
     });
 
@@ -268,7 +276,7 @@ export function ProductForm({
           {values.variants.map((variant, index) => (
             <div
               key={index}
-              className="grid gap-3 rounded-lg border border-border p-4 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] sm:items-end"
+              className="grid gap-3 rounded-lg border border-border p-4 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] sm:items-end"
             >
               <div className="flex flex-col gap-2">
                 <Label htmlFor={`variant-sku-${index}`}>SKU</Label>
@@ -322,6 +330,21 @@ export function ProductForm({
                   value={variant.stock}
                   onChange={(event) =>
                     updateVariant(index, { stock: event.target.value })
+                  }
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor={`variant-weight-${index}`}>Berat (gram)</Label>
+                <Input
+                  id={`variant-weight-${index}`}
+                  type="number"
+                  min="1"
+                  step="1"
+                  required
+                  value={variant.weightGram}
+                  onChange={(event) =>
+                    updateVariant(index, { weightGram: event.target.value })
                   }
                 />
               </div>

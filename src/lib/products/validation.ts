@@ -44,6 +44,13 @@ export const productVariantSchema = z.object({
     .number({ invalid_type_error: "Stok harus berupa angka" })
     .int("Stok harus bilangan bulat")
     .min(0, "Stok tidak boleh negatif"),
+  // Berat aktual varian (gram). Dipakai server untuk ongkir; tidak pernah
+  // diambil dari input customer.
+  weightGram: z
+    .number({ invalid_type_error: "Berat harus berupa angka" })
+    .int("Berat harus bilangan bulat")
+    .min(1, "Berat minimal 1 gram")
+    .max(1000000, "Berat maksimal 1.000.000 gram"),
   imageUrl: z.string().trim().url("URL gambar tidak valid").optional().nullable(),
 });
 

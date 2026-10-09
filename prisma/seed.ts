@@ -27,7 +27,13 @@ type SeedProduct = {
   categorySlug: string;
   brandSlug: string;
   imageSeeds: string[];
-  variants: { sku: string; name: string; price: number; stock: number }[];
+  variants: {
+    sku: string;
+    name: string;
+    price: number;
+    stock: number;
+    weightGram: number;
+  }[];
 };
 
 const PRODUCTS: SeedProduct[] = [
@@ -41,9 +47,9 @@ const PRODUCTS: SeedProduct[] = [
     brandSlug: "flexstore-basics",
     imageSeeds: ["kaos-polos-1", "kaos-polos-2"],
     variants: [
-      { sku: "KP-30S-M", name: "Size M - Hitam", price: 79000, stock: 25 },
-      { sku: "KP-30S-L", name: "Size L - Hitam", price: 79000, stock: 30 },
-      { sku: "KP-30S-XL", name: "Size XL - Putih", price: 84000, stock: 12 },
+      { sku: "KP-30S-M", name: "Size M - Hitam", price: 79000, stock: 25, weightGram: 200 },
+      { sku: "KP-30S-L", name: "Size L - Hitam", price: 79000, stock: 30, weightGram: 200 },
+      { sku: "KP-30S-XL", name: "Size XL - Putih", price: 84000, stock: 12, weightGram: 220 },
     ],
   },
   {
@@ -56,8 +62,8 @@ const PRODUCTS: SeedProduct[] = [
     brandSlug: "nusantara-wear",
     imageSeeds: ["kemeja-flanel-1"],
     variants: [
-      { sku: "KF-LP-M", name: "Size M - Merah", price: 185000, stock: 10 },
-      { sku: "KF-LP-L", name: "Size L - Merah", price: 185000, stock: 8 },
+      { sku: "KF-LP-M", name: "Size M - Merah", price: 185000, stock: 10, weightGram: 350 },
+      { sku: "KF-LP-L", name: "Size L - Merah", price: 185000, stock: 8, weightGram: 370 },
     ],
   },
   {
@@ -70,8 +76,8 @@ const PRODUCTS: SeedProduct[] = [
     brandSlug: "nusantara-wear",
     imageSeeds: ["blouse-1"],
     variants: [
-      { sku: "BL-KT-S", name: "Size S - Navy", price: 149000, stock: 15 },
-      { sku: "BL-KT-M", name: "Size M - Navy", price: 149000, stock: 18 },
+      { sku: "BL-KT-S", name: "Size S - Navy", price: 149000, stock: 15, weightGram: 180 },
+      { sku: "BL-KT-M", name: "Size M - Navy", price: 149000, stock: 18, weightGram: 200 },
     ],
   },
   {
@@ -84,9 +90,9 @@ const PRODUCTS: SeedProduct[] = [
     brandSlug: "urban-step",
     imageSeeds: ["sneakers-canvas-1", "sneakers-canvas-2"],
     variants: [
-      { sku: "SN-CV-40", name: "Size 40 - Putih", price: 329000, stock: 7 },
-      { sku: "SN-CV-41", name: "Size 41 - Putih", price: 329000, stock: 9 },
-      { sku: "SN-CV-42", name: "Size 42 - Hitam", price: 339000, stock: 5 },
+      { sku: "SN-CV-40", name: "Size 40 - Putih", price: 329000, stock: 7, weightGram: 800 },
+      { sku: "SN-CV-41", name: "Size 41 - Putih", price: 329000, stock: 9, weightGram: 820 },
+      { sku: "SN-CV-42", name: "Size 42 - Hitam", price: 339000, stock: 5, weightGram: 850 },
     ],
   },
   {
@@ -98,8 +104,8 @@ const PRODUCTS: SeedProduct[] = [
     brandSlug: "flexstore-basics",
     imageSeeds: ["topi-basic-1"],
     variants: [
-      { sku: "TB-BSC-BLK", name: "Hitam", price: 89000, stock: 40 },
-      { sku: "TB-BSC-NVY", name: "Navy", price: 89000, stock: 22 },
+      { sku: "TB-BSC-BLK", name: "Hitam", price: 89000, stock: 40, weightGram: 150 },
+      { sku: "TB-BSC-NVY", name: "Navy", price: 89000, stock: 22, weightGram: 150 },
     ],
   },
   {
@@ -111,7 +117,7 @@ const PRODUCTS: SeedProduct[] = [
     brandSlug: "flexstore-basics",
     imageSeeds: ["tas-selempang-1"],
     variants: [
-      { sku: "TS-KNV-STD", name: "Standard - Khaki", price: 129000, stock: 0 },
+      { sku: "TS-KNV-STD", name: "Standard - Khaki", price: 129000, stock: 0, weightGram: 500 },
     ],
   },
 ];

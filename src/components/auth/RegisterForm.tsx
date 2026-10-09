@@ -73,6 +73,9 @@ export function RegisterForm() {
         return;
       }
 
+      // Keranjang guest digabung ke keranjang customer (MOD-CART).
+      await apiRequest("/api/cart/sync", { method: "POST" }).catch(() => null);
+
       router.replace("/");
       router.refresh();
     } catch (caught) {

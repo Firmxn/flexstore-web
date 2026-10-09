@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { CartBadge } from "./CartBadge";
 import { HeaderUserMenu } from "./HeaderUserMenu";
 
 export function Header() {
@@ -10,11 +11,18 @@ export function Header() {
           FlexStore
         </Link>
 
-        <Suspense
-          fallback={<div className="h-9 w-40 animate-pulse rounded-md bg-muted" />}
-        >
-          <HeaderUserMenu />
-        </Suspense>
+        <div className="flex items-center gap-3">
+          <Suspense
+            fallback={<div className="h-9 w-24 animate-pulse rounded-md bg-muted" />}
+          >
+            <CartBadge />
+          </Suspense>
+          <Suspense
+            fallback={<div className="h-9 w-40 animate-pulse rounded-md bg-muted" />}
+          >
+            <HeaderUserMenu />
+          </Suspense>
+        </div>
       </div>
     </header>
   );

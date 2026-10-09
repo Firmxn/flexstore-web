@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { AddToCartForm } from "@/components/cart/AddToCartForm";
 import { getPublishedProductBySlug } from "@/lib/products";
-import { formatRupiah } from "@/lib/utils/format";
 
 type DetailProps = PageProps<"/products/[slug]">;
 
@@ -131,34 +131,15 @@ export default async function ProductDetailPage({ params }: DetailProps) {
             </p>
           ) : null}
 
-          <div className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-              Pilihan Varian
-            </h2>
-            <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
-              {product.variants.map((variant) => (
-                <li
-                  key={variant.id}
-                  className="flex items-center justify-between gap-4 px-4 py-3"
-                >
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{variant.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      SKU {variant.sku}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-sm font-semibold">
-                      {formatRupiah(variant.price.toString())}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Stok {variant.stock}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <AddToCartForm
+            variants={product.variants.map((variant) => ({
+              id: variant.id,
+              name: variant.name,
+              sku: variant.sku,
+              price: Number(variant.price),
+              stock: variant.stock,
+            }))}
+          />
         </div>
       </div>
     </div>

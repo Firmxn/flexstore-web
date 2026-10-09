@@ -26,6 +26,7 @@ function normalizeInput(input: ProductInput) {
         name: variant.name,
         price: variant.price,
         stock: variant.stock,
+        weightGram: variant.weightGram,
         imageUrl: variant.imageUrl || null,
       })),
     },
