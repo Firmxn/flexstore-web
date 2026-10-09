@@ -44,8 +44,7 @@ function getVerifyServiceSid(): string {
   return serviceSid;
 }
 
-// Akun Trial hanya menyediakan channel tertentu; `sms` adalah default yang
-// selalu ada. `whatsapp` boleh dipilih lewat env kalau akun sudah mendukung.
+// Kanal verifikasi diambil dari TWILIO_VERIFY_CHANNEL; proyek ini memakai `sms`.
 function getVerifyChannel(): string {
   return process.env.TWILIO_VERIFY_CHANNEL?.trim() || "sms";
 }

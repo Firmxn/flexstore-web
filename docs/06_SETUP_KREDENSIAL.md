@@ -157,7 +157,7 @@ FlexStore memakai **Twilio Verify**, bukan Messaging API. Bedanya penting:
 | Endpoint | `verify.twilio.com/v2` | `api.twilio.com/2010-04-01` |
 | Yang membuat kode | Server Twilio | Aplikasi (disimpan di Redis) |
 | Template pesan | Bawaan Twilio, sudah disetujui operator | Harus dibuat sendiri |
-| Aturan "pesan pertama" | Tidak berlaku | WhatsApp menolak tanpa Content Template |
+| Aturan template/Content | Tidak ada | Wajib Content Template (hanya jalur Messaging) |
 
 Karena Verify yang menyimpan kode, aplikasi tidak lagi menyimpan kode OTP di
 Redis. Redis hanya menyimpan **SID sesi verification** dengan TTL 5 menit, untuk
@@ -186,9 +186,8 @@ sendiri 10 menit). Pemeriksaan kode dilakukan Twilio lewat
    TWILIO_VERIFY_CHANNEL="sms"
    ```
 
-   `TWILIO_VERIFY_CHANNEL` menentukan kanal yang dipakai. `sms` adalah default dan
-   satu-satunya yang pasti tersedia di akun Trial. Nilai lain yang dikenal Verify:
-   `whatsapp`, `call`, `email`. Biarkan `sms` kecuali Anda punya alasan lain.
+   `TWILIO_VERIFY_CHANNEL` menentukan kanal. Proyek ini memakai `sms` — kanal
+   itulah yang wajib diisi dan sudah terbukti terkirim.
 
 5. **Akun Trial: pastikan nomor tujuan boleh menerima.** Nomor yang dipakai
    **mendaftar akun Twilio** sudah otomatis diverifikasi, jadi nomor itu bisa
@@ -291,7 +290,7 @@ baru, ubah dulu password akun itu (atau hapus akunnya) sebelum menjalankan seed 
 | --- | --- | --- |
 | Database tersambung | `pnpm db:migrate --name init` | Migrasi sukses, tabel dibuat |
 | Redis tersambung | Buka `/verify-phone`, kirim OTP | Tidak ada error 500, kode masuk |
-| Twilio terkirim | Cek HP/WhatsApp tujuan | Kode OTP 6 digit diterima |
+| Twilio terkirim | Cek HP tujuan | Kode OTP 6 digit diterima |
 | Login admin | Buka `/login`, masuk dengan akun seed | Diarahkan ke `/admin/products` |
 | Proteksi admin | Buka `/admin/products` tanpa login | Dialihkan ke `/login` |
 | Uploadthing | `/admin/products/new`, unggah gambar | Gambar muncul di pratinjau |

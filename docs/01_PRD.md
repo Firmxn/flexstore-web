@@ -198,9 +198,8 @@ Sistem memiliki **3 role utama** (single-store MVP):
   - Set password link (untuk guest yang isi email)
   - Cancellation approved/rejected
   - Refund completed (jika approved)
-- ✅ **OTP verification:** Twilio (SMS + WhatsApp), dikirim via **Twilio Verify**
+- ✅ **OTP verification:** Twilio Verify, kanal **SMS**
   - SMS OTP (dev: Trial gratis — 40 verifikasi; production ~Rp450-600 per SMS)
-  - WhatsApp OTP (butuh upgrade akun; production ~Rp300-500 per message)
   - Start dengan Twilio Verify di akun Trial untuk development
   - Upgrade ke production setelah deploy
   - Detail setup: `docs/06_SETUP_KREDENSIAL.md` bagian 4
@@ -563,10 +562,10 @@ Keputusan teknis yang sudah ditetapkan untuk MVP:
 - ✅ **Fallback:** Flat rate temporary jika API error
 
 ### 7.3 OTP/Verification
-- ✅ **Provider:** Twilio
-- ✅ **Channels:** SMS + WhatsApp
-- ✅ **Development:** Sandbox (gratis)
-- ✅ **Production:** SMS ~Rp450-600, WhatsApp ~Rp300-500
+- ✅ **Provider:** Twilio Verify
+- ✅ **Channel:** SMS
+- ✅ **Development:** Trial (gratis, 40 verifikasi)
+- ✅ **Production:** SMS ~Rp450-600 per SMS
 
 ### 7.4 Product Configuration
 - ✅ **Images:** 1 utama + 3 tambahan (max 4)
@@ -584,7 +583,7 @@ Keputusan teknis yang sudah ditetapkan untuk MVP:
 
 ### 7.7 Notification
 - ✅ **Email:** Order, payment, shipping, cancellation, refund, set password
-- ✅ **OTP:** SMS/WhatsApp via Twilio
+- ✅ **OTP:** SMS via Twilio Verify
 
 ### 7.8 Target Market
 - ✅ **Primary:** Indonesia (QRIS, local shipping)
@@ -673,7 +672,7 @@ Produk dianggap berhasil jika:
 ### External Services:
 - ✅ **Payment gateway:** Xendit (QRIS, VA, E-Wallet)
 - ✅ **Shipping aggregator:** RajaOngkir/Biteship/ShipperID (JNE, SiCepat, J&T)
-- ✅ **OTP provider:** Twilio (SMS + WhatsApp)
+- ✅ **OTP provider:** Twilio Verify (SMS)
 - ⚠️ **Email service:** Perlu ditentukan (SendGrid, AWS SES, Mailgun, Resend)
 - ⚠️ **File storage:** Perlu ditentukan (AWS S3, Cloudinary, local storage)
 

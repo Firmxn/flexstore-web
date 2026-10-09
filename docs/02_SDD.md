@@ -28,7 +28,7 @@
 | Hosting | Vercel | Cloud | Serverless, edge | https://vercel.com/docs | Ditetapkan |
 | Payment | Xendit | Latest | QRIS, VA, E-Wallet | https://developers.xendit.co | Ditetapkan |
 | Shipping | RajaOngkir/Biteship | Latest | Real-time rates | rajaongkir.com/dokumentasi | Ditetapkan |
-| OTP | Twilio | Latest | SMS + WhatsApp | https://twilio.com/docs | Ditetapkan |
+| OTP | Twilio Verify | Latest | SMS | https://twilio.com/docs | Ditetapkan |
 | Email | Resend | Latest | Modern API, React Email | https://resend.com/docs | Ditetapkan |
 | File Storage | Uploadthing | Latest | Next.js native, S3-backed | https://docs.uploadthing.com | Ditetapkan |
 | Validation | Zod | 3.x | Type-safe validation | https://zod.dev | Ditetapkan |
@@ -656,8 +656,8 @@ erDiagram
 | Verifikasi akses DB | Prisma RLS tidak digunakan, role check di application layer |
 
 **OTP verification:**
-- Guest checkout: wajib verify phone via Twilio SMS/WhatsApp
-- OTP code stored Redis (5 min expiry)
+- Guest checkout: wajib verify phone via Twilio Verify (SMS)
+- Session SID verification disimpan Redis (TTL 5 menit) — kode dibuat dan dicek di server Twilio
 - Rate limit: 3 attempts per phone per hour
 
 **Password:**
