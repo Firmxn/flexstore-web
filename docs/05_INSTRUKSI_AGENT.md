@@ -55,7 +55,7 @@
 ## 5. Implementasi dan integrasi
 
 - **Ikuti idiomatic Next.js 16 App Router structure (SDD section 5)** — File-based routing (`page.tsx`, `layout.tsx`, `route.ts`), Server Components default, Route Groups untuk organize routes, API Routes di `/src/app/api/`, business logic di `/src/lib/`, UI components di `/src/components/`
-- **Ikuti stack/versi/structure SDD** — Next.js 16.3+ (Turbopack default), React 19.2 (React Compiler), Prisma 5, NextAuth v5 stable, Uploadthing v7+, Xendit latest, Twilio, Resend. Project structure SDD section 5.
+- **Ikuti stack/versi/structure SDD** — Next.js 16.3+ (Turbopack default), React 19.2 (React Compiler), Prisma 5, NextAuth v5 (beta), Uploadthing v7+, Xendit latest, Twilio, Resend. Project structure SDD section 5.
 - **Next.js 16 conventions wajib:**
   - Route UI: `page.tsx` (bukan `index.tsx`)
   - API handler: `route.ts` (bukan `api.ts`)
@@ -88,7 +88,7 @@
 - **Context7 use cases:**
   - Next.js 16 API reference (App Router, Server Components, `use cache`, Turbopack config, Metadata API)
   - React 19.2 features (React Compiler, RSC patterns, Server Actions)
-  - NextAuth v5 stable (App Router integration, session management, providers)
+  - NextAuth v5 (beta) (App Router integration, session management, providers)
   - Prisma 5 (ORM queries, migrations, transactions, middleware)
   - Xendit API (payment methods, webhook signature, refund)
   - Twilio Verify API (OTP SMS, `verificationChecks`)
@@ -173,7 +173,7 @@
 | **Shipping API timeout 10s, fallback flat rate Rp10k** | UX resilience (PRD 3.1.F) | PRD section 3.1.F, SDD 4.7 |
 | **shadcn/ui untuk admin panel** | Modern, Tailwind-based, customizable (PRD 7.6) | PRD section 7.6, SDD section 2 |
 | **Prisma migrations via script `pnpm db:*` (`pnpm db:migrate` dev, `pnpm db:deploy` prod)** | CLI Prisma tidak membaca `.env.local`; script dibungkus `dotenv-cli` | SDD section 12, Implementation Plan section 10 |
-| **NextAuth v5 stable** | Dukungan App Router; versi beta lama sudah tidak dipakai | SDD section 2, SDD 4.1 |
+| **NextAuth v5 (beta)** | Dukungan App Router; v5 belum rilis stabil (tag `latest` npm masih v4) | SDD section 2, SDD 4.1 |
 | **Phase bertahap review (PH-01 sampai PH-06)** | Incremental verification, catch bugs early | Implementation Plan section 3 |
 | **Pesan commit pakai Conventional Commits v1.0.0** | Riwayat terbaca manusia + dibaca tooling (changelog, versi) | Section 12, <https://www.conventionalcommits.org/en/v1.0.0> |
 

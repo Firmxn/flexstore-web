@@ -67,7 +67,7 @@
 - Next.js 16.3 stable (latest) with Turbopack default, React Compiler ✓
 - Next.js 16 requires React 19.2 ✓
 - Prisma 5 supports PostgreSQL 15 ✓
-- NextAuth v5 stable supports App Router ✓
+- NextAuth v5 masih beta; mendukung App Router ✓ (repo pin `5.0.0-beta.25`; v5 belum rilis stabil)
 - Uploadthing v7+ supports Next.js 16 ✓
 
 ## 3. Arsitektur sistem
@@ -747,7 +747,7 @@ erDiagram
 | **A03:2021 — Injection (SQL/NoSQL)** | Parameterized queries | Prisma ORM (auto-parameterized), **NO raw SQL** (`prisma.$executeRaw` banned), Zod validation BEFORE Prisma queries, escape user input di email templates |
 | **A04:2021 — Insecure Design** | Secure-by-default architecture | Stock reservation (prevent overselling), webhook idempotency (prevent double-processing), OTP rate limiting (prevent spam), guest checkout requires OTP (prevent fake orders) |
 | **A05:2021 — Security Misconfiguration** | Secure defaults | CORS restricted (Vercel default), CSP headers (Next.js config), security headers (`X-Frame-Options`, `X-Content-Type-Options`), no directory listing, no debug info in production |
-| **A06:2021 — Vulnerable Components** | Keep dependencies updated | `pnpm audit` di CI/CD, pin exact versions (`package.json`), auto-update Dependabot (GitHub), use latest stable versions (Next.js 16.3+, React 19.2, Prisma 5, NextAuth v5 stable) |
+| **A06:2021 — Vulnerable Components** | Keep dependencies updated | `pnpm audit` di CI/CD, pin exact versions (`package.json`), auto-update Dependabot (GitHub), use latest stable versions (Next.js 16.3+, React 19.2, Prisma 5, NextAuth v5 beta terbaru) |
 | **A07:2021 — Auth Failures** | Strong authentication | NextAuth v5 (industry-standard), bcrypt password (min 8 chars), OTP verification (Twilio), session timeout (30 days idle), rate limiting login attempts (future: implement after MVP), no password in URL/logs |
 | **A08:2021 — Software & Data Integrity** | Verify external data | Xendit webhook signature verification (HMAC), Twilio webhook verification, validate all external API responses (Zod schemas), SRI for CDN scripts (Next.js auto-handles), no `eval()` or `dangerouslySetInnerHTML` without sanitization |
 | **A09:2021 — Security Logging Failures** | Audit trail | Log failed login attempts, log payment webhook events (to DB for audit), log stock reservation/release, log refund requests, **NO log secrets/passwords/tokens**, Vercel auto-capture errors |
@@ -896,7 +896,7 @@ pnpm db:deploy
 | TECH-01 | Vercel serverless | Optimized for Next.js, auto-scaling, affordable MVP | All modules | Ditetapkan |
 | TECH-02 | Supabase over Vercel Postgres | Unlimited compute, avoid surprise billing | Database | Ditetapkan |
 | TECH-03 | Redis for stock locks | Fast, atomic operations, auto-expiry | MOD-ORDER, MOD-PROD | Ditetapkan |
-| TECH-04 | NextAuth v5 stable | Dukungan App Router; versi beta lama sudah tidak dipakai | MOD-AUTH | Ditetapkan |
+| TECH-04 | NextAuth v5 (beta) | Dukungan App Router; v5 belum rilis stabil, tag `latest` npm masih v4 | MOD-AUTH | Ditetapkan |
 | TECH-05 | Uploadthing over S3 direct | Next.js native, simpler setup | MOD-PROD, MOD-CONFIG | Ditetapkan |
 | TECH-06 | Resend over SendGrid | Modern API, React Email support, affordable | MOD-NOTIF | Ditetapkan |
 | TECH-07 | Prisma over Drizzle | Mature ecosystem, better DX for MVP | All modules | Ditetapkan |
