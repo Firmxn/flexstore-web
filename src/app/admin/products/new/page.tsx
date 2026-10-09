@@ -4,6 +4,11 @@ import { ProductForm } from "@/components/admin/ProductForm";
 import { getBrands } from "@/lib/brands";
 import { getCategories } from "@/lib/categories";
 
+// Data kategori dan brand diambil di level halaman, di luar Suspense.
+// `instant = false` menandai rute ini sebagai blocking route (Next.js 16
+// cacheComponents); konfigurasi di layout tidak diwariskan ke halaman.
+export const instant = false;
+
 export default async function NewProductPage() {
   const [categories, brands] = await Promise.all([getCategories(), getBrands()]);
 

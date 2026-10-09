@@ -2,6 +2,11 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { TaxonomyManager } from "@/components/admin/TaxonomyManager";
 import { getCategories } from "@/lib/categories";
 
+// Data kategori diambil di level halaman, di luar Suspense. `instant = false`
+// menandai rute ini sebagai blocking route (Next.js 16 cacheComponents) supaya
+// data dinamis diizinkan; konfigurasi di layout tidak diwariskan ke halaman.
+export const instant = false;
+
 export default async function AdminCategoriesPage() {
   const categories = await getCategories();
 

@@ -8,6 +8,11 @@ import { getProductById } from "@/lib/products";
 
 const idSchema = z.string().uuid();
 
+// `params` dan data produk dibaca di level halaman, di luar Suspense.
+// `instant = false` menandai rute ini sebagai blocking route (Next.js 16
+// cacheComponents); konfigurasi di layout tidak diwariskan ke halaman.
+export const instant = false;
+
 export default async function EditProductPage({
   params,
 }: PageProps<"/admin/products/[id]/edit">) {

@@ -19,6 +19,11 @@ import { PRODUCT_STATUS_LABELS, formatRupiah } from "@/lib/utils/format";
 
 const PAGE_SIZE = 20;
 
+// `searchParams` dan data produk dibaca di level halaman, di luar Suspense.
+// `instant = false` menandai rute ini sebagai blocking route (Next.js 16
+// cacheComponents); konfigurasi di layout tidak diwariskan ke halaman.
+export const instant = false;
+
 function parsePage(value: string | string[] | undefined): number {
   if (typeof value !== "string") return 1;
   const parsed = Number(value);
