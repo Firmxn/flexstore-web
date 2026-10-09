@@ -1,0 +1,922 @@
+# SDD — Software Design Document — FlexStore
+
+> Fungsi dokumen: menerjemahkan kebutuhan menjadi rancangan teknis yang bisa diikuti agent. SDD menjadi acuan untuk stack, arsitektur, batas modul, data, kontrak, project structure, dan cara menjalankan serta memeriksa sistem.
+
+## 1. Identitas dan dasar rancangan
+
+| Isian | Jawaban |
+| --- | --- |
+| Nama proyek | FlexStore |
+| Versi / tanggal SDD | v1.0 / 2026-10-09 |
+| Status rancangan | Draft |
+| Versi PRD dan fitur yang dirujuk | PRD v1.0 (2026-10-08) — MVP scope section 3.1, Modules section 4 |
+| Penanggung jawab keputusan teknis | Development Team |
+
+## 2. Tech stack dan referensi
+
+| Bagian | Teknologi | Versi | Alasan | Dokumentasi | Status |
+| --- | --- | --- | --- | --- | --- |
+| Framework | Next.js | 16.3+ | Turbopack (2-5x faster), App Router, RSC, `use cache` | https://nextjs.org/docs | Ditetapkan |
+| UI Library | React | 19.2 | React Compiler (built-in), RSC | https://react.dev | Ditetapkan |
+| Admin UI | shadcn/ui | Latest | Modern, Tailwind-based | https://ui.shadcn.com | Ditetapkan |
+| Styling | Tailwind CSS | 3.x | Utility-first | https://tailwindcss.com | Ditetapkan |
+| Database | PostgreSQL | 15.x | ACID, relational | https://postgresql.org/docs/15 | Ditetapkan |
+| DB Hosting | Supabase | Cloud | Unlimited compute, pooler | https://supabase.com/docs | Ditetapkan |
+| Cache | Redis | 7.x | Locks, sessions, cache | https://redis.io/docs | Ditetapkan |
+| Redis Hosting | Upstash | Cloud | Serverless Redis | https://upstash.com/docs | Ditetapkan |
+| ORM | Prisma | 5.x | Type-safe, migrations | https://prisma.io/docs | Ditetapkan |
+| Hosting | Vercel | Cloud | Serverless, edge | https://vercel.com/docs | Ditetapkan |
+| Payment | Xendit | Latest | QRIS, VA, E-Wallet | https://developers.xendit.co | Ditetapkan |
+| Shipping | RajaOngkir/Biteship | Latest | Real-time rates | rajaongkir.com/dokumentasi | Ditetapkan |
+| OTP | Twilio | Latest | SMS + WhatsApp | https://twilio.com/docs | Ditetapkan |
+| Email | Resend | Latest | Modern API, React Email | https://resend.com/docs | Ditetapkan |
+| File Storage | Uploadthing | Latest | Next.js native, S3-backed | https://docs.uploadthing.com | Ditetapkan |
+| Validation | Zod | 3.x | Type-safe validation | https://zod.dev | Ditetapkan |
+| Auth | NextAuth.js | 5.x beta | App Router support | https://authjs.dev | Ditetapkan |
+| PDF | @react-pdf/renderer | Latest | React PDF components | https://react-pdf.org | Ditetapkan |
+| Testing | Vitest | Latest | Fast unit tests | https://vitest.dev | Asumsi sementara |
+| E2E | Playwright | Latest | Browser automation | https://playwright.dev | Asumsi sementara |
+
+**Dependency utama:**
+```json
+{
+  "next": "^15.0.0",
+  "react": "^19.0.0",
+  "@prisma/client": "^5.0.0",
+  "next-auth": "^5.0.0-beta",
+  "zod": "^3.0.0",
+  "@upstash/redis": "^1.0.0",
+  "uploadthing": "^7.0.0",
+  "resend": "^4.0.0",
+  "xendit-node": "^3.0.0",
+  "@react-pdf/renderer": "^4.0.0"
+}
+```
+
+**Batas layanan (checked 2026-10-09):**
+- Vercel Hobby: Free, 10s timeout, 4500 build min/month
+- Supabase Free: 500MB DB, unlimited compute
+- Upstash Free: 10k commands/day
+- Uploadthing Free: 2GB storage, 2GB bandwidth/month
+- Resend Free: 100 emails/day, 3k/month
+- Twilio: Sandbox gratis dev, prod ~Rp450-600/SMS
+- Xendit: No monthly fee, per-transaction only
+- RajaOngkir: Free 1000 req/month
+
+**Kompatibilitas (verified 2026-10-09):**
+- Next.js 16.3 stable (latest) with Turbopack default, React Compiler ✓
+- Next.js 16 requires React 19.2 ✓
+- Prisma 5 supports PostgreSQL 15 ✓
+- NextAuth v5 stable supports App Router ✓
+- Uploadthing v7+ supports Next.js 16 ✓
+
+## 3. Arsitektur sistem
+
+| Komponen | Tanggung jawab | Komunikasi | Cara | Dikelola |
+| --- | --- | --- | --- | --- |
+| Next.js Client | UI rendering, interaction | Server, API Routes | Fetch API | Aplikasi |
+| Server Components | SSR, data fetching | Prisma, Redis, APIs | Direct calls | Aplikasi |
+| API Routes | REST, webhooks | DB, Redis, External | HTTP, SDK | Aplikasi |
+| PostgreSQL | Permanent data | Prisma | SQL via pooler | Supabase |
+| Redis | Temp data (locks, cache) | API Routes | SDK | Upstash |
+| Prisma | DB abstraction | PostgreSQL | Connection pooler | Aplikasi |
+| Xendit | Payment, webhook | API Routes | Webhook, SDK | Xendit |
+| Twilio | OTP delivery | API Routes | SDK | Twilio |
+| Resend | Email notifications | API Routes | SDK | Resend |
+| Shipping API | Shipping cost | API Routes | REST | Provider |
+| Uploadthing | File storage | Client, API | SDK | Uploadthing |
+| NextAuth.js | Auth, sessions | Prisma, API | Middleware | Aplikasi |
+| Vercel Edge | CDN, serverless | Next.js | Auto deploy | Vercel |
+
+**Alur Guest Checkout:**
+1. Client → Server Component → Prisma → PostgreSQL (fetch products)
+2. Client → `/api/cart/validate` → Prisma (stock check)
+3. Client → `/api/otp/send` → Twilio
+4. Client → `/api/otp/verify` → Redis
+5. Client → `/api/orders/create` → Redis (lock) → Prisma (order Waiting Payment)
+6. API → Xendit (create payment)
+7. Xendit → Webhook `/api/webhooks/xendit` → Prisma (update payment)
+8. Webhook → Redis (release lock) → Prisma (update order)
+9. Webhook → Resend (email)
+
+**Aturan bisnis ditegakkan:**
+- Stock validation: Server-side API (client UX only)
+- Payment verify: Webhook signature check
+- Voucher calc: Server-side API
+- Role auth: NextAuth middleware
+- Idempotency: Redis check webhook ID
+
+**Batas kepercayaan:**
+- Input: Zod validation API Routes
+- Webhook: Xendit signature verify
+- Auth: NextAuth token verify
+- Authorization: Role check middleware
+
+**Diagram:**
+
+```mermaid
+graph TB
+    Client[Next.js Client]
+    SC[Server Components]
+    API[API Routes]
+    DB[(PostgreSQL)]
+    Redis[(Redis)]
+    Xendit[Xendit]
+    Twilio[Twilio]
+    Resend[Resend]
+    
+    Client --> SC
+    Client --> API
+    SC --> DB
+    API --> DB
+    API --> Redis
+    API --> Xendit
+    Xendit --> API
+    API --> Twilio
+    API --> Resend
+```
+
+## 4. Rancangan per modul
+
+### 4.1. MOD-AUTH — Authentication & Authorization
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | User auth, session mgmt, RBAC, OTP verification, password reset |
+| Di luar tanggung jawab | Product/order/payment logic |
+| Fitur yang dilayani | PRD 4.1: Authentication & Authorization |
+| Komponen UI | Login, register, OTP verify, password reset forms |
+| Komponen backend | NextAuth providers, `/api/auth/[...nextauth]`, `/api/otp/*`, middleware |
+| Data yang dikelola | User, Session, Account, VerificationToken, OTP codes (Redis) |
+| Antarmuka | `getServerSession()`, `signIn()`, `signOut()`, `sendOTP()`, `verifyOTP()` |
+| Ketergantungan | Redis, Twilio, Prisma |
+| Lokasi kode | `/src/lib/auth/`, `/src/app/api/auth/`, `/src/middleware.ts` |
+
+### 4.2. MOD-PROD — Product Management
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Product CRUD, category, brand, variant, stock, images |
+| Di luar tanggung jawab | Order/cart logic, stock reservation (MOD-ORDER) |
+| Fitur yang dilayani | PRD 3.1.A: Catalog & Product Management |
+| Komponen UI | Product list, detail, admin CRUD, category/brand CRUD, image upload |
+| Komponen backend | Server Components, `/api/admin/products`, Server Actions |
+| Data yang dikelola | Product, Category, Brand, ProductVariant, ProductImage, stock |
+| Antarmuka | `getProducts()`, `getProductBySlug()`, `createProduct()`, `updateStock()` |
+| Ketergantungan | Uploadthing, Prisma |
+| Lokasi kode | `/src/app/(storefront)/products/`, `/src/app/admin/products/`, `/src/lib/products/` |
+
+### 4.3. MOD-CART — Shopping Cart
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Cart session, add/update/remove, stock/price validation |
+| Di luar tanggung jawab | Checkout, order creation, payment |
+| Fitur yang dilayani | PRD 3.1.B: Shopping Cart |
+| Komponen UI | Cart page, drawer, quantity controls |
+| Komponen backend | Context/Zustand, `/api/cart/validate`, `/api/cart/sync` |
+| Data yang dikelola | CartItem (Redis for guest, PostgreSQL for customer) |
+| Antarmuka | `addToCart()`, `updateCartItem()`, `removeFromCart()`, `validateCart()` |
+| Ketergantungan | MOD-PROD, Redis, Prisma |
+| Lokasi kode | `/src/app/(storefront)/cart/`, `/src/lib/cart/`, `/src/contexts/CartContext.tsx` |
+
+### 4.4. MOD-ORDER — Order Management
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Create order, status tracking, stock reservation, history, cancellation |
+| Di luar tanggung jawab | Payment processing, shipping calc, voucher calc |
+| Fitur yang dilayani | PRD 3.1.C: Checkout & Order, PRD 5.1: Stock Management |
+| Komponen UI | Checkout, order confirmation, history, admin order mgmt |
+| Komponen backend | `/api/orders/create`, `/api/orders/[id]`, `/api/admin/orders` |
+| Data yang dikelola | Order, OrderItem, order status |
+| Antarmuka | `createOrder()`, `updateOrderStatus()`, `reserveStock()`, `releaseStock()` |
+| Ketergantungan | MOD-CART, MOD-PROD (via Redis lock), MOD-PAY, MOD-SHIP, MOD-VOUCH |
+| Lokasi kode | `/src/app/(storefront)/checkout/`, `/src/app/admin/orders/`, `/src/lib/orders/` |
+
+**Stock Reservation:** Redis lock (`lock:stock:{variantId}`, 10 min expiry). Payment success → deduct stock. Payment fail → release lock.
+
+### 4.5. MOD-PAY — Payment
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Xendit integration, payment tracking, webhook, idempotency, refund |
+| Di luar tanggung jawab | Order creation, stock mgmt |
+| Fitur yang dilayani | PRD 3.1.D: Payment, PRD 5.2: Payment Rules, PRD 3.1.G: Refund |
+| Komponen UI | Payment method selection, instructions, status polling, refund proof upload |
+| Komponen backend | `/api/payments/create`, `/api/webhooks/xendit`, `/api/admin/payments/refund` |
+| Data yang dikelola | Payment, payment status, Refund, refund proof |
+| Antarmuka | `createPayment()`, `verifyWebhook()`, `processRefund()`, `uploadRefundProof()` |
+| Ketergantungan | Xendit, MOD-ORDER, Redis (idempotency), Uploadthing |
+| Lokasi kode | `/src/lib/payments/`, `/src/app/api/payments/`, `/src/app/api/webhooks/xendit/` |
+
+**Webhook Idempotency:** Check `webhook:{payload.id}` in Redis before process (24h expiry).
+
+### 4.6. MOD-VOUCH — Voucher & Promotion
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Voucher CRUD, eligibility, stacking, usage tracking, calculation (bertahap) |
+| Di luar tanggung jawab | Order/payment, cart |
+| Fitur yang dilayani | PRD 3.1.E: Voucher & Promotion, PRD 5.3: Voucher Calculation |
+| Komponen UI | Voucher input (checkout), admin CRUD, stacking matrix |
+| Komponen backend | `/api/vouchers/validate`, `/api/vouchers/apply`, `/api/admin/vouchers` |
+| Data yang dikelola | Voucher, VoucherCompatibility, VoucherUsage |
+| Antarmuka | `validateVoucher()`, `applyVouchers()`, `calculateDiscount()`, `checkStacking()` |
+| Ketergantungan | MOD-CART, MOD-ORDER, MOD-SHIP, Prisma |
+| Lokasi kode | `/src/lib/vouchers/`, `/src/app/api/vouchers/`, `/src/app/admin/vouchers/` |
+
+**Calculation:** Sort nominal first → percentage. Sequential: nominal → percentage (seller-oriented).
+
+### 4.7. MOD-SHIP — Shipping
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Shipping API integration, cost calc, tracking, pickup |
+| Di luar tanggung jawab | Order mgmt, payment |
+| Fitur yang dilayani | PRD 3.1.F: Shipping |
+| Komponen UI | Shipping method selection, cost display, tracking page |
+| Komponen backend | `/api/shipping/calculate`, `/api/shipping/track`, fallback flat rate |
+| Data yang dikelola | Shipping (order_id, provider, service, cost, tracking) |
+| Antarmuka | `calculateShippingCost()`, `getShippingOptions()`, `trackShipment()` |
+| Ketergantungan | RajaOngkir/Biteship API, MOD-ORDER, Redis (cache 5-10 min) |
+| Lokasi kode | `/src/lib/shipping/`, `/src/app/api/shipping/` |
+
+**Error handling:** Timeout 10s, fallback flat rate, cache result Redis.
+
+### 4.8. MOD-CUST — Customer Management
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Customer profile, address mgmt (max 5), order history |
+| Di luar tanggung jawab | Auth, order creation |
+| Fitur yang dilayani | PRD 4.8: Customer Management, PRD 5.8: Customer Address |
+| Komponen UI | Profile page, address CRUD, order history |
+| Komponen backend | Server Components, `/api/customer/addresses`, Server Actions |
+| Data yang dikelola | User (profile), Address (max 5) |
+| Antarmuka | `getProfile()`, `updateProfile()`, `getAddresses()`, `addAddress()` |
+| Ketergantungan | MOD-AUTH, MOD-ORDER, Prisma |
+| Lokasi kode | `/src/app/(storefront)/profile/`, `/src/lib/customers/` |
+
+### 4.9. MOD-NOTIF — Notification
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Email notifications (order, payment, shipping, cancellation, refund) |
+| Di luar tanggung jawab | OTP delivery (MOD-AUTH via Twilio) |
+| Fitur yang dilayani | PRD 3.1.I: Email Notification |
+| Komponen UI | Email templates (React Email) |
+| Komponen backend | `/api/notifications/send`, Resend SDK, templates `/src/emails/` |
+| Data yang dikelola | Notification log (optional) |
+| Antarmuka | `sendOrderConfirmation()`, `sendPaymentSuccess()`, `sendShippingNotif()` |
+| Ketergantungan | Resend, MOD-ORDER, MOD-PAY |
+| Lokasi kode | `/src/lib/notifications/`, `/src/emails/` |
+
+### 4.10. MOD-INV — Invoice
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Invoice generation, view, PDF download |
+| Di luar tanggung jawab | Order/payment data (read-only) |
+| Fitur yang dilayani | PRD 3.1.I: Invoice |
+| Komponen UI | Invoice view, download PDF button |
+| Komponen backend | Server Components, `/api/invoices/[orderId]/pdf`, @react-pdf/renderer |
+| Data yang dikelola | Invoice (generated on-demand) |
+| Antarmuka | `generateInvoice()`, `generateInvoicePDF()` |
+| Ketergantungan | MOD-ORDER, MOD-PAY, @react-pdf/renderer |
+| Lokasi kode | `/src/app/(storefront)/orders/[id]/invoice/`, `/src/lib/invoices/` |
+
+### 4.11. MOD-REPORT — Reporting
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Sales report, product performance, stock/order/refund reports |
+| Di luar tanggung jawab | Real-time analytics, advanced visualization |
+| Fitur yang dilayani | PRD 3.1.K: Admin & Reporting |
+| Komponen UI | Admin dashboard, report pages, date filters |
+| Komponen backend | Server Components, Prisma aggregation queries |
+| Data yang dikelola | Read-only aggregations from Order, Payment, Product, Refund |
+| Antarmuka | `getSalesReport()`, `getProductPerformance()`, `getStockReport()` |
+| Ketergantungan | Prisma, MOD-ORDER, MOD-PAY, MOD-PROD |
+| Lokasi kode | `/src/app/admin/reports/`, `/src/lib/reports/` |
+
+### 4.12. MOD-CONFIG — Store Configuration
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Store info, payment/shipping settings, cancellation templates, theme |
+| Di luar tanggung jawab | Product/order/payment data |
+| Fitur yang dilayani | PRD 3.1.J: Store Customization, PRD 4.12: Store Configuration |
+| Komponen UI | Settings forms (Store/Site Admin), theme customization (upload, colors) |
+| Komponen backend | Server Components, `/api/admin/settings`, Server Actions |
+| Data yang dikelola | StoreSettings (singleton), PlatformSettings (singleton), CancellationReasonTemplate |
+| Antarmuka | `getStoreSettings()`, `updateStoreSettings()`, `getCancellationTemplates()` |
+| Ketergantungan | Uploadthing (logo, banner), Prisma |
+| Lokasi kode | `/src/app/admin/settings/`, `/src/lib/config/` |
+
+## 5. Project Structure
+
+**Konvensi:** Idiomatic Next.js 16 App Router structure mengikuti ecosystem best practices.
+
+**Next.js 16 App Router Patterns:**
+- **File-based routing** (`/src/app/`) — folder = route segment, `page.tsx` = UI, `layout.tsx` = shared wrapper
+- **Route Groups** (`(storefront)`, `admin`) — organize routes tanpa affect URL path
+- **Server Components default** — all components di `/src/app/` are Server Components kecuali marked `'use client'`
+- **API Routes** (`/src/app/api/`) — serverless functions via Route Handlers (Next.js 13+)
+- **Colocation** — `loading.tsx`, `error.tsx`, `not-found.tsx` co-located dengan routes
+- **Metadata API** — `metadata` export di `layout.tsx`/`page.tsx` untuk SEO
+- **Server Actions** — form actions via `'use server'` (optional, API Routes preferred untuk external integrations)
+
+**Grouping Strategy:**
+- **Feature-based** (`/src/lib/`) — business logic, data access, utilities
+- **Route-based** (`/src/app/`) — UI pages dan API endpoints
+- **Component-based** (`/src/components/`) — reusable UI components
+
+```
+flexstore/
+├── prisma/
+│   ├── schema.prisma              # Prisma schema (DB entities)
+│   ├── migrations/                # DB migrations
+│   └── seed.ts                    # Seed data script
+├── src/
+│   ├── app/                       # Next.js 16 App Directory (file-based routing)
+│   │   ├── (storefront)/          # Route group: Customer-facing routes (no '/storefront' in URL)
+│   │   │   ├── page.tsx           # Homepage: `/`
+│   │   │   ├── layout.tsx         # Storefront layout (header, footer)
+│   │   │   ├── loading.tsx        # Loading UI (Suspense boundary)
+│   │   │   ├── products/
+│   │   │   │   ├── page.tsx       # Product list: `/products`
+│   │   │   │   └── [slug]/
+│   │   │   │       └── page.tsx   # Product detail: `/products/[slug]`
+│   │   │   ├── cart/
+│   │   │   │   └── page.tsx       # Cart: `/cart`
+│   │   │   ├── checkout/
+│   │   │   │   └── page.tsx       # Checkout: `/checkout`
+│   │   │   ├── orders/
+│   │   │   │   ├── page.tsx       # Order history: `/orders`
+│   │   │   │   └── [id]/
+│   │   │   │       ├── page.tsx   # Order detail: `/orders/[id]`
+│   │   │   │       └── invoice/
+│   │   │   │           └── page.tsx # Invoice: `/orders/[id]/invoice`
+│   │   │   ├── profile/
+│   │   │   │   ├── page.tsx       # Profile: `/profile`
+│   │   │   │   └── addresses/
+│   │   │   │       └── page.tsx   # Manage addresses: `/profile/addresses`
+│   │   │   └── track/
+│   │   │       └── [orderNumber]/
+│   │   │           └── page.tsx   # Public tracking: `/track/[orderNumber]`
+│   │   ├── admin/                 # Admin routes (protected by middleware)
+│   │   │   ├── page.tsx           # Admin dashboard: `/admin`
+│   │   │   ├── layout.tsx         # Admin layout (sidebar, auth check)
+│   │   │   ├── products/
+│   │   │   │   ├── page.tsx       # Product list admin: `/admin/products`
+│   │   │   │   ├── new/
+│   │   │   │   │   └── page.tsx   # Add product: `/admin/products/new`
+│   │   │   │   └── [id]/
+│   │   │   │       └── edit/
+│   │   │   │           └── page.tsx # Edit product: `/admin/products/[id]/edit`
+│   │   │   ├── orders/
+│   │   │   │   ├── page.tsx       # Order management: `/admin/orders`
+│   │   │   │   └── [id]/
+│   │   │   │       └── page.tsx   # Order detail admin: `/admin/orders/[id]`
+│   │   │   ├── vouchers/
+│   │   │   │   ├── page.tsx       # Voucher list: `/admin/vouchers`
+│   │   │   │   ├── new/
+│   │   │   │   │   └── page.tsx   # Add voucher: `/admin/vouchers/new`
+│   │   │   │   └── [id]/
+│   │   │   │       └── edit/
+│   │   │   │           └── page.tsx # Edit voucher: `/admin/vouchers/[id]/edit`
+│   │   │   ├── reports/
+│   │   │   │   └── page.tsx       # Sales reports: `/admin/reports`
+│   │   │   └── settings/
+│   │   │       └── page.tsx       # Store settings: `/admin/settings`
+│   │   ├── api/                   # API Routes (Route Handlers)
+│   │   │   ├── auth/
+│   │   │   │   └── [...nextauth]/ # NextAuth v5 catch-all route
+│   │   │   │       └── route.ts   # NextAuth handlers: `/api/auth/*`
+│   │   │   ├── otp/
+│   │   │   │   ├── send/
+│   │   │   │   │   └── route.ts   # Send OTP: POST `/api/otp/send`
+│   │   │   │   └── verify/
+│   │   │   │       └── route.ts   # Verify OTP: POST `/api/otp/verify`
+│   │   │   ├── cart/
+│   │   │   │   └── route.ts       # Cart operations: GET/POST/PATCH/DELETE `/api/cart`
+│   │   │   ├── orders/
+│   │   │   │   ├── route.ts       # Create order: POST `/api/orders`
+│   │   │   │   └── [id]/
+│   │   │   │       └── route.ts   # Order detail: GET/PATCH `/api/orders/[id]`
+│   │   │   ├── payments/
+│   │   │   │   └── route.ts       # Create payment: POST `/api/payments`
+│   │   │   ├── webhooks/
+│   │   │   │   └── xendit/
+│   │   │   │       └── route.ts   # Xendit webhook: POST `/api/webhooks/xendit`
+│   │   │   ├── shipping/
+│   │   │   │   └── route.ts       # Calculate shipping: POST `/api/shipping`
+│   │   │   ├── vouchers/
+│   │   │   │   ├── validate/
+│   │   │   │   │   └── route.ts   # Validate voucher: POST `/api/vouchers/validate`
+│   │   │   │   └── route.ts       # Apply voucher: POST `/api/vouchers`
+│   │   │   ├── admin/
+│   │   │   │   ├── products/
+│   │   │   │   │   ├── route.ts   # Admin product CRUD: GET/POST `/api/admin/products`
+│   │   │   │   │   └── [id]/
+│   │   │   │   │       └── route.ts # Admin product detail: GET/PATCH/DELETE `/api/admin/products/[id]`
+│   │   │   │   ├── categories/
+│   │   │   │   │   └── route.ts   # Category CRUD: GET/POST/PATCH/DELETE `/api/admin/categories`
+│   │   │   │   └── brands/
+│   │   │   │       └── route.ts   # Brand CRUD: GET/POST/PATCH/DELETE `/api/admin/brands`
+│   │   │   └── uploadthing/
+│   │   │       └── route.ts       # Uploadthing handler: POST `/api/uploadthing`
+│   │   ├── layout.tsx             # Root layout (global metadata, font, Providers)
+│   │   ├── error.tsx              # Global error boundary
+│   │   └── not-found.tsx          # 404 page
+│   ├── components/                # React components (Client + Server)
+│   │   ├── ui/                    # shadcn/ui primitives (Button, Input, Card, etc.)
+│   │   │   ├── button.tsx
+│   │   │   ├── input.tsx
+│   │   │   ├── card.tsx
+│   │   │   └── ...
+│   │   ├── layout/                # Layout components
+│   │   │   ├── Header.tsx
+│   │   │   ├── Footer.tsx
+│   │   │   └── Sidebar.tsx
+│   │   ├── products/              # Product-related components
+│   │   │   ├── ProductCard.tsx
+│   │   │   ├── ProductGrid.tsx
+│   │   │   └── ProductForm.tsx
+│   │   └── admin/                 # Admin-specific components
+│   │       ├── DashboardStats.tsx
+│   │       └── DataTable.tsx
+│   ├── lib/                       # Business logic, utilities, data access (Server-side only)
+│   │   ├── auth/                  # Auth utilities
+│   │   │   ├── index.ts           # NextAuth config
+│   │   │   ├── session.ts         # getServerSession wrapper
+│   │   │   └── otp.ts             # OTP logic (Twilio)
+│   │   ├── products/              # Product domain logic
+│   │   │   ├── queries.ts         # Prisma queries (getProducts, getProductBySlug)
+│   │   │   ├── mutations.ts       # Prisma mutations (createProduct, updateProduct)
+│   │   │   └── validation.ts      # Zod schemas
+│   │   ├── cart/                  # Cart logic
+│   │   │   ├── queries.ts
+│   │   │   ├── mutations.ts
+│   │   │   └── validation.ts
+│   │   ├── orders/                # Order domain logic
+│   │   │   ├── queries.ts
+│   │   │   ├── mutations.ts
+│   │   │   ├── stock.ts           # Stock reservation (Redis lock)
+│   │   │   └── validation.ts
+│   │   ├── payments/              # Payment integration
+│   │   │   ├── xendit.ts          # Xendit SDK wrapper
+│   │   │   ├── webhook.ts         # Webhook verification
+│   │   │   └── validation.ts
+│   │   ├── vouchers/              # Voucher logic
+│   │   │   ├── queries.ts
+│   │   │   ├── calculation.ts     # Voucher calculation (bertahap)
+│   │   │   └── validation.ts
+│   │   ├── shipping/              # Shipping integration
+│   │   │   ├── rajaongkir.ts      # RajaOngkir API wrapper
+│   │   │   ├── biteship.ts        # Biteship API wrapper (fallback)
+│   │   │   └── cache.ts           # Redis cache (5-10 min)
+│   │   ├── notifications/         # Notification logic
+│   │   │   ├── email.ts           # Resend integration
+│   │   │   └── templates.ts       # Email templates
+│   │   ├── db/
+│   │   │   └── prisma.ts          # Prisma client singleton
+│   │   ├── redis/
+│   │   │   └── client.ts          # Upstash Redis client
+│   │   └── utils/                 # Shared utilities
+│   │       ├── format.ts          # Date, currency formatting
+│   │       └── cn.ts              # Tailwind class merge (shadcn/ui)
+│   ├── emails/                    # React Email templates
+│   │   ├── OrderConfirmation.tsx
+│   │   └── PaymentSuccess.tsx
+│   ├── contexts/                  # React Context providers (Client Components)
+│   │   └── CartContext.tsx        # Cart state (optional, prefer Server Components + cookies)
+│   ├── hooks/                     # Custom React hooks (Client Components)
+│   │   └── useCart.ts
+│   ├── types/                     # TypeScript type definitions
+│   │   ├── api.ts                 # API response types
+│   │   └── database.ts            # Prisma-generated types
+│   └── middleware.ts              # Next.js middleware (auth, redirects)
+├── public/                        # Static assets (served from `/`)
+│   ├── favicon.ico
+│   └── images/
+├── .env.local                     # Environment variables (gitignored)
+├── .gitignore
+├── next.config.js                 # Next.js config
+├── tailwind.config.ts             # Tailwind CSS config
+├── tsconfig.json                  # TypeScript config
+├── components.json                # shadcn/ui config
+└── package.json
+```
+
+**File Naming Conventions:**
+- **Files:** kebab-case (`product-card.tsx`, `auth-utils.ts`)
+- **Components:** PascalCase (`ProductCard.tsx`, `Header.tsx`)
+- **Functions/Variables:** camelCase (`getProducts`, `userId`)
+- **Constants:** UPPER_SNAKE_CASE (`MAX_CART_ITEMS`, `API_BASE_URL`)
+- **Types/Interfaces:** PascalCase (`User`, `ProductWithVariants`)
+
+**Next.js 16 Special Files (App Router):**
+- `page.tsx` — Route UI (accessible via URL)
+- `layout.tsx` — Shared wrapper (persists across navigations)
+- `loading.tsx` — Loading UI (Suspense fallback)
+- `error.tsx` — Error boundary
+- `not-found.tsx` — 404 UI
+- `route.ts` — API Route Handler (serverless function)
+- `middleware.ts` — Edge middleware (runs before request)
+
+**Import Rules (Dependency Direction):**
+- `/src/app/` (UI) → `/src/lib/` (logic), `/src/components/` (UI components)
+- `/src/lib/` (logic) → NO imports from `/src/app/` or `/src/components/` (avoid circular deps)
+- `/src/components/` → `/src/lib/utils/`, `shadcn/ui` (UI utilities only)
+- API Routes (`/src/app/api/`) → `/src/lib/` (business logic), NO direct Prisma queries in route handlers (use `/src/lib/*/queries.ts`)
+
+## 6. Rancangan data
+
+### 6.1. Entitas dan relasi
+
+| Entitas | Arti | Modul | PK | Relasi |
+| --- | --- | --- | --- | --- |
+| User | User account | MOD-AUTH | id (UUID) | 1 → N Orders, 1 → N Addresses, 1 → N Sessions |
+| Session | NextAuth session | MOD-AUTH | id (UUID) | N → 1 User |
+| Category | Product category | MOD-PROD | id (UUID) | 1 → N Products |
+| Brand | Product brand | MOD-PROD | id (UUID) | 1 → N Products |
+| Product | Product base | MOD-PROD | id (UUID) | 1 → N Images, 1 → N Variants, N → 1 Category, N → 1 Brand |
+| ProductImage | Product images | MOD-PROD | id (UUID) | N → 1 Product |
+| ProductVariant | Variants (SKU, stock) | MOD-PROD | id (UUID) | N → 1 Product |
+| Order | Order | MOD-ORDER | id (UUID) | 1 → N OrderItems, N → 1 User (nullable), 1 → 1 Payment, 1 → 1 Shipping |
+| OrderItem | Order line item | MOD-ORDER | id (UUID) | N → 1 Order, N → 1 ProductVariant |
+| Payment | Payment record | MOD-PAY | id (UUID) | 1 → 1 Order, 1 → N Refunds |
+| Refund | Refund record | MOD-PAY | id (UUID) | N → 1 Payment |
+| Shipping | Shipping record | MOD-SHIP | id (UUID) | 1 → 1 Order |
+| Address | Customer addresses | MOD-CUST | id (UUID) | N → 1 User |
+| Voucher | Voucher/promotion | MOD-VOUCH | id (UUID) | 1 → N VoucherCompatibility, 1 → N VoucherUsage |
+| VoucherCompatibility | Stacking compat | MOD-VOUCH | id (UUID) | N → 1 Voucher (2 FKs) |
+| VoucherUsage | Usage tracking | MOD-VOUCH | id (UUID) | N → 1 Voucher, N → 1 Order |
+| StoreSettings | Store config | MOD-CONFIG | id (UUID) | Singleton |
+| PlatformSettings | Platform config | MOD-CONFIG | id (UUID) | Singleton |
+| CancellationReasonTemplate | Cancel templates | MOD-CONFIG | id (UUID) | Standalone |
+
+### ERD:
+
+```mermaid
+erDiagram
+    User ||--o{ Order : places
+    User ||--o{ Address : has
+    Category ||--o{ Product : contains
+    Brand ||--o{ Product : has
+    Product ||--o{ ProductImage : has
+    Product ||--o{ ProductVariant : has
+    Order ||--|{ OrderItem : contains
+    Order ||--|| Payment : has
+    Order ||--|| Shipping : has
+    ProductVariant ||--o{ OrderItem : in
+    Payment ||--o{ Refund : has
+    Voucher ||--o{ VoucherUsage : used
+```
+
+### 6.2. Data dictionary (key fields)
+
+**User:**
+- id: UUID, PK
+- email: String, unique, nullable
+- phone: String, unique (OTP)
+- password: String, nullable (bcrypt)
+- role: Enum (GUEST, CUSTOMER, STORE_ADMIN, SITE_ADMIN)
+- name: String
+
+**Product:**
+- id: UUID, PK
+- name, slug (unique), description
+- status: Enum (ACTIVE, INACTIVE, DRAFT, OUT_OF_STOCK, DISCONTINUED)
+- categoryId, brandId (nullable)
+- totalStock: Int (calculated)
+
+**ProductVariant:**
+- id: UUID, PK
+- productId: FK
+- sku: String, unique
+- name, price: Decimal, stock: Int
+- imageUrl: String, nullable
+
+**Order:**
+- id: UUID, PK
+- orderNumber: String, unique
+- userId: FK, nullable (guest)
+- guestPhone, guestEmail: nullable
+- status: Enum (WAITING_PAYMENT, PROCESSING, SHIPPED, COMPLETED, CANCELED)
+- subtotal, shippingCost, discount, total: Decimal
+- shippingAddress: JSON
+
+**Payment:**
+- id: UUID, PK
+- orderId: FK, unique
+- externalId: String (Xendit)
+- method: Enum (QRIS, VIRTUAL_ACCOUNT, E_WALLET)
+- status: Enum (WAITING, PAID, FAILED, CANCELED, EXPIRED)
+- amount: Decimal
+- paidAt: DateTime, nullable
+
+**Voucher:**
+- id: UUID, PK
+- code: String, unique
+- type: Enum (PERCENTAGE, NOMINAL, SHIPPING)
+- discountPercentage, discountAmount, maxDiscount: nullable
+- minTransaction: Decimal
+- usageLimit, usageCount, usageLimitPerPhone: Int
+- validFrom, validUntil: DateTime
+- isActive: Boolean
+
+**Representasi:**
+- Uang: Decimal (10,2), IDR
+- Tanggal: DateTime (UTC), display Asia/Jakarta
+- Status: Enum Prisma
+- Phone: String (+62...)
+
+**Constraint:**
+- Product.slug, ProductVariant.sku, Order.orderNumber, User.email, User.phone, Voucher.code: unique, indexed
+
+**Operasi atomik:**
+- Stock reservation: Redis lock → Prisma transaction
+- Payment webhook: Prisma transaction (Payment, Order, stock)
+- Voucher application: Prisma transaction (check usage, create VoucherUsage)
+
+**Migrasi:** Prisma migrate, seed.ts untuk dev data.
+
+## 7. Autentikasi dan otorisasi
+
+| Bagian | Keputusan teknis |
+| --- | --- |
+| Metode login | Credentials (email/phone + password), NextAuth.js v5 |
+| Sesi | JWT token (NextAuth default), httpOnly cookie, 30 days expiry |
+| Penyimpanan role | User.role field (Prisma), checked via `getServerSession()` |
+| Pemeriksaan akses | Middleware for protected routes, role check di API Routes |
+| Respons unauthorized | 401 Unauthorized (API), redirect /login (UI) |
+| Verifikasi akses DB | Prisma RLS tidak digunakan, role check di application layer |
+
+**OTP verification:**
+- Guest checkout: wajib verify phone via Twilio SMS/WhatsApp
+- OTP code stored Redis (5 min expiry)
+- Rate limit: 3 attempts per phone per hour
+
+**Password:**
+- Bcrypt hash (rounds: 10)
+- Min 8 chars, reset via email link
+
+## 8. Kontrak antarmuka
+
+### REST API Endpoints (sample)
+
+**POST /api/orders/create**
+- Auth: Optional (guest or customer session)
+- Request: `{ cartItems, shippingAddress, voucherCodes?, guestPhone?, guestEmail? }`
+- Response Success (200): `{ orderId, orderNumber, paymentUrl }`
+- Response Fail (400): `{ error: "INSUFFICIENT_STOCK", variantId }`
+- Response Fail (401): `{ error: "UNAUTHORIZED" }` (if customer route but no session)
+
+**POST /api/webhooks/xendit**
+- Auth: Xendit signature verification
+- Request: Xendit payload + signature header
+- Response (200): `{ status: "success" }`
+- Response (400): `{ error: "INVALID_SIGNATURE" }`
+- Idempotency: Check Redis `webhook:{payload.id}` before process
+
+**GET /api/admin/products**
+- Auth: Store Admin or Site Admin
+- Query: `?page=1&limit=20&status=ACTIVE`
+- Response (200): `{ products: [...], total, page, limit }`
+- Response (403): `{ error: "FORBIDDEN" }`
+
+**Validation:** Zod schemas in `/src/lib/{module}/validation.ts`
+
+**Pagination:** `?page=N&limit=M` (default limit: 20, max: 100)
+
+**Error format:**
+```json
+{
+  "error": "ERROR_CODE",
+  "message": "Human readable message",
+  "field": "fieldName" // optional for validation errors
+}
+```
+
+## 9. Integrasi eksternal
+
+| Layanan | Fitur | Kontrak | Config | Saat gagal | Status |
+| --- | --- | --- | --- | --- | --- |
+| Xendit | Payment | Xendit API v3 | XENDIT_SECRET_KEY | Return error to user | Direncanakan |
+| Twilio | OTP SMS/WA | Twilio API | TWILIO_ACCOUNT_SID, AUTH_TOKEN | Retry 1x, show error | Direncanakan |
+| Resend | Email | Resend API | RESEND_API_KEY | Log error, continue (non-blocking) | Direncanakan |
+| RajaOngkir | Shipping | RajaOngkir API | RAJAONGKIR_API_KEY | Fallback flat rate Rp10k | Direncanakan |
+| Biteship | Shipping | Biteship API | BITESHIP_API_KEY | Fallback flat rate Rp10k | Direncanakan |
+| Uploadthing | File storage | Uploadthing SDK | UPLOADTHING_SECRET, APP_ID | Show upload error | Direncanakan |
+| Supabase | PostgreSQL | Connection string | DATABASE_URL | Crash (critical) | Direncanakan |
+| Upstash | Redis | Upstash SDK | UPSTASH_REDIS_REST_URL, TOKEN | Degrade gracefully (no cache) | Direncanakan |
+
+**Timeout:**
+- Xendit: 30s
+- Twilio: 10s
+- Resend: 10s (fire and forget)
+- Shipping API: 10s (fallback)
+- Uploadthing: 60s
+
+**Retry:**
+- Webhook processing: No retry (idempotent, Xendit resends)
+- OTP send: 1 retry
+- Email send: No retry (log error)
+- Shipping API: No retry (fallback)
+
+## 10. Penerapan kebutuhan kualitas
+
+| Referensi | Pendekatan teknis | Batas | Cara membuktikan |
+| --- | --- | --- | --- |
+| PRD 6.1: Security | See **Security (OWASP Top 10)** section below | PCI DSS: payment data tidak disimpan | Manual review, security audit |
+| PRD 6.2: Performance | Prisma query optimization, Redis cache shipping (5 min), image optimization (Uploadthing) | Halaman produk < 2s | Lighthouse, manual test |
+| PRD 6.3: Reliability | Redis stock lock (10 min), webhook idempotency (24h), Prisma transactions | Prevent overselling | Unit test, E2E test checkout flow |
+| PRD 6.4: Usability | Guest checkout (no signup), clear error messages, responsive UI | Mobile-friendly | Manual test, Playwright E2E |
+
+### Security (OWASP Top 10 2021)
+
+**Wajib implement untuk semua API endpoints dan user input:**
+
+| OWASP Risk | Mitigation | Implementation |
+| --- | --- | --- |
+| **A01:2021 — Broken Access Control** | Server-side authorization checks | NextAuth middleware (`/src/middleware.ts`) protect `/admin/*` routes, role check di setiap API handler (`if (session.user.role !== 'STORE_ADMIN') return 403`), Guest dapat checkout tapi tidak akses `/profile/*` |
+| **A02:2021 — Cryptographic Failures** | Encrypt sensitive data | Bcrypt password hashing (cost 10), NextAuth JWT tokens (httpOnly cookies), HTTPS only (Vercel enforced), no plaintext secrets (use `.env.local`), payment data NOT stored (Xendit handles) |
+| **A03:2021 — Injection (SQL/NoSQL)** | Parameterized queries | Prisma ORM (auto-parameterized), **NO raw SQL** (`prisma.$executeRaw` banned), Zod validation BEFORE Prisma queries, escape user input di email templates |
+| **A04:2021 — Insecure Design** | Secure-by-default architecture | Stock reservation (prevent overselling), webhook idempotency (prevent double-processing), OTP rate limiting (prevent spam), guest checkout requires OTP (prevent fake orders) |
+| **A05:2021 — Security Misconfiguration** | Secure defaults | CORS restricted (Vercel default), CSP headers (Next.js config), security headers (`X-Frame-Options`, `X-Content-Type-Options`), no directory listing, no debug info in production |
+| **A06:2021 — Vulnerable Components** | Keep dependencies updated | `pnpm audit` di CI/CD, pin exact versions (`package.json`), auto-update Dependabot (GitHub), use latest stable versions (Next.js 16.3+, React 19.2, Prisma 5, NextAuth v5 stable) |
+| **A07:2021 — Auth Failures** | Strong authentication | NextAuth v5 (industry-standard), bcrypt password (min 8 chars), OTP verification (Twilio), session timeout (30 days idle), rate limiting login attempts (future: implement after MVP), no password in URL/logs |
+| **A08:2021 — Software & Data Integrity** | Verify external data | Xendit webhook signature verification (HMAC), Twilio webhook verification, validate all external API responses (Zod schemas), SRI for CDN scripts (Next.js auto-handles), no `eval()` or `dangerouslySetInnerHTML` without sanitization |
+| **A09:2021 — Security Logging Failures** | Audit trail | Log failed login attempts, log payment webhook events (to DB for audit), log stock reservation/release, log refund requests, **NO log secrets/passwords/tokens**, Vercel auto-capture errors |
+| **A10:2021 — SSRF** | Validate external URLs | Shipping API: whitelist RajaOngkir/Biteship domains, Payment: whitelist Xendit domain, Uploadthing: signed URLs only, no user-provided URLs di server-side fetch |
+
+**Additional Security Measures:**
+- **XSS Prevention:** React auto-escapes (RSC), no `dangerouslySetInnerHTML` kecuali sanitized (DOMPurify), Content Security Policy headers
+- **CSRF Prevention:** NextAuth CSRF tokens (built-in), SameSite cookies (`Lax` default), no GET requests for state-changing operations
+- **Rate Limiting:** OTP send (1 req/min per phone), future: API rate limiting via Vercel Edge Config or Upstash Redis
+- **Input Validation:** Zod schemas di **semua API Routes** (server-side), validate file uploads (type, size), sanitize filenames
+- **Error Handling:** Generic error messages to users ("Invalid credentials", NOT "User not found"), detailed errors to logs only, no stack traces in production
+- **Secrets Management:** `.env.local` gitignored, Vercel Environment Variables for production, rotate secrets regularly (Xendit, Twilio)
+
+**Security Testing:**
+- Manual: OWASP ZAP scan (optional for MVP)
+- Automated: `pnpm audit`, Dependabot alerts
+- Code review: Check all PR diffs for hardcoded secrets, SQL injection risks, missing validation
+
+**Logging:**
+- Error logs: console.error (Vercel auto-capture)
+- Webhook logs: save to DB (optional, for audit)
+- Payment logs: save to DB (required for reconciliation)
+
+**Backup:** Supabase automatic daily backup.
+
+## 11. Lingkungan, konfigurasi, dan deployment
+
+| Lingkungan | Tujuan | Komponen | Data | Konfigurasi |
+| --- | --- | --- | --- | --- |
+| Lokal | Development | Next.js dev server, Supabase local/cloud, Upstash cloud | Dev seed data | `.env.local` |
+| Preview | Testing PR | Vercel preview deploy | Dev seed data | Vercel env vars |
+| Produksi | Live users | Vercel production | Real data | Vercel env vars (encrypted) |
+
+**Prasyarat:**
+- Node.js 20+
+- pnpm/npm/yarn
+- Prisma CLI
+- Supabase account
+- Upstash account
+- Xendit sandbox account (dev)
+- Twilio account (Trial cukup untuk dev OTP via Verify; upgrade untuk production)
+
+**Variabel konfigurasi (.env.local):**
+```bash
+# Database
+DATABASE_URL="postgresql://..."
+
+# Redis
+UPSTASH_REDIS_REST_URL="https://..."
+UPSTASH_REDIS_REST_TOKEN="..."
+
+# Auth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="..."
+
+# Payment
+XENDIT_SECRET_KEY="..."
+XENDIT_WEBHOOK_TOKEN="..."
+
+# OTP (Twilio Verify — docs/06_SETUP_KREDENSIAL.md bagian 4)
+TWILIO_ACCOUNT_SID="..."
+TWILIO_AUTH_TOKEN="..."
+TWILIO_VERIFY_SERVICE_SID="..."
+TWILIO_VERIFY_CHANNEL="sms"
+
+# Email
+RESEND_API_KEY="..."
+
+# Shipping
+RAJAONGKIR_API_KEY="..."
+BITESHIP_API_KEY="..."
+
+# File upload
+UPLOADTHING_SECRET="..."
+UPLOADTHING_APP_ID="..."
+```
+
+**Setup steps:**
+```bash
+# 1. Clone repo
+git clone <repo-url>
+cd flexstore
+
+# 2. Install dependencies
+pnpm install
+
+# 3. Copy env
+cp .env.example .env.local
+# Edit .env.local with actual values
+
+# 4. Setup database
+pnpm db:migrate
+pnpm db:seed
+
+# 5. Run dev server
+pnpm dev
+# Open http://localhost:3000
+```
+
+**Deployment steps (Vercel):**
+```bash
+# 1. Push to main branch
+git push origin main
+
+# 2. Vercel auto-deploy
+# Set env vars in Vercel dashboard
+
+# 3. Run migration (production)
+vercel env pull .env.production.local
+pnpm db:deploy
+```
+
+**Rollback:** Vercel instant rollback via dashboard (previous deployment).
+
+## 12. Perintah dan strategi verifikasi
+
+| Kegiatan | Perintah | Direktori | Hasil |
+| --- | --- | --- | --- |
+| Run app | `pnpm dev` | Root | Dev server localhost:3000 |
+| Format check | `pnpm lint` | Root | No errors |
+| Type check | `pnpm build` | Root | Build success |
+| Unit test | `pnpm test` | Root | All tests pass |
+| E2E test | `pnpm test:e2e` | Root | Checkout flow pass |
+| DB migration | `pnpm db:migrate` | Root | Migration applied |
+| DB seed | `pnpm db:seed` | Root | Seed data created |
+
+**Verifikasi manual (E2E scenarios):**
+1. **Guest checkout:** Browse product → add to cart → checkout (OTP verify) → payment (sandbox) → order created
+2. **Customer checkout:** Register → login → add to cart → checkout (select saved address) → payment → order created
+3. **Stock reservation:** Create order → wait 10 min (no payment) → stock lock released
+4. **Voucher stacking:** Apply 2 compatible vouchers → discount calculated correctly (bertahap)
+5. **Admin order mgmt:** Store Admin login → view orders → approve cancellation → upload refund proof
+6. **Webhook idempotency:** Send duplicate Xendit webhook → only processed once
+
+**Test data:**
+- Admin: email dari `SEED_ADMIN_EMAIL` (default `admin@flexstore.local`); password dari `SEED_ADMIN_PASSWORD`, atau password acak yang dicetak `pnpm db:seed` bila variabel itu kosong
+- Customer: tidak di-seed — dibuat lewat `/register`
+- Guest phone: `+628123456789` (OTP via Twilio Verify)
+
+**Kriteria penerimaan:** Lihat `03_SPESIFIKASI_FITUR.md`.
+
+## 13. Keputusan teknis dan pertanyaan terbuka
+
+| ID | Keputusan | Alasan | Dampak | Status |
+| --- | --- | --- | --- | --- |
+| TECH-01 | Vercel serverless | Optimized for Next.js, auto-scaling, affordable MVP | All modules | Ditetapkan |
+| TECH-02 | Supabase over Vercel Postgres | Unlimited compute, avoid surprise billing | Database | Ditetapkan |
+| TECH-03 | Redis for stock locks | Fast, atomic operations, auto-expiry | MOD-ORDER, MOD-PROD | Ditetapkan |
+| TECH-04 | NextAuth v5 stable | Dukungan App Router; versi beta lama sudah tidak dipakai | MOD-AUTH | Ditetapkan |
+| TECH-05 | Uploadthing over S3 direct | Next.js native, simpler setup | MOD-PROD, MOD-CONFIG | Ditetapkan |
+| TECH-06 | Resend over SendGrid | Modern API, React Email support, affordable | MOD-NOTIF | Ditetapkan |
+| TECH-07 | Prisma over Drizzle | Mature ecosystem, better DX for MVP | All modules | Ditetapkan |
+| TECH-08 | No repository layer | Keep simple for MVP, Prisma sufficient | All modules | Ditetapkan |
+| OPEN-01 | Email service production pricing | Resend free tier 3k/month, need monitoring | MOD-NOTIF | Terbuka |
+| OPEN-02 | Shipping API primary provider | RajaOngkir vs Biteship, need cost comparison | MOD-SHIP | Terbuka |
+| OPEN-03 | E2E test coverage | Playwright setup pending, critical flows prioritized | Testing | Terbuka |
+
+**Change log:**
+
+| Tanggal | Perubahan | Kebutuhan | Referensi |
+| --- | --- | --- | --- |
+| 2026-10-09 | Initial draft | PRD v1.0 MVP scope | All sections |
+
+---
+
+**Status:** Draft SDD v1.0 complete. Ready for review.
+
+**Next steps:**
+1. Review SDD dengan team
+2. Draft `03_SPESIFIKASI_FITUR.md`
+3. Draft `04_IMPLEMENTATION_PLAN.md`
+4. Draft `05_INSTRUKSI_AGENT.md`

@@ -1,0 +1,364 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ImageUploader } from "@/components/admin/ImageUploader";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  PRODUCT_STATUSES,
+  productSchema,
+} from "@/lib/products/validation";
+import { PRODUCT_STATUS_LABELS } from "@/lib/utils/format";
+import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { slugify } from "@/lib/utils/slug";
+
+export type VariantRow = {
+  sku: string;
+  name: string;
+  price: string;
+  stock: string;
+};
+
+export type ProductFormValues = {
+  id?: string;
+  name: string;
+  slug: string;
+  description: string;
+  categoryId: string;
+  brandId: string;
+  status: string;
+  images: string[];
+  variants: VariantRow[];
+};
+
+type Option = { id: string; name: string };
+
+const EMPTY_VARIANT: VariantRow = { sku: "", name: "", price: "", stock: "" };
+
+export function ProductForm({
+  categories,
+  brands,
+  initial,
+}: {
+  categories: Option[];
+  brands: Option[];
+  initial?: ProductFormValues;
+}) {
+  const router = useRouter();
+  const [values, setValues] = useState<ProductFormValues>(
+    initial ?? {
+      name: "",
+      slug: "",
+      description: "",
+      categoryId: categories[0]?.id ?? "",
+      brandId: "",
+      status: "DRAFT",
+      images: [],
+      variants: [{ ...EMPTY_VARIANT }],
+    },
+  );
+  const [slugTouched, setSlugTouched] = useState(Boolean(initial));
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const isEdit = Boolean(initial?.id);
+
+  function setField<K extends keyof ProductFormValues>(
+    field: K,
+    value: ProductFormValues[K],
+  ) {
+    setValues((previous) => ({ ...previous, [field]: value }));
+  }
+
+  function handleNameChange(name: string) {
+    setValues((previous) => ({
+      ...previous,
+      name,
+      slug: slugTouched ? previous.slug : slugify(name),
+    }));
+  }
+
+  function updateVariant(index: number, patch: Partial<VariantRow>) {
+    setValues((previous) => ({
+      ...previous,
+      variants: previous.variants.map((variant, position) =>
+        position === index ? { ...variant, ...patch } : variant,
+      ),
+    }));
+  }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+
+    const parsed = productSchema.safeParse({
+      name: values.name,
+      slug: values.slug,
+      description: values.description,
+      categoryId: values.categoryId,
+      brandId: values.brandId,
+      status: values.status,
+      images: values.images.map((url, index) => ({ url, sortOrder: index })),
+      variants: values.variants.map((variant) => ({
+        sku: variant.sku,
+        name: variant.name,
+        price: Number(variant.price),
+        stock: Number(variant.stock),
+      })),
+    });
+
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      setError(issue?.message ?? "Data tidak valid");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      await apiRequest(
+        isEdit
+          ? `/api/admin/products/${initial?.id}`
+          : "/api/admin/products",
+        {
+          method: isEdit ? "PATCH" : "POST",
+          body: JSON.stringify(parsed.data),
+        },
+      );
+
+      router.push("/admin/products");
+      router.refresh();
+    } catch (caught) {
+      setError(toErrorMessage(caught));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      {error ? <Alert variant="destructive">{error}</Alert> : null}
+
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
+        <h2 className="font-semibold">Informasi Produk</h2>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="product-name">Nama Produk</Label>
+            <Input
+              id="product-name"
+              required
+              maxLength={200}
+              value={values.name}
+              onChange={(event) => handleNameChange(event.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="product-slug">Slug</Label>
+            <Input
+              id="product-slug"
+              required
+              maxLength={200}
+              value={values.slug}
+              onChange={(event) => {
+                setSlugTouched(true);
+                setField("slug", event.target.value);
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="product-description">Deskripsi</Label>
+          <Textarea
+            id="product-description"
+            rows={4}
+            maxLength={5000}
+            value={values.description}
+            onChange={(event) => setField("description", event.target.value)}
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="product-category">Kategori</Label>
+            <Select
+              id="product-category"
+              required
+              value={values.categoryId}
+              onChange={(event) => setField("categoryId", event.target.value)}
+            >
+              <option value="">Pilih kategori</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="product-brand">Brand (opsional)</Label>
+            <Select
+              id="product-brand"
+              value={values.brandId}
+              onChange={(event) => setField("brandId", event.target.value)}
+            >
+              <option value="">Tanpa brand</option>
+              {brands.map((brand) => (
+                <option key={brand.id} value={brand.id}>
+                  {brand.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="product-status">Status</Label>
+            <Select
+              id="product-status"
+              value={values.status}
+              onChange={(event) => setField("status", event.target.value)}
+            >
+              {PRODUCT_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {PRODUCT_STATUS_LABELS[status]}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
+        <h2 className="font-semibold">Gambar Produk</h2>
+        <ImageUploader urls={values.images} setUrls={(action) => {
+          setValues((previous) => ({
+            ...previous,
+            images:
+              typeof action === "function" ? action(previous.images) : action,
+          }));
+        }} />
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">Varian</h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setValues((previous) => ({
+                ...previous,
+                variants: [...previous.variants, { ...EMPTY_VARIANT }],
+              }))
+            }
+          >
+            Tambah Varian
+          </Button>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          {values.variants.map((variant, index) => (
+            <div
+              key={index}
+              className="grid gap-3 rounded-lg border border-border p-4 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] sm:items-end"
+            >
+              <div className="flex flex-col gap-2">
+                <Label htmlFor={`variant-sku-${index}`}>SKU</Label>
+                <Input
+                  id={`variant-sku-${index}`}
+                  required
+                  maxLength={64}
+                  value={variant.sku}
+                  onChange={(event) =>
+                    updateVariant(index, { sku: event.target.value })
+                  }
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor={`variant-name-${index}`}>Nama Varian</Label>
+                <Input
+                  id={`variant-name-${index}`}
+                  required
+                  maxLength={200}
+                  value={variant.name}
+                  onChange={(event) =>
+                    updateVariant(index, { name: event.target.value })
+                  }
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor={`variant-price-${index}`}>Harga (Rp)</Label>
+                <Input
+                  id={`variant-price-${index}`}
+                  type="number"
+                  min="1"
+                  step="1"
+                  required
+                  value={variant.price}
+                  onChange={(event) =>
+                    updateVariant(index, { price: event.target.value })
+                  }
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor={`variant-stock-${index}`}>Stok</Label>
+                <Input
+                  id={`variant-stock-${index}`}
+                  type="number"
+                  min="0"
+                  step="1"
+                  required
+                  value={variant.stock}
+                  onChange={(event) =>
+                    updateVariant(index, { stock: event.target.value })
+                  }
+                />
+              </div>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={values.variants.length <= 1}
+                onClick={() =>
+                  setValues((previous) => ({
+                    ...previous,
+                    variants: previous.variants.filter(
+                      (_, position) => position !== index,
+                    ),
+                  }))
+                }
+              >
+                Hapus
+              </Button>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div className="flex items-center gap-3">
+        <Button type="submit" disabled={submitting}>
+          {submitting ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Simpan Produk"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/admin/products")}
+        >
+          Batal
+        </Button>
+      </div>
+    </form>
+  );
+}
