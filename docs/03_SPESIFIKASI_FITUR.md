@@ -11,7 +11,7 @@
 
 ## 1. Identitas dan indeks fitur
 
-- **Versi / tanggal:** v1.0 / 2026-10-09
+- **Versi / tanggal:** v1.1 / 2026-10-10
 - **Versi PRD / SDD:** PRD v1.0, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
@@ -28,9 +28,10 @@
 | | | PROD-04 | Category Management | Belum dirinci | - |
 | | | PROD-05 | Brand Management | Belum dirinci | - |
 | **Phase 2** | **MOD-CART** | CART-01 | Add to Cart | Draft | [CART-01](#cart-01) |
-| | | CART-02 | Update Cart Item | Belum dirinci | - |
-| | | CART-03 | Remove from Cart | Belum dirinci | - |
-| | **MOD-SHIP** | SHIP-01 | Calculate Shipping Cost | Belum dirinci | - |
+| | | CART-02 | Update Cart Item | Draft | [CART-02](#cart-02) |
+| | | CART-03 | Remove from Cart | Draft | [CART-03](#cart-03) |
+| | | CART-04 | Merge Guest Cart on Login (tambahan) | Draft | [CART-04](#cart-04) |
+| | **MOD-SHIP** | SHIP-01 | Calculate Shipping Cost | Draft | [SHIP-01](#ship-01) |
 | **Phase 3** | **MOD-ORDER** | ORDER-01 | Create Order (Guest Checkout) | Draft | [ORDER-01](#order-01) |
 | | | ORDER-02 | Create Order (Customer) | Belum dirinci | - |
 | | | ORDER-03 | Order History | Belum dirinci | - |
@@ -404,6 +405,451 @@ Tidak ada.
 ### 13. Pertanyaan terbuka
 
 Tidak ada.
+
+---
+
+## <a name="cart-02"></a>CART-02 — Update Cart Item
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | CART-02 — Update Cart Item |
+| Modul | MOD-CART |
+| Tujuan | Guest/Customer mengubah jumlah item di cart dari halaman keranjang |
+| Aktor utama | Guest, Customer |
+| Status | Draft |
+| Referensi PRD | PRD 3.1.B (Shopping Cart) |
+| Referensi SDD | SDD 4.3 (MOD-CART), CartItem schema |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Item sudah ada di cart
+- **Pemicu:** Tombol `+`/`-` pada baris item
+- **Titik masuk:** Halaman `/cart`
+- **Jika tidak terpenuhi:** Baris item tidak dirender, tombol tidak tersedia
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Guest | Ubah jumlah | Own session cart (Redis) | N/A |
+| Customer | Ubah jumlah | Own cart (PostgreSQL) | N/A |
+| Bukan pemilik cart | Ubah jumlah | Tidak ada — identitas diambil dari sesi/cookie, bukan dari body | Cart milik orang lain tidak pernah tersentuh |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| variantId | UUID | Ya | Harus ada di cart dan variannya masih aktif | "Produk tidak ditemukan" |
+| quantity | Int | Ya | >= 1, <= stok tersedia | "Jumlah minimal 1", "Stok tidak cukup (tersisa X)" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | User ubah jumlah | `PATCH /api/cart` | Jumlah item diperbarui |
+| 2 | System | Hitung ulang subtotal dan jumlah item | Ringkasan diperbarui |
+| 3 | System | `router.refresh()` | Daftar item dan badge keranjang ikut terbarui |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Jumlah item berubah
+- **Data dibaca:** CartItem, ProductVariant (stok, harga snapshot)
+- **Data diubah:** CartItem.quantity (customer) atau entri di daftar Redis (guest)
+- **Kondisi akhir:** Cart konsisten dengan permintaan terakhir
+- **Setelah reload:** Perubahan bertahan (Redis untuk guest, PostgreSQL untuk customer)
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Jumlah dikurangi sampai 1 | Tombol `-` dinonaktifkan | Tidak ada nilai 0; untuk membuang item dipakai CART-03 |
+| Item sudah tidak aktif | Baris menandai "Produk tidak tersedia" dan tombol dinonaktifkan | Item harus dihapus dulu (CART-03) |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Stok berkurang setelah item masuk cart | "Stok tidak cukup (tersisa X)" | Turunkan jumlah |
+| Varian/produk sudah tidak aktif | "Produk tidak tersedia" | Hapus item (CART-03) |
+| Varian tidak ditemukan | "Produk tidak ditemukan" | Muat ulang halaman |
+| Item tidak ada di cart | `404 VARIANT_NOT_FOUND` "Item tidak ada di keranjang" | Muat ulang halaman |
+| Body tidak valid | "Varian wajib dipilih" / "Jumlah minimal 1" | Perbaiki input |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/cart`
+- **Elemen:** Tombol `+`/`-`, subtotal baris, ringkasan, badge keranjang
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal | Tombol aktif | Klik untuk mengubah |
+| Memproses | Tombol nonaktif, label "Memproses..." | Tunggu |
+| Stok tidak cukup | Pesan galat di baris item | Turunkan jumlah |
+| Keranjang kosong | Kartu "Keranjang masih kosong" + tautan ke `/products` | Lanjut belanja |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-CART-02-01 | Item ada di cart | Ubah jumlah ke nilai valid | `200`, jumlah dan subtotal berubah |
+| AC-CART-02-02 | Item ada di cart | Set jumlah melebihi stok | `400 INSUFFICIENT_STOCK` |
+| AC-CART-02-03 | Item ada di cart | Set jumlah 0 atau negatif | `400 VALIDATION_ERROR` |
+| AC-CART-02-04 | Guest | Ubah jumlah, muat ulang | Perubahan bertahan (Redis) |
+| AC-CART-02-05 | Customer | Ubah jumlah, logout, login | Perubahan bertahan (PostgreSQL) |
+| AC-CART-02-06 | Customer, varian aktif yang tidak ada di cart | Ubah jumlah | `404 VARIANT_NOT_FOUND` (bukan `500`) |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Valid | quantity: 4, stock: 25 | `200`, quantity 4 | AC-CART-02-01 |
+| Melebihi stok | quantity: 999, stock: 25 | `400`, "Stok tidak cukup (tersisa 25)" | AC-CART-02-02 |
+| Tidak valid | quantity: 0 | `400`, "Jumlah minimal 1" | AC-CART-02-03 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Ubah jumlah satu item, perhitungan ulang ringkasan
+- **Tidak termasuk:** Hapus item (CART-03), ubah varian (harus hapus lalu tambah lagi), hapus semua sekaligus
+- **Ketergantungan:** CART-01 (item harus ada), MOD-PROD (stok)
+
+### 13. Pertanyaan terbuka
+
+Tidak ada.
+
+---
+
+## <a name="cart-03"></a>CART-03 — Remove from Cart
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | CART-03 — Remove from Cart |
+| Modul | MOD-CART |
+| Tujuan | Guest/Customer membuang satu item dari cart |
+| Aktor utama | Guest, Customer |
+| Status | Draft |
+| Referensi PRD | PRD 3.1.B (Shopping Cart) |
+| Referensi SDD | SDD 4.3 (MOD-CART), CartItem schema |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Item sudah ada di cart
+- **Pemicu:** Tombol "Hapus" pada baris item
+- **Titik masuk:** Halaman `/cart`
+- **Jika tidak terpenuhi:** Tombol tidak tersedia
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Guest | Hapus item | Own session cart (Redis) | N/A |
+| Customer | Hapus item | Own cart (PostgreSQL) | N/A |
+| Bukan pemilik cart | Hapus item | Tidak ada — identitas diambil dari sesi/cookie, bukan dari body | Cart milik orang lain tidak pernah tersentuh |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| variantId | UUID | Ya | Harus UUID valid | "Varian wajib dipilih" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | User klik "Hapus" | `DELETE /api/cart` | Item dihapus dari cart |
+| 2 | System | Hitung ulang subtotal dan jumlah item | Ringkasan diperbarui |
+| 3 | System | `router.refresh()` | Daftar item dan badge keranjang ikut terbarui |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Item hilang dari cart
+- **Data dibaca:** CartItem (memastikan item ada di cart pemanggil)
+- **Data dihapus:** Baris CartItem (customer) atau entri di daftar Redis (guest)
+- **Kondisi akhir:** Cart konsisten dengan permintaan terakhir; `itemCount` berkurang satu
+- **Setelah reload:** Item tetap hilang (Redis untuk guest, PostgreSQL untuk customer)
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Item terakhir dihapus | Keranjang menjadi kosong | Halaman menampilkan kartu "Keranjang masih kosong" |
+| Item sudah tidak ada | `DELETE` tetap dijawab `200` (idempoten) | Cart tidak berubah |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Body tidak valid | `400 VALIDATION_ERROR` "Varian wajib dipilih" | Perbaiki input |
+| Varian tidak ditemukan | `404 VARIANT_NOT_FOUND` | Muat ulang halaman |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/cart`
+- **Elemen:** Tombol "Hapus" per baris item
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal | Tombol "Hapus" aktif | Klik untuk membuang item |
+| Memproses | Tombol nonaktif, label "Memproses..." | Tunggu |
+| Keranjang kosong | Kartu "Keranjang masih kosong" + tautan ke `/products` | Lanjut belanja |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-CART-03-01 | Item ada di cart | Klik "Hapus" | `200`, item hilang dari daftar |
+| AC-CART-03-02 | Item terakhir di cart | Klik "Hapus" | `200`, `itemCount: 0`, keranjang kosong |
+| AC-CART-03-03 | Guest | Hapus item, muat ulang | Item tetap hilang (Redis) |
+| AC-CART-03-04 | Customer | Hapus item, logout, login | Item tetap hilang (PostgreSQL) |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Hapus satu | 2 item di cart, hapus 1 | `200`, sisa 1 item | AC-CART-03-01 |
+| Hapus terakhir | 1 item di cart, hapus 1 | `200`, `itemCount: 0` | AC-CART-03-02 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Hapus satu item, perhitungan ulang ringkasan
+- **Tidak termasuk:** Hapus semua sekaligus, ubah jumlah (CART-02)
+- **Ketergantungan:** CART-01 (item harus ada)
+
+### 13. Pertanyaan terbuka
+
+Tidak ada.
+
+---
+
+## <a name="cart-04"></a>CART-04 — Merge Guest Cart on Login (tambahan)
+
+> Fitur ini **tambahan di luar indeks PRD**. PRD tidak mencantumkannya sebagai fitur terpisah, tetapi
+> perilakunya wajib begitu keranjang guest disimpan di luar akun: tanpa penggabungan, item yang
+> ditambahkan sebelum login akan hilang.
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | CART-04 — Merge Guest Cart on Login |
+| Modul | MOD-CART |
+| Tujuan | Isi keranjang guest dipindahkan ke keranjang customer setelah login/registrasi, tanpa kehilangan item |
+| Aktor utama | Guest yang baru login/registrasi |
+| Status | Draft |
+| Referensi PRD | PRD 3.1.B (Shopping Cart) — perilaku turunan |
+| Referensi SDD | SDD 4.3 (MOD-CART) |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Ada cookie keranjang guest (`flexstore_cart`) berisi UUID valid
+- **Pemicu:** Login sukses (form login) atau registrasi sukses (auto-login)
+- **Titik masuk:** `LoginForm`, `RegisterForm`, dan `CartSync` di layout storefront
+- **Jika tidak terpenuhi:** Endpoint menjawab `{"merged":0}` tanpa efek samping
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Guest tanpa sesi | Panggil `/api/cart/sync` | Tidak ada | `{"merged":0}` |
+| Customer login | Panggil `/api/cart/sync` | Keranjang miliknya sendiri | Item guest digabung |
+| Store Admin | Panggil `/api/cart/sync` | Keranjang miliknya sendiri | Item guest digabung (role apa pun yang punya sesi) |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| (tidak ada body) | - | - | Identitas customer dari sesi; identitas guest dari cookie dan wajib UUID valid (nilai lain diabaikan, `merged: 0`) | Tidak ada |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | User login/registrasi sukses | Client memanggil `POST /api/cart/sync` | Sesi aktif |
+| 2 | System | Baca sesi + cookie guest | Keduanya ada |
+| 3 | System | Untuk tiap item guest: lewati jika varian tidak aktif, jumlah dibatasi stok, item digabung ke `cart_items` | Item masuk keranjang customer |
+| 4 | System | Hapus kunci Redis `cart:guest:{uuid}` | Keranjang guest kosong |
+| 5 | System | Kembalikan `{"merged":N}` | Client `router.refresh()` bila `N > 0` |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Item keranjang guest pindah ke keranjang customer
+- **Data dibaca:** Daftar item guest di Redis, ProductVariant (stok, status)
+- **Data dibuat/diubah:** Baris `CartItem` untuk customer (upsert, `price` = snapshot harga saat itu)
+- **Data dihapus:** Kunci Redis `cart:guest:{uuid}`
+- **Kondisi akhir:** Keranjang guest kosong; keranjang customer berisi gabungan
+- **Setelah reload:** Item tetap ada karena tersimpan di PostgreSQL
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Dipanggil dua kali | Keranjang guest sudah dihapus, jadi panggilan kedua no-op | `{"merged":0}` (idempoten) |
+| Varian sudah tidak aktif | Item itu dilewati | Item lain tetap digabung |
+| Jumlah gabungan melebihi stok | Dibatasi ke stok maksimum | Tidak melebihi stok |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Tidak ada sesi | `200 {"merged":0}` | Tidak ada |
+| Tidak ada cookie guest | `200 {"merged":0}` | Tidak ada |
+| Redis tidak tersedia | Keranjang guest tidak terbaca; login tetap sukses | Login tidak diblokir oleh kegagalan sinkronisasi |
+
+### 9. Perilaku UI
+
+- **Halaman:** Semua halaman storefront (layout), form login, form registrasi
+- **Elemen:** Tidak ada UI khusus; sinkronisasi berjalan di latar belakang
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Ada item digabung | Badge keranjang dan isi `/cart` ikut terbarui setelah `router.refresh()` | Lanjut belanja |
+| Tidak ada item | Tidak ada perubahan tampilan | - |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-CART-04-01 | Guest punya item di keranjang | Login | Item muncul di keranjang customer, `merged >= 1` |
+| AC-CART-04-02 | Guest punya item di keranjang | Registrasi (auto-login) | Item muncul di keranjang customer |
+| AC-CART-04-03 | Sudah pernah digabung | Panggil sync lagi | `{"merged":0}`, tidak ada duplikasi |
+| AC-CART-04-04 | Guest punya item | Login, logout, login lagi | Item tetap ada (PostgreSQL) |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Merge | Guest: 1 item Sneakers x1; customer baru | `{"merged":1}` | AC-CART-04-01 |
+| Idempoten | Sync dipanggil ulang | `{"merged":0}` | AC-CART-04-03 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Penggabungan otomatis setelah login/registrasi, idempoten, pembatasan stok
+- **Tidak termasuk:** Notifikasi khusus "item digabung", penggabungan antar dua akun customer
+- **Ketergantungan:** CART-01 (isi keranjang guest), MOD-AUTH (sesi)
+
+### 13. Pertanyaan terbuka
+
+Tidak ada.
+
+---
+
+## <a name="ship-01"></a>SHIP-01 — Calculate Shipping Cost
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | SHIP-01 — Calculate Shipping Cost |
+| Modul | MOD-SHIP |
+| Tujuan | Menghitung ongkos kirim dari lokasi toko ke kecamatan tujuan, berdasarkan berat paket |
+| Aktor utama | Guest, Customer |
+| Status | Draft |
+| Referensi PRD | PRD 3.1.C (Shipping) |
+| Referensi SDD | SDD 4.7 (MOD-SHIP), SDD section 9 (timeout + fallback) |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Keranjang tidak kosong
+- **Pemicu:** User memilih tujuan lalu klik "Hitung Ongkos Kirim"
+- **Titik masuk:** Ringkasan di halaman `/cart`
+- **Jika tidak terpenuhi:** Endpoint menjawab `400 CART_EMPTY`
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Guest | Hitung ongkir | Berat dari keranjang guest-nya sendiri | N/A |
+| Customer | Hitung ongkir | Berat dari keranjangnya sendiri | N/A |
+| Bukan pemilik | Hitung ongkir | Tidak bisa — berat dihitung server dari identitas pemanggil | Body `weight` dari klien diabaikan |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| destinationId | String angka | Ya bila mode API aktif | 1-10 digit | "Tujuan wajib dipilih" |
+| search (pencarian tujuan) | String | Ya (endpoint cities) | Minimal 3 karakter | "Ketik minimal 3 karakter" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | User mengetik nama kecamatan | `GET /api/shipping/cities?search=...` | Daftar tujuan (id + label) |
+| 2 | User memilih tujuan | Client menyimpan `destinationId` | Tujuan terpilih |
+| 3 | User klik "Hitung Ongkos Kirim" | `POST /api/shipping` | Server menghitung berat = jumlah (kuantitas x berat varian); berat varian dibaca dari data produk |
+| 4 | System | Panggil RajaOngkir, cache 10 menit per (origin, tujuan, berat) | Daftar opsi kurir |
+| 5 | System | Tampilkan opsi; user memilih satu | Total = subtotal + ongkir terpilih |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** `{source, cached, options:[{courier,code,service,description,cost,etd}]}` — berat paket **tidak** ikut di respons supaya tidak terbaca customer/guest; berat tetap dipakai server sebagai kunci cache dan parameter RajaOngkir
+- **Data dibaca:** Keranjang (kuantitas per item), berat varian dari data produk, pengaturan env (origin, kurir)
+- **Data dibuat:** Cache Redis `ship:cost:*` (TTL 10 menit), `ship:search:*` (TTL 5 menit)
+- **Kondisi akhir:** Ongkir terhitung; belum ada pesanan yang dibuat (itu PH-03)
+- **Setelah reload:** Hasil hitung tidak disimpan di klien; user menghitung ulang bila perlu
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| API key/origin belum diisi | Tarif flat Rp10.000 | `source: "fallback"` |
+| API menjawab galat atau timeout (10 detik) | Tarif flat Rp10.000 | `source: "fallback"`, detail galat hanya ke log |
+| Permintaan sama diulang | Diambil dari cache | `cached: true` |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Keranjang kosong | `400 CART_EMPTY` | Tambah item dulu |
+| Tujuan kosong saat API aktif | `400 VALIDATION_ERROR` "Tujuan wajib dipilih" | Pilih tujuan |
+| Tujuan tidak dikenal | Tarif flat (fallback anggun) | Pilih tujuan lain |
+| Redis mati | Hitung tetap jalan tanpa cache | Tidak ada |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/cart` (ringkasan)
+- **Elemen:** Kolom pencarian tujuan, daftar hasil, tombol hitung, daftar opsi (radio), total
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Mencari | Teks "Mencari tujuan..." | Tunggu |
+| API belum aktif | Catatan "API ongkir belum aktif" + tombol "Gunakan Tarif Flat" | Hitung tarif flat |
+| Selesai | Daftar opsi kurir dengan harga dan estimasi | Pilih satu |
+| Galat | Pesan galat berbahasa Indonesia | Coba lagi |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-SHIP-01-01 | Keranjang berisi, API aktif, tujuan dipilih | Hitung ongkir | Opsi kurir asli, `source: "api"` |
+| AC-SHIP-01-02 | Keranjang kosong | Hitung ongkir | `400 CART_EMPTY` |
+| AC-SHIP-01-03 | API belum dikonfigurasi | Hitung ongkir | Tarif flat Rp10.000, `source: "fallback"` |
+| AC-SHIP-01-04 | API aktif, tujuan kosong | Hitung ongkir | `400 VALIDATION_ERROR` |
+| AC-SHIP-01-05 | Permintaan identik diulang dalam 10 menit | Hitung ongkir | `cached: true` |
+| AC-SHIP-01-06 | Tujuan tidak dikenal | Hitung ongkir | Tarif flat (tidak ada galat ke pengguna) |
+| AC-SHIP-01-07 | Dua keranjang dengan berat varian berbeda, tujuan sama | Hitung ongkir | Kunci cache berbeda (`cached: false` untuk keduanya), membuktikan berat = jumlah (kuantitas x berat varian) ikut dihitung |
+| AC-SHIP-01-08 | Body permintaan menyertakan `weight`/`weightGram` dari klien | Hitung ongkir | Nilai dari klien diabaikan; berat tetap dari data produk |
+| AC-SHIP-01-09 | Permintaan hitung ongkir berhasil | Hitung ongkir | Respons hanya memuat `source`, `cached`, `options`; tidak ada berat paket |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| API aktif | Keranjang 2 item varian `KP-30S-M` (200 gram), tujuan `16034` | 9 opsi kurir asli, `source: "api"` | AC-SHIP-01-01, AC-SHIP-01-07, AC-SHIP-01-09 |
+| Fallback | `RAJAONGKIR_API_KEY` kosong | `cost: 10000`, `source: "fallback"` | AC-SHIP-01-03 |
+| Keranjang kosong | Tanpa item | `400 CART_EMPTY` | AC-SHIP-01-02 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Pencarian kecamatan tujuan, hitung ongkir multi-kurir, cache, fallback tarif flat
+- **Tidak termasuk:** Simpan pilihan ongkir ke pesanan (PH-03), lacak kiriman (SHIP-02), berat per produk (dipakai berat per varian)
+- **Ketergantungan:** MOD-CART (berat dari keranjang), RajaOngkir Komerce API v1 (opsional)
+
+### 13. Pertanyaan terbuka
+
+- Berat paket dihitung dari berat varian (`ProductVariant.weightGram`, gram) yang diisi admin di form produk. `SHIPPING_WEIGHT_PER_ITEM_GRAM` (default 1000) hanya cadangan untuk varian yang beratnya 0/belum diisi. Berat **tidak** ditampilkan ke customer/guest dan **tidak pernah** diterima dari body request.
 
 ---
 

@@ -598,6 +598,7 @@ erDiagram
 - productId: FK
 - sku: String, unique
 - name, price: Decimal, stock: Int
+- weightGram: Int (gram, diisi admin; dipakai server untuk ongkir)
 - imageUrl: String, nullable
 
 **Order:**

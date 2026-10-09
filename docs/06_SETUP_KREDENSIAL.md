@@ -6,7 +6,7 @@ berupa placeholder harus diganti sebelum aplikasi bisa terhubung ke layanan terk
 **Aturan:** jangan pernah commit `.env.local`. Semua kredensial hanya hidup di file
 tersebut (sudah masuk `.gitignore`). `.env.example` hanya berisi nama variabel.
 
-**Urutan pengerjaan yang disarankan:** bagian 1 → 2 → 3 → 4 → 5 → 6 (Database dulu,
+**Urutan pengerjaan yang disarankan:** bagian 1 → 2 → 3 → 4 → 5 → 6 → 7 (Database dulu,
 baru layanan lain, terakhir migrasi dan seed).
 
 Setelah semua terisi, jalankan migrasi dan seed:
@@ -251,7 +251,53 @@ Catatan:
 
 ---
 
-## 6. Seed dan Verifikasi
+## 6. RajaOngkir — Ongkos Kirim
+
+Dipakai fitur SHIP-01 (hitung ongkos kirim). Endpoint yang dipakai adalah **Komerce Shipping
+Cost API v1** di `https://rajaongkir.komerce.id`.
+
+| Variabel | Wajib? | Isi |
+| --- | --- | --- |
+| `RAJAONGKIR_API_KEY` | untuk mode API | API key dari dashboard rajaongkir.komerce.id |
+| `SHIPPING_ORIGIN_DISTRICT_ID` | untuk mode API | ID kecamatan asal toko (angka) |
+| `SHIPPING_WEIGHT_PER_ITEM_GRAM` | opsional | Cadangan berat per item dalam gram (default `1000`) untuk varian yang beratnya belum diisi |
+| `SHIPPING_COURIERS` | opsional | Daftar kurir dipisah titik dua (default `jne:sicepat:jnt`) |
+
+**Tanpa `RAJAONGKIR_API_KEY` atau tanpa `SHIPPING_ORIGIN_DISTRICT_ID`, aplikasi otomatis memakai
+tarif flat Rp10.000** (SDD section 9). Jadi fitur keranjang tetap bisa dicoba sebelum kredensial
+ini diisi — yang hilang hanya ongkir asli.
+
+### Langkah setup
+
+1. Ambil API key dari dashboard `rajaongkir.komerce.id`, isi `RAJAONGKIR_API_KEY` di `.env.local`.
+2. Muat ulang environment. Di Next.js 16 dev, mengubah `.env.local` memicu muat ulang otomatis
+   (log menampilkan `Reload env: .env.local`); kalau nilainya tidak ikut berubah, restart dev server.
+3. Cari ID kecamatan asal toko lewat aplikasi:
+   `GET /api/shipping/cities?search=<nama-kecamatan>` lalu salin nilai `id` yang cocok ke
+   `SHIPPING_ORIGIN_DISTRICT_ID`.
+4. Pastikan mode API aktif: `POST /api/shipping` dengan body `{"destinationId":"<id tujuan>"}`
+   harus mengembalikan `"source":"api"` beserta opsi kurir asli (bukan `"fallback"`).
+
+### Catatan
+
+- API key dikirim sebagai header `key` (bukan query param) dan hanya dipakai di server. Tidak ada
+  prefix `NEXT_PUBLIC_`, jadi nilainya tidak ikut ke bundle browser.
+- Base URL ditulis tetap di kode (`src/lib/shipping/client.ts`), bukan dari input pengguna (OWASP A10).
+- Berat paket dihitung server sebagai `jumlah (kuantitas x ProductVariant.weightGram)`. Berat per
+  varian diisi admin di form produk (`/admin/products`), jadi tidak ada asumsi seragam dan customer
+  tidak bisa menentukannya. `SHIPPING_WEIGHT_PER_ITEM_GRAM` hanya cadangan untuk varian yang
+  beratnya 0/belum diisi. Berat **tidak** ditampilkan ke customer/guest dan **tidak** ikut di
+  respons `POST /api/shipping` (hanya `source`, `cached`, `options`); server memakainya sebagai
+  kunci cache dan parameter `weight` ke RajaOngkir.
+- Pencarian tujuan mengembalikan **ID tingkat kecamatan (subdistrict)**. Karena itu perhitungan biaya
+  memakai `POST /api/v1/calculate/domestic-cost`. Endpoint `.../calculate/district/domestic-cost`
+  hanya menerima ID tingkat district dari kaskade provinsi/kota/district dan menjawab
+  `422 Origin or Destination not found` bila diberi ID hasil pencarian.
+- Kalau Redis mati, hitung ongkir tetap jalan — cache dibungkus try/catch (degrade gracefully).
+
+---
+
+## 7. Seed dan Verifikasi
 
 Setelah semua kredensial terisi:
 
@@ -294,6 +340,8 @@ baru, ubah dulu password akun itu (atau hapus akunnya) sebelum menjalankan seed 
 | Login admin | Buka `/login`, masuk dengan akun seed | Diarahkan ke `/admin/products` |
 | Proteksi admin | Buka `/admin/products` tanpa login | Dialihkan ke `/login` |
 | Uploadthing | `/admin/products/new`, unggah gambar | Gambar muncul di pratinjau |
+| Ongkir mode API | `POST /api/shipping` dengan `destinationId` (isi dulu bagian 6) | `"source":"api"`, daftar kurir asli |
+| Ongkir fallback | Kosongkan `RAJAONGKIR_API_KEY` lalu hitung ongkir | `"source":"fallback"`, tarif flat Rp10.000 |
 | Storefront | Buka `/` lalu `/products` | Produk seed tampil |
 
 ### Kalau ada masalah
@@ -315,3 +363,6 @@ baru, ubah dulu password akun itu (atau hapus akunnya) sebelum menjalankan seed 
 | Log memuat `21654 ContentSid Required` atau `63016` | Sisa dari jalur Messaging API yang lama. Kalau ini muncul, berarti kode yang berjalan masih versi lama — pastikan `src/lib/auth/otp.ts` memakai `client.verify.v2` |
 | Upload gagal | `UPLOADTHING_TOKEN` salah, atau sesi bukan `STORE_ADMIN` |
 | `UPSTASH_REDIS_REST_URL belum diisi` | Variabel Redis masih kosong di `.env.local` |
+| `POST /api/shipping` menjawab `"source":"fallback"` padahal key sudah diisi | `SHIPPING_ORIGIN_DISTRICT_ID` belum diisi, atau dev server belum di-restart setelah `.env.local` diubah |
+| `/api/shipping/cities` menjawab `configured:false` | `RAJAONGKIR_API_KEY` masih kosong di `.env.local` |
+| Log memuat `RajaOngkir menjawab 404` atau `422` | Tujuan tidak dikenal, atau ID bukan tingkat yang benar. Perhitungan butuh ID hasil `/api/shipping/cities` (tingkat kecamatan), bukan ID district dari kaskade |
