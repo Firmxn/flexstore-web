@@ -11,7 +11,7 @@
 
 ## 1. Identitas dan indeks fitur
 
-- **Versi / tanggal:** v1.1 / 2026-10-10
+- **Versi / tanggal:** v1.2 / 2026-10-10
 - **Versi PRD / SDD:** PRD v1.0, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
@@ -33,9 +33,9 @@
 | | | CART-04 | Merge Guest Cart on Login (tambahan) | Draft | [CART-04](#cart-04) |
 | | **MOD-SHIP** | SHIP-01 | Calculate Shipping Cost | Draft | [SHIP-01](#ship-01) |
 | **Phase 3** | **MOD-ORDER** | ORDER-01 | Create Order (Guest Checkout) | Draft | [ORDER-01](#order-01) |
-| | | ORDER-02 | Create Order (Customer) | Belum dirinci | - |
-| | | ORDER-03 | Order History | Belum dirinci | - |
-| | | ORDER-04 | Track Order (Public) | Belum dirinci | - |
+| | | ORDER-02 | Create Order (Customer) | Draft | [ORDER-02](#order-02) |
+| | | ORDER-03 | Order History | Draft | [ORDER-03](#order-03) |
+| | | ORDER-04 | Track Order (Public) | Draft | [ORDER-04](#order-04) |
 | **Phase 4** | **MOD-PAY** | PAY-01 | Create Payment (Xendit) | Draft | [PAY-01](#pay-01) |
 | | | PAY-02 | Webhook Handler (Xendit) | Draft | [PAY-02](#pay-02) |
 | **Phase 5** | **MOD-VOUCH** | VOUCH-01 | Apply Voucher | Belum dirinci | - |
@@ -855,6 +855,10 @@ Tidak ada.
 
 ## <a name="order-01"></a>ORDER-01 — Create Order (Guest Checkout)
 
+> **Cakupan PH-03:** pembuatan pesanan saja. Pembayaran (Xendit) ada di PH-04, voucher dan email
+> konfirmasi ada di PH-05. Karena itu `voucherCodes` dan AC yang bergantung padanya ditandai
+> ditunda, dan pesanan dibuat tanpa baris `Payment`.
+
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
@@ -869,106 +873,454 @@ Tidak ada.
 
 ### 2. Prasyarat dan pemicu
 
-- **Prasyarat:** Cart has items, phone verified (AUTH-01)
-- **Pemicu:** Click "Checkout" from cart
-- **Titik masuk:** Cart page
-- **Jika tidak terpenuhi:** Redirect to cart if empty, show OTP verification if phone not verified
+- **Prasyarat:** Keranjang berisi minimal satu item terpilih, nomor HP guest terverifikasi (AUTH-01)
+- **Pemicu:** Klik "Checkout" dari halaman keranjang
+- **Titik masuk:** Halaman keranjang `/cart` → `/checkout`
+- **Jika tidak terpenuhi:** Keranjang kosong atau tidak ada item terpilih → kembali ke `/cart`; nomor belum terverifikasi → tampilkan langkah OTP
 
 ### 3. Hak akses
 
 | Role | Tindakan | Cakupan | Respons |
 | --- | --- | --- | --- |
-| Guest (phone verified) | Create order | Own order | N/A |
-| Guest (not verified) | None | None | Show OTP verification |
+| Guest (nomor terverifikasi) | Buat pesanan | Pesanannya sendiri | - |
+| Guest (nomor belum terverifikasi) | Tidak ada | Tidak ada | Tampilkan verifikasi OTP |
 
 ### 4. Input dan validasi
 
 | Input | Tipe | Wajib | Validasi | Pesan error |
 | --- | --- | --- | --- | --- |
-| guestPhone | String | Ya | +62xxx, verified via OTP | "Phone belum diverifikasi" |
+| variantIds | String[] | Ya | 1..50 UUID, semuanya harus ada di keranjang pemanggil | "Pilih minimal satu produk" |
+| guestPhone | String | Ya (guest) | Format +62xxx **dan** sudah diverifikasi lewat OTP | "Nomor HP belum diverifikasi" |
 | guestEmail | String | Tidak | Valid email format | "Email tidak valid" |
-| shippingAddress | JSON | Ya | name, address, city, province, postalCode, phone | "Alamat lengkap wajib diisi" |
-| shippingMethod | String | Ya | Must be from calculated options | "Metode pengiriman tidak valid" |
-| voucherCodes | String[] | Tidak | Max 2, must be valid and compatible | "Voucher tidak valid" |
+| shippingAddress | JSON | Ya | name, phone, street, city, province, postalCode | "Alamat lengkap wajib diisi" |
+| destinationId | String | Ya | ID kecamatan hasil pencarian tujuan | "Tujuan wajib dipilih" |
+| courierCode, service | String | Ya | `courierCode` + `service` harus cocok dengan salah satu opsi hasil hitung server | "Metode pengiriman tidak valid" |
+| voucherCodes | String[] | Tidak | **Ditunda ke PH-05 (VOUCH-01)** | - |
 
 ### 5. Alur berhasil
 
 | Langkah | Tindakan | Respons | Hasil |
 | --- | --- | --- | --- |
-| 1 | Guest proceed to checkout | Load cart, calculate shipping options | Checkout form displayed |
-| 2 | Guest fill shipping address | Validate address | Address valid |
-| 3 | Guest select shipping method | Calculate shipping cost | Cost displayed |
-| 4 | Guest apply voucher (optional) | Validate and calculate discount | Discount applied |
-| 5 | Guest click "Place Order" | Reserve stock (Redis lock), create order (Waiting Payment), create payment (Xendit) | Order created |
-| 6 | System | Redirect to payment page | Payment instructions displayed |
+| 1 | Guest pilih item di `/cart` lalu klik "Checkout" | Halaman `/checkout` dibuka dengan daftar `variantIds` terpilih | Form checkout tampil |
+| 2 | Guest verifikasi nomor HP (bila belum) | `POST /api/otp/send` lalu `POST /api/otp/verify` | Nomor ditandai terverifikasi di Redis |
+| 3 | Guest isi alamat dan email (opsional) | Validasi Zod | Data valid |
+| 4 | Guest pilih tujuan dan kurir | `POST /api/shipping` untuk item terpilih | Opsi kurir dan biaya tampil |
+| 5 | Guest klik "Buat Pesanan" | `POST /api/orders/create`: kurangi stok (reservasi), buat Order + OrderItem, hapus item terpilih dari keranjang | Pesanan dibuat (Waiting Payment) |
+| 6 | System | Tampilkan konfirmasi berisi nomor pesanan dan tautan lacak | Nomor pesanan dan tautan `/track-order` |
 
 ### 6. Output dan perubahan data
 
-- **Hasil:** Order created, payment link, stock reserved
-- **Data dibaca:** Cart items, shipping rates, voucher rules
-- **Data dibuat:** Order, OrderItem, Payment (Waiting), Shipping, VoucherUsage, Redis stock locks
-- **Kondisi akhir:** Order status = WAITING_PAYMENT, stock locked (10 min)
-- **Efek samping:** Email sent if guestEmail provided
-- **Setelah reload:** Order persists, can track via order number + phone
+- **Hasil:** Pesanan dibuat, stok tereservasi, nomor pesanan terbit
+- **Data dibaca:** Keranjang (item terpilih), berat varian, harga live varian, tarif ongkir
+- **Data dibuat:** Order, OrderItem (snapshot nama produk, nama varian, SKU, harga, berat)
+- **Data diubah:** `ProductVariant.stock` dan `Product.totalStock` (turun), keranjang (item terpilih dihapus)
+- **Kondisi akhir:** Order status = WAITING_PAYMENT, `stockReservedUntil` = 10 menit
+- **Nomor pesanan:** `FS-YYYYMMDD-XXXXXX` (tanggal Asia/Jakarta + 6 karakter acak huruf/angka kapital), unik; dibuat ulang bila bentrok
+- **Efek samping:** Tidak ada email (ditunda ke PH-05)
+- **Setelah reload:** Pesanan tetap ada; guest bisa lacak lewat nomor pesanan + nomor HP
 
 ### 7. Alur alternatif
 
 | Kondisi | Perilaku | Hasil |
 | --- | --- | --- |
-| Cancel checkout | Return to cart | No order created |
-| Stock insufficient during place order | Show error, release partial locks | No order created |
+| Batalkan checkout | Kembali ke keranjang | Tidak ada pesanan dibuat |
+| Stok berkurang saat pembuatan pesanan | Tampilkan galat, batalkan seluruh perubahan stok pada transaksi itu | Tidak ada pesanan dibuat |
 
 ### 8. Kondisi gagal
 
 | Kondisi | Respons | Tindakan |
 | --- | --- | --- |
-| Phone not verified | "Verifikasi nomor HP terlebih dahulu" | Redirect to OTP verification |
-| Stock insufficient | "Stok produk X tidak cukup" | Update cart |
-| Shipping API error | "Gagal menghitung ongkir, gunakan flat rate" | Use fallback flat rate |
-| Voucher invalid | "Kode voucher tidak valid" | Remove voucher |
-| Payment creation fail | "Gagal membuat pembayaran, coba lagi" | Retry, release stock locks |
+| Nomor HP belum diverifikasi | `403 PHONE_NOT_VERIFIED` "Verifikasi nomor HP terlebih dahulu" | Tampilkan langkah OTP |
+| Tidak ada item terpilih | `400 VALIDATION_ERROR` "Pilih minimal satu produk" | Kembali ke `/cart` |
+| Item terpilih tidak ada di keranjang | `404 VARIANT_NOT_FOUND` "Produk tidak ditemukan" | Muat ulang `/cart` |
+| Stok tidak cukup | `400 INSUFFICIENT_STOCK` "Stok produk X tidak cukup" | Perbarui keranjang; tidak ada pesanan dibuat |
+| Produk tidak aktif | `400 PRODUCT_INACTIVE` "Produk tidak tersedia" | Keluarkan item dari pilihan |
+| Kurir tidak cocok hasil hitung server | `400 INVALID_SHIPPING_METHOD` "Metode pengiriman tidak valid" | Hitung ulang ongkir |
+| Ongkir gagal dihitung | Tarif flat Rp10.000 dipakai (SDD section 9) | Pesanan tetap bisa dibuat |
+| Voucher tidak valid | **Ditunda ke PH-05** | - |
+| Pembayaran gagal dibuat | **Ditunda ke PH-04** | - |
 
 ### 9. Perilaku UI
 
-- **Halaman:** Checkout page
-- **Elemen:** Phone (verified badge), email (optional), shipping address form, shipping method selector, voucher input, order summary, "Place Order" button
+- **Halaman:** `/checkout`
+- **Elemen:** Verifikasi nomor HP (bila belum), email (opsional), form alamat, pemilih tujuan dan kurir, ringkasan pesanan, tombol "Buat Pesanan"
 
 | Kondisi | Tampilan | Tindakan |
 | --- | --- | --- |
-| Normal | Form enabled | Fill and submit |
-| Calculating shipping | Loading spinner on shipping section | Wait |
-| Placing order | Loading spinner, button disabled | Wait |
-| Order created | Redirect to payment page | Pay order |
-| Error | Error message | Fix and retry |
+| Normal | Form aktif | Isi lalu kirim |
+| Menghitung ongkir | Spinner di bagian ongkir | Tunggu |
+| Membuat pesanan | Spinner, tombol nonaktif | Tunggu |
+| Pesanan dibuat | Halaman konfirmasi berisi nomor pesanan dan tautan lacak | Catat nomor pesanan |
+| Galat | Pesan galat | Perbaiki lalu coba lagi |
 
 ### 10. Kriteria penerimaan
 
 | ID | Kondisi awal | Ketika | Hasil |
 | --- | --- | --- | --- |
-| AC-ORDER-01-01 | Guest, cart has items, phone verified | Fill form, place order | Order created (Waiting Payment), stock locked |
-| AC-ORDER-01-02 | Guest, phone not verified | Try checkout | Show OTP verification |
-| AC-ORDER-01-03 | Guest | Place order with valid voucher | Discount applied correctly (bertahap) |
-| AC-ORDER-01-04 | Guest | Place order, stock insufficient | Error, no order created |
-| AC-ORDER-01-05 | Guest | Place order with email | Email sent with order confirmation |
-| AC-ORDER-01-06 | Guest | Order created, wait 10 min (no payment) | Stock lock released |
+| AC-ORDER-01-01 | Guest, keranjang berisi, nomor HP terverifikasi | Isi form, buat pesanan | Pesanan dibuat (WAITING_PAYMENT), stok berkurang |
+| AC-ORDER-01-02 | Guest, nomor HP belum terverifikasi | Buat pesanan | `403 PHONE_NOT_VERIFIED`, tampil langkah OTP |
+| AC-ORDER-01-03 | Guest | Buat pesanan memakai voucher | **Ditunda ke PH-05 (VOUCH-01)** |
+| AC-ORDER-01-04 | Guest | Buat pesanan saat stok tidak cukup | `400 INSUFFICIENT_STOCK`, tidak ada pesanan, stok tidak berubah |
+| AC-ORDER-01-05 | Guest mengisi email | Buat pesanan | **Ditunda ke PH-05 (NOTIF-01)**; email tetap disimpan di pesanan |
+| AC-ORDER-01-06 | Pesanan dibuat, 10 menit tanpa pembayaran | Buka riwayat atau lacak pesanan | Reservasi dilepas, stok kembali, status CANCELED |
+| AC-ORDER-01-07 | Hanya sebagian item dicentang di `/cart` | Buat pesanan | Hanya item tercentang menjadi OrderItem; item tercentang dihapus dari keranjang, sisanya tetap |
+| AC-ORDER-01-08 | Klien mengirim biaya ongkir sendiri di body | Buat pesanan | Biaya dari klien diabaikan; server memakai hasil hitung ulang kurir + layanan terpilih |
+| AC-ORDER-01-09 | Dua permintaan bersamaan untuk varian berstok 1 | Keduanya diproses | Hanya satu berhasil; yang lain `400 INSUFFICIENT_STOCK` (tanpa overselling) |
 
 ### 11. Contoh data
 
 | Skenario | Data | Hasil | Kriteria |
 | --- | --- | --- | --- |
-| Valid | phone: "+628123456789" (verified), address: complete, shipping: "JNE REG" | Order created | AC-ORDER-01-01 |
-| Not verified | phone not verified | Show OTP | AC-ORDER-01-02 |
-| With voucher | voucherCodes: ["DISKON10", "ONGKIR50"] | Discount applied | AC-ORDER-01-03 |
+| Valid | phone `+628123456789` terverifikasi, alamat lengkap, kurir `jne`/`REG`, 1 varian terpilih | Pesanan dibuat, stok turun 1 | AC-ORDER-01-01 |
+| Belum verifikasi | `guestPhone` belum diverifikasi | `403 PHONE_NOT_VERIFIED` | AC-ORDER-01-02 |
+| Sebagian dipilih | Keranjang 3 item, 1 dicentang | 1 OrderItem; 2 item tetap di keranjang | AC-ORDER-01-07 |
+| Voucher | `voucherCodes: ["DISKON10"]` | Ditunda ke PH-05 | AC-ORDER-01-03 |
 
 ### 12. Batas fitur
 
-- **Termasuk:** Guest checkout, OTP verification, stock reservation, voucher (max 2)
-- **Tidak termasuk:** Customer checkout (separate), save address, re-order
-- **Ketergantungan:** AUTH-01 (OTP), MOD-CART, MOD-VOUCH, MOD-SHIP, MOD-PAY
+- **Termasuk:** Guest checkout, verifikasi OTP, pemilihan item, reservasi stok, ongkir dari berat varian
+- **Tidak termasuk:** Pembayaran (PH-04), voucher (PH-05), email konfirmasi (PH-05), alamat tersimpan (belum masuk peta fase), re-order
+- **Ketergantungan:** AUTH-01 (OTP), MOD-CART, MOD-SHIP
+
+### 13. Pertanyaan terbuka
+
+- Pelepasan reservasi 10 menit memakai **pelepasan malas**: diperiksa saat ada permintaan yang membaca pesanan, bukan lewat penjadwal. Alasan: Vercel Cron di paket Hobby hanya berjalan harian sehingga tidak cocok untuk batas 10 menit, sedangkan pelepasan malas tidak butuh infrastruktur tambahan dan tetap idempoten. Rincian: `docs/04` bagian 6.
+- Batas 10 menit (AC-ORDER-01-06) berasal dari SDD 4.4, sementara PAY-01 memberi masa bayar 24 jam. Selisih ini diselesaikan di PH-04: perpanjang `stockReservedUntil` saat pembayaran dibuat, atau selaraskan batas bayar.
+- Stok dikurangi saat pesanan dibuat lalu dikembalikan saat reservasi kedaluwarsa. PH-04 tidak perlu mengurangi stok lagi saat pembayaran berhasil — cukup mengubah status pesanan.
+
+---
+
+## <a name="order-02"></a>ORDER-02 — Create Order (Customer)
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | ORDER-02 — Create Order (Customer) |
+| Modul | MOD-ORDER |
+| Tujuan | Customer yang sudah login membuat pesanan tanpa verifikasi OTP (sudah terautentikasi) |
+| Aktor utama | Customer |
+| Status | Draft |
+| Referensi PRD | PRD 3.1.C (Checkout & Order), PRD 5.1 (Stock Management) |
+| Referensi SDD | SDD 4.4 (MOD-ORDER), Order schema |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Ada sesi login, keranjang berisi minimal satu item terpilih
+- **Pemicu:** Klik "Checkout" dari `/cart`
+- **Titik masuk:** `/cart` → `/checkout`
+- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; tidak ada item terpilih → kembali ke `/cart`
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Customer (login) | Buat pesanan | Pesanannya sendiri | - |
+| Store Admin (login) | Buat pesanan | Pesanannya sendiri | Diizinkan karena keranjang terikat sesi, sama seperti CART-04 |
+| Guest tanpa sesi | Buat pesanan | - | `401 UNAUTHORIZED` (pakai jalur ORDER-01) |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| variantIds | String[] | Ya | 1..50 UUID, semuanya ada di keranjang pemanggil | "Pilih minimal satu produk" |
+| shippingAddress | JSON | Ya | name, phone, street, city, province, postalCode | "Alamat lengkap wajib diisi" |
+| destinationId | String | Ya | ID kecamatan hasil pencarian tujuan | "Tujuan wajib dipilih" |
+| courierCode, service | String | Ya | `courierCode` + `service` harus cocok dengan salah satu opsi hasil hitung server | "Metode pengiriman tidak valid" |
+| guestPhone, guestEmail | - | Tidak | Tidak dipakai di jalur ini (kontak diambil dari akun dan alamat) | - |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Customer pilih item di `/cart` lalu klik "Checkout" | Halaman `/checkout` dibuka dengan daftar `variantIds` terpilih | Form checkout tampil, nama dan email terisi dari akun |
+| 2 | Customer isi alamat | Validasi Zod | Data valid |
+| 3 | Customer pilih tujuan dan kurir | `POST /api/shipping` untuk item terpilih | Opsi kurir dan biaya tampil |
+| 4 | Customer klik "Buat Pesanan" | `POST /api/orders/create`: kurangi stok (reservasi), buat Order + OrderItem, hapus item terpilih dari keranjang | Pesanan dibuat (Waiting Payment) |
+| 5 | System | Tampilkan halaman konfirmasi | Nomor pesanan + tautan `/orders/[id]` |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Pesanan terhubung ke akun (`Order.userId` terisi), stok tereservasi, nomor pesanan terbit
+- **Data dibaca:** Keranjang customer, berat varian, harga live varian, tarif ongkir
+- **Data dibuat:** Order, OrderItem (snapshot)
+- **Data diubah:** `ProductVariant.stock` dan `Product.totalStock` (turun), `cart_items` (baris terpilih dihapus)
+- **Kondisi akhir:** Order status = WAITING_PAYMENT, `stockReservedUntil` = 10 menit
+- **Setelah reload:** Pesanan muncul di `/orders` (ORDER-03)
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Keranjang juga berisi item yang tidak dicentang | Item itu tidak ikut ke pesanan dan tetap di keranjang | Pesanan hanya berisi item terpilih |
+| Ongkir gagal dihitung | Fallback tarif flat Rp10.000 | Pesanan tetap bisa dibuat |
+| Sesi berakhir saat mengisi form | `401 UNAUTHORIZED` | Alihkan ke `/login`, keranjang tetap utuh |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Tanpa sesi | `401 UNAUTHORIZED` | Alihkan ke `/login` |
+| Tidak ada item terpilih | `400 VALIDATION_ERROR` "Pilih minimal satu produk" | Kembali ke `/cart` |
+| Item terpilih tidak ada di keranjang | `404 VARIANT_NOT_FOUND` | Muat ulang `/cart` |
+| Stok tidak cukup | `400 INSUFFICIENT_STOCK` | Perbarui keranjang; tidak ada pesanan |
+| Produk tidak aktif | `400 PRODUCT_INACTIVE` | Keluarkan item dari pilihan |
+| Kurir tidak cocok hasil hitung server | `400 INVALID_SHIPPING_METHOD` | Hitung ulang ongkir |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/checkout`
+- **Elemen:** Nama dan email dari akun (read-only), form alamat, pemilih tujuan dan kurir, ringkasan pesanan, tombol "Buat Pesanan"
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal | Form aktif | Isi lalu kirim |
+| Membuat pesanan | Spinner, tombol nonaktif | Tunggu |
+| Pesanan dibuat | Alihkan ke `/orders/[id]` | Lihat detail pesanan |
+| Galat | Pesan galat | Perbaiki lalu coba lagi |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-ORDER-02-01 | Customer login, keranjang berisi item terpilih | Buat pesanan | Pesanan dibuat, `userId` terisi, stok turun |
+| AC-ORDER-02-02 | Tanpa sesi | Panggil `POST /api/orders/create` | `401 UNAUTHORIZED` |
+| AC-ORDER-02-03 | Customer login | Buka `/orders` | Pesanannya muncul di daftar |
+| AC-ORDER-02-04 | Customer A login | Buka pesanan milik customer B | `404 NOT_FOUND` (bukan `403`, agar keberadaan pesanan tidak bocor) |
+| AC-ORDER-02-05 | Customer login, item terpilih dihapus dari keranjang oleh tab lain | Buat pesanan | `404 VARIANT_NOT_FOUND`, tidak ada pesanan |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Valid | Customer login, 1 varian terpilih, alamat lengkap, kurir `jne`/`REG` | Pesanan dibuat | AC-ORDER-02-01 |
+| Tanpa sesi | Cookie sesi dihapus | `401 UNAUTHORIZED` | AC-ORDER-02-02 |
+| Pesanan orang lain | ID pesanan customer lain | `404 NOT_FOUND` | AC-ORDER-02-04 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Checkout customer, pemilihan item, reservasi stok, ongkir dari berat varian
+- **Tidak termasuk:** Alamat tersimpan (belum masuk peta fase), pembayaran (PH-04), voucher (PH-05), email (PH-05)
+- **Ketergantungan:** MOD-AUTH (sesi), MOD-CART, MOD-SHIP, ORDER-01 (logika pembuatan pesanan yang sama)
+
+### 13. Pertanyaan terbuka
+
+- Alamat tersimpan (maks 5, PRD 5.8) belum punya fase di peta `docs/04`. Sementara ini alamat diisi per pesanan dan disimpan sebagai `shippingAddress` (JSON) di Order, sesuai SDD 6.2.
+
+---
+
+## <a name="order-03"></a>ORDER-03 — Order History
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | ORDER-03 — Order History |
+| Modul | MOD-ORDER |
+| Tujuan | Customer melihat daftar dan detail pesanannya sendiri |
+| Aktor utama | Customer |
+| Status | Draft |
+| Referensi PRD | PRD 3.1.C (Checkout & Order), PRD 3.1.H (Order Tracking) |
+| Referensi SDD | SDD 4.4 (MOD-ORDER), SDD 4.8 (MOD-CUST) |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Ada sesi login
+- **Pemicu:** Buka `/orders` atau tautan "Pesanan Saya" di menu pengguna
+- **Titik masuk:** `/orders`, `/orders/[id]`
+- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Customer login | Lihat daftar dan detail | Hanya pesanan miliknya | - |
+| Customer lain | Lihat detail pesanan orang lain | - | `404 NOT_FOUND` |
+| Guest tanpa sesi | Lihat riwayat | - | Alihkan ke `/login` |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| id (di `/orders/[id]`) | UUID | Ya | Harus UUID valid dan milik pemanggil | `404` halaman tidak ditemukan |
+| page | number | Tidak | >= 1, default 1 | - |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Customer buka `/orders` | Lepas reservasi kedaluwarsa, lalu baca pesanan miliknya (terbaru dulu) | Daftar pesanan tampil |
+| 2 | Customer klik satu pesanan | Baca pesanan + OrderItem miliknya | Detail tampil (item, alamat, ongkir, total, status) |
+| 3 | System | Tampilkan label status bahasa Indonesia dan tanggal (Asia/Jakarta) | Status terbaca |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Daftar dan detail pesanan
+- **Data dibaca:** Order, OrderItem milik pemanggil
+- **Data diubah:** Status pesanan kedaluwarsa → CANCELED beserta pengembalian stok (pelepasan malas)
+- **Kondisi akhir:** Tidak ada perubahan lain
+- **Setelah reload:** Data tetap sama
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Belum ada pesanan | Tampilkan ajakan belanja | Halaman kosong yang informatif |
+| Pesanan sudah kedaluwarsa | Status CANCELED setelah pelepasan malas | Stok sudah kembali |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Tanpa sesi | Alihkan ke `/login` | - |
+| ID bukan UUID atau bukan miliknya | Halaman `404` | Kembali ke `/orders` |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/orders`, `/orders/[id]`
+- **Elemen:** Daftar pesanan (nomor, tanggal, status, total), tautan detail, detail item dan alamat
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Ada pesanan | Daftar berisi kartu pesanan | Buka detail |
+| Tidak ada | Pesan "Belum ada pesanan" + tautan ke `/products` | Belanja |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-ORDER-03-01 | Customer punya pesanan | Buka `/orders` | Pesanan tampil, terbaru di atas |
+| AC-ORDER-03-02 | Customer punya pesanan | Buka `/orders/[id]` miliknya | Detail lengkap tampil |
+| AC-ORDER-03-03 | Customer A | Buka `/orders/[id]` milik customer B | `404` |
+| AC-ORDER-03-04 | Tanpa sesi | Buka `/orders` | Dialihkan ke `/login` |
+| AC-ORDER-03-05 | Pesanan kedaluwarsa (> 10 menit, belum dibayar) | Buka `/orders` | Status CANCELED, stok sudah kembali |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Ada pesanan | 1 pesanan WAITING_PAYMENT | Tampil di daftar | AC-ORDER-03-01 |
+| Milik orang lain | ID pesanan customer lain | `404` | AC-ORDER-03-03 |
+| Kedaluwarsa | `stockReservedUntil` terlewat | CANCELED + stok kembali | AC-ORDER-03-05 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Daftar dan detail pesanan customer, pelepasan malas reservasi
+- **Tidak termasuk:** Riwayat untuk guest (pakai ORDER-04), pembatalan (PH-06), invoice (PH-05), pembayaran (PH-04)
+- **Ketergantungan:** ORDER-01/ORDER-02 (data pesanan), MOD-AUTH (sesi)
 
 ### 13. Pertanyaan terbuka
 
 Tidak ada.
+
+---
+
+## <a name="order-04"></a>ORDER-04 — Track Order (Public)
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | ORDER-04 — Track Order (Public) |
+| Modul | MOD-ORDER |
+| Tujuan | Guest melacak pesanannya tanpa akun, memakai nomor pesanan + nomor HP |
+| Aktor utama | Guest |
+| Status | Draft |
+| Referensi PRD | PRD 3.1.H (Order Tracking), PRD 5.7 (Guest Checkout) |
+| Referensi SDD | SDD 4.4 (MOD-ORDER) |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Ada pesanan dengan nomor pesanan dan nomor HP yang cocok
+- **Pemicu:** Buka `/track-order`, isi nomor pesanan + nomor HP
+- **Titik masuk:** `/track-order`, `POST /api/orders/track`
+- **Jika tidak terpenuhi:** Tampilkan pesan generik (tidak membedakan "nomor salah" dan "pesanan tidak ada")
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Guest | Lacak pesanan | Pesanan dengan nomor + HP yang cocok | - |
+| Customer login | Lacak pesanan | Sama seperti guest (disarankan pakai `/orders`) | - |
+| Siapa pun dengan nomor pesanan tanpa HP yang cocok | Lacak pesanan | - | `404 NOT_FOUND` pesan generik |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| orderNumber | String | Ya | Format `FS-YYYYMMDD-XXXXXX` | "Nomor pesanan tidak valid" |
+| phone | String | Ya | Format +62xxx | "Nomor HP tidak valid" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Guest isi nomor pesanan dan nomor HP | `POST /api/orders/track` | Permintaan diproses |
+| 2 | System | Lepas reservasi kedaluwarsa, lalu cari pesanan: nomor cocok **dan** (`guestPhone` cocok **atau** `User.phone` cocok) | Pesanan ditemukan |
+| 3 | System | Kembalikan status, ringkasan item, ongkir, alamat ringkas, tanggal | Hasil lacak tampil |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Status pesanan dan ringkasannya
+- **Data dibaca:** Order, OrderItem
+- **Data diubah:** Status pesanan kedaluwarsa → CANCELED beserta pengembalian stok (pelepasan malas)
+- **Kondisi akhir:** Tidak ada perubahan lain
+- **Setelah reload:** Hasil lacak tidak disimpan di klien; isi ulang bila perlu
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Nomor pesanan benar, nomor HP salah | Pesan generik | `404 NOT_FOUND` |
+| Pesanan sudah kedaluwarsa | Status CANCELED | Stok sudah kembali |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Format tidak valid | `400 VALIDATION_ERROR` | Perbaiki isian |
+| Tidak cocok | `404 NOT_FOUND` "Pesanan tidak ditemukan" | Periksa kembali nomor pesanan dan HP |
+| Terlalu banyak percobaan | `429 RATE_LIMITED` "Terlalu banyak percobaan, coba lagi nanti" | Tunggu |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/track-order`
+- **Elemen:** Input nomor pesanan, input nomor HP, tombol "Lacak", kartu hasil (status, item, ongkir, alamat, tanggal)
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal | Form aktif | Isi lalu kirim |
+| Ditemukan | Kartu hasil tampil | - |
+| Tidak ditemukan | Pesan generik | Perbaiki isian |
+| Rate limited | Pesan tunggu | Tunggu |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-ORDER-04-01 | Pesanan guest ada | Isi nomor pesanan + nomor HP yang benar | Status dan ringkasan tampil |
+| AC-ORDER-04-02 | Pesanan guest ada | Isi nomor pesanan benar, nomor HP salah | `404` pesan generik (tidak membocorkan keberadaan pesanan) |
+| AC-ORDER-04-03 | - | Isi format tidak valid | `400 VALIDATION_ERROR` |
+| AC-ORDER-04-04 | - | Kirim > 10 permintaan dalam 10 menit | `429 RATE_LIMITED` |
+| AC-ORDER-04-05 | Pesanan customer (login) | Isi nomor pesanan + nomor HP akun | Pesanan ditemukan (cocok lewat `User.phone`) |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Ditemukan | `FS-20261010-AB12CD` + `+628123456789` | Status tampil | AC-ORDER-04-01 |
+| Tidak cocok | Nomor pesanan benar, HP salah | `404` generik | AC-ORDER-04-02 |
+| Berulang | 11 permintaan cepat | `429` | AC-ORDER-04-04 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Lacak pesanan publik dengan nomor pesanan + HP, pembatasan percobaan
+- **Tidak termasuk:** Lacak posisi kurir (SHIP-02, PH-06), ubah data pesanan
+- **Ketergantungan:** ORDER-01/ORDER-02 (data pesanan), Redis (pembatasan percobaan)
+
+### 13. Pertanyaan terbuka
+
+- Pembatasan percobaan memakai penghitung per alamat IP di Redis (`track:limit:{ip}`, 10 percobaan / 10 menit). Alamat IP diambil dari header `x-forwarded-for` yang diisi proxy platform; di dev nilainya bisa kosong, sehingga pembatasan dilewati secara aman.
 
 ---
 

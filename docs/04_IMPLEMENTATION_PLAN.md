@@ -10,8 +10,8 @@
 | Versi / tanggal rencana | v1.0 / 2026-10-09 |
 | Versi PRD, SDD, dan spesifikasi | PRD v1.0, SDD v1.0, Spesifikasi Fitur v1.1 |
 | Reviewer / pemilik keputusan gate | Development Team / Product Owner |
-| Fase aktif | PH-02 — Shopping Flow (Cart + Shipping) — **Berjalan** (lihat bagian 5). PH-01 **Disetujui** (bagian 4.7) |
-| Task aktif / terakhir | TASK-24 — Dokumentasi dan laporan review PH-02 (selesai) |
+| Fase aktif | PH-03 — Checkout (Order Creation) — **Siap direview** (lihat bagian 6). PH-01 **Disetujui**, PH-02 **Disetujui** (bagian 4.7, 5.7) |
+| Task aktif / terakhir | TASK-38 — Dokumentasi dan laporan review PH-03 (selesai) |
 | Instruksi mulai / lanjut terakhir | User: "mulai phase 1" (2026-10-09), "lanjutkan" (2026-10-09), "sudah bisa saya coba akses?" (2026-10-09), "perbaiki di PH-01" + "error.tsx tambahkan di PH-01" (2026-10-09), "opsi 1 gua setuju" (2026-10-10), "jalankan 1 dan 2 dulu" (2026-10-10), "jika ada masalah kredensial yang diperlukan, skip dulu, dan lanjutkan coding sampai selesai" (2026-10-10) |
 | Hambatan saat ini | Tidak ada. Kredensial ongkir sudah lengkap di `.env.local` (`RAJAONGKIR_API_KEY` + `SHIPPING_ORIGIN_DISTRICT_ID=17590`, Cilandak Barat, Jakarta Selatan), sehingga ongkir memakai tarif asli (`source: "api"`, 9 opsi kurir). Fallback tarif flat Rp10.000 tetap ada sebagai jalur kegagalan (SDD section 9) |
 
@@ -37,8 +37,8 @@
 | ID | Nama Fase | Hasil yang bisa dicoba | Modul / Fitur | Prasyarat | Status |
 | --- | --- | --- | --- | --- | --- |
 | PH-01 | Foundation (Auth + Product) | Admin/Customer login, CRUD products, view product list | MOD-AUTH (AUTH-01, AUTH-02, AUTH-03), MOD-PROD (PROD-01, PROD-02, PROD-03, PROD-04, PROD-05) | Setup project, DB, Redis, Supabase, Upstash | **Disetujui** (2026-10-10) |
-| PH-02 | Shopping Flow (Cart + Shipping) | Add to cart, update/remove cart, calculate shipping cost | MOD-CART (CART-01, CART-02, CART-03, CART-04), MOD-SHIP (SHIP-01) | PH-01 disetujui | **Berjalan** (2026-10-10) |
-| PH-03 | Checkout (Order Creation) | Guest checkout (OTP), Customer checkout, order history, track order | MOD-ORDER (ORDER-01, ORDER-02, ORDER-03, ORDER-04) | PH-02 disetujui | Belum dimulai |
+| PH-02 | Shopping Flow (Cart + Shipping) | Add to cart, update/remove cart, calculate shipping cost | MOD-CART (CART-01, CART-02, CART-03, CART-04), MOD-SHIP (SHIP-01) | PH-01 disetujui | **Disetujui** (2026-10-10) |
+| PH-03 | Checkout (Order Creation) | Guest checkout (OTP), Customer checkout, order history, track order | MOD-ORDER (ORDER-01, ORDER-02, ORDER-03, ORDER-04) | PH-02 disetujui | **Siap direview** (2026-10-10) |
 | PH-04 | Payment Integration | Create payment (Xendit), webhook handler, stock deduction | MOD-PAY (PAY-01, PAY-02) | PH-03 disetujui, Xendit sandbox setup | Belum dimulai |
 | PH-05 | Core Features (Voucher + Notification + Invoice) | Apply voucher, voucher CRUD, email notification, invoice PDF | MOD-VOUCH (VOUCH-01, VOUCH-02), MOD-NOTIF (NOTIF-01), MOD-INV (INV-01) | PH-04 disetujui, Resend setup | Belum dimulai |
 | PH-06 | Polish MVP (Reports + Config + Advanced) | Sales report, store settings, shipping tracking, cancel/refund order | MOD-SHIP (SHIP-02), MOD-ORDER (ORDER-05, ORDER-06), MOD-REPORT (REPORT-01), MOD-CONFIG (CONFIG-01) | PH-05 disetujui | Belum dimulai |
@@ -446,6 +446,14 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
    - Konfirmasi apakah PH-02 disetujui untuk lanjut ke PH-03 (Checkout)
    - Konfirmasi pesan commit yang sudah disiapkan (usulan: dua commit terpisah — kode dan dokumentasi; belum ada yang di-`git add`)
 
+### 5.7. Keputusan gate dan revisi
+
+| Tanggal | Reviewer | Hasil | Keputusan | Catatan |
+| --- | --- | --- | --- | --- |
+| 2026-10-10 | User | **PH-02 — Shopping Flow DISETUJUI.** User: "implementasi hingga phase 3 selesai" | Fase diterima; status PH-02 di section 1 dan 3 → **Disetujui**. PH-03 dimulai tanpa menunggu commit (perubahan PH-02 tetap di working directory) | Bukti: 40 pemeriksaan HTTP lulus, `pnpm lint`/`pnpm build` exit 0 (27 rute), 0 galat prerender. Rincian: bagian 5.5 |
+| 2026-10-10 | User | **Keputusan pra-PH-03 dijawab** (lihat bagian 6.2): pesanan tanpa baris Payment; voucher disembunyikan; AC email pindah ke PH-05; pelepasan reservasi memakai mekanisme "paling optimal" (malas, tanpa penjadwal) | Diterapkan di cakupan PH-03 (bagian 6.2) | Alasan tiap keputusan tercatat di bagian 6.2 |
+| 2026-10-10 | User | **Catatan Twilio Trial dikoreksi.** User: "seharusnya tetap tidak perlu upgrade, karena pola pengiriman OTP sudah berbeda" | Catatan "wajib upgrade" dicabut; uji OTP tetap memakai akun Trial dengan nomor yang sudah terdaftar (maks 5 nomor) | Pola pengiriman OTP kini lewat Twilio **Verify**, bukan Messaging API — batas "pesan pertama/Content Template" tidak berlaku, dan nomor pendaftaran akun tetap bisa menerima (bagian 4.5) |
+
 ---
 
 ## 6. Rincian Fase: PH-03 — Checkout (Order Creation)
@@ -461,7 +469,145 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
 - **Estimasi:** 3-4 hari
 - **Catatan dari review PH-02 (2026-10-10):** checkout tidak memproses seluruh isi keranjang. Tambahkan **checkbox per baris** di `/cart` untuk memilih item yang di-checkout; default **tidak ada yang tercentang**, pilihan **tidak disimpan** (state React saja), dan tanpa tombol "pilih semua". Item yang tidak dicentang tidak masuk pesanan, dan ongkir dihitung hanya dari item terpilih. Lihat bagian 10.
 
-*Task detail dirinci saat PH-02 selesai dan PH-03 dimulai.*
+### 6.2. Keputusan cakupan PH-03 (2026-10-10)
+
+| Keputusan | Alasan | Dampak |
+| --- | --- | --- |
+| Pesanan dibuat **tanpa baris `Payment`** | Xendit baru ada di PH-04 | `POST /api/orders/create` hanya membuat Order + OrderItem; PAY-01 menyusul |
+| Input **voucher disembunyikan** di `/checkout` | VOUCH-01 ada di PH-05 | Order punya kolom `discount` (default 0), nilainya tetap 0 sampai PH-05 |
+| **AC-ORDER-01-05 (email)** dipindah ke PH-05 | NOTIF-01 ada di PH-05; `guestEmail` tetap disimpan di pesanan | Tidak ada pengiriman email di PH-03 |
+| Reservasi stok dilepas **malas (lazy)**, bukan penjadwal | Vercel Cron paket Hobby hanya harian, tidak cocok untuk batas 10 menit; pelepasan malas tanpa infrastruktur tambahan dan idempoten | `releaseExpiredReservations()` dipanggil saat pesanan dibuat dan saat pesanan dibaca (riwayat, detail, lacak) |
+| Stok **dikurangi saat pesanan dibuat**, dikembalikan saat reservasi kedaluwarsa | Prisma tidak bisa membandingkan dua kolom di `where` (aturan "tanpa raw SQL"), sehingga cara atomik yang tersedia adalah `stock: { decrement }` dengan syarat `stock >= qty` | PH-04 **tidak** mengurangi stok lagi saat pembayaran berhasil — cukup ubah status. Selaras dengan PRD 5.1 (stok tereservasi sejak order dibuat) |
+| Alamat disimpan sebagai `shippingAddress` (JSON) per pesanan | MOD-CUST (alamat tersimpan, maks 5) belum punya fase di peta | Tidak ada tabel `Address` di PH-03 |
+
+### 6.3. Daftar task
+
+| ID | Pekerjaan / hasil | Fitur | Bergantung pada | Status | Bukti |
+| --- | --- | --- | --- | --- | --- |
+| TASK-25 | Skema `Order` + `OrderItem` + enum `OrderStatus` + relasi ke `User`/`ProductVariant` + migrasi | ORDER-01..04 | TASK-15 | Selesai | Migrasi `20261009231301_add_orders`; T05, T19 |
+| TASK-26 | Penanda nomor HP terverifikasi di Redis (`phone-verified:{phone}`), di-set saat `POST /api/otp/verify` berhasil | ORDER-01 | TASK-16 | Selesai | `src/lib/auth/otp.ts` (`markPhoneVerified`/`isPhoneVerified`); T03, T04 |
+| TASK-27 | Lib orders: validasi Zod, nomor pesanan `FS-YYYYMMDD-XXXXXX`, query, pembuatan pesanan dalam transaksi + reservasi stok atomik, pelepasan malas | ORDER-01..04 | TASK-25, TASK-26 | Selesai | `src/lib/orders/{validation,number,status,mutations,queries,reservations,rate-limit,index}.ts`; T04, T05, T17, T18, T19, T20, T22 |
+| TASK-28 | API `POST /api/orders/create` | ORDER-01, ORDER-02 | TASK-27 | Selesai | `src/app/api/orders/create/route.ts`; T03, T04, T13, T17, T18 |
+| TASK-29 | API `POST /api/orders/track` + pembatasan percobaan per IP | ORDER-04 | TASK-27 | Selesai | `src/app/api/orders/track/route.ts`; T07, T08, T09, T10, T11 |
+| TASK-30 | Filter `variantIds` di `POST /api/shipping` (ongkir hanya dari item terpilih) | ORDER-01, ORDER-02 | TASK-19 | Selesai | `src/lib/shipping/validation.ts`, `src/app/api/shipping/route.ts`; T01, T01b, T02 |
+| TASK-31 | UI checkbox per baris di `/cart` + tombol "Checkout (n)" (default kosong, tidak disimpan) | ORDER-01, ORDER-02 | TASK-30 | Selesai | `src/components/cart/{CartView,CartItemRow,CartSummary}.tsx`; pemeriksaan manual |
+| TASK-32 | Halaman `/checkout` + form (guest: OTP inline; customer: data akun), pemilih kurir, ringkasan, tombol "Buat Pesanan" | ORDER-01, ORDER-02 | TASK-28, TASK-31 | Selesai | `src/app/(storefront)/checkout/page.tsx`, `src/components/checkout/CheckoutForm.tsx`, `src/components/shipping/ShippingPicker.tsx`; T04, T13 |
+| TASK-33 | Halaman `/orders` + `/orders/[id]` (riwayat customer) | ORDER-03 | TASK-27 | Selesai | `src/app/(storefront)/orders/**`; T15, T16 |
+| TASK-34 | Halaman publik `/track-order` | ORDER-04 | TASK-29 | Selesai | `src/app/(storefront)/track-order/page.tsx`, `src/components/orders/TrackOrderForm.tsx`; T07 |
+| TASK-35 | Integrasi navigasi (tautan "Pesanan Saya", "Lacak Pesanan") | ORDER-03, ORDER-04 | TASK-33, TASK-34 | Selesai | `src/components/layout/HeaderUserMenu.tsx`; pemeriksaan manual |
+| TASK-36 | Lint + build | Semua | TASK-25..35 | Selesai | `pnpm lint` exit 0; `pnpm build` exit 0 (33 rute) |
+| TASK-37 | Verifikasi exit criteria PH-03 | Semua | TASK-36 | Selesai | 23 PASS / 0 FAIL (bagian 6.6) |
+| TASK-38 | Dokumentasi (spesifikasi ORDER-02/03/04, revisi ORDER-01) + laporan review | Semua | TASK-37 | Selesai | `docs/03` v1.2; bagian 6.6 dan 6.7 |
+
+### 6.4. Kartu task (sample: TASK-27 — Pembuatan pesanan + reservasi stok)
+
+| Isian | Detail |
+| --- | --- |
+| Tujuan | Membuat pesanan dari item keranjang terpilih, mengurangi stok secara atomik (reservasi 10 menit), dan melepas reservasi yang kedaluwarsa |
+| Referensi kebutuhan | Spesifikasi ORDER-01/ORDER-02 bagian 5-8, AC-ORDER-01-01..09, PRD 5.1, SDD 4.4 |
+| Lingkup perubahan | `src/lib/orders/{validation,number,queries,mutations,reservations,index}.ts` |
+| Di luar lingkup | Pembayaran (PH-04), voucher (PH-05), email (PH-05), alamat tersimpan |
+| Ketergantungan | TASK-25 (skema), TASK-26 (verifikasi HP), TASK-19 (ongkir), TASK-16 (keranjang) |
+| Area kode | `/src/lib/orders/` |
+| Hasil yang diserahkan | `createOrder()` transaksional, `releaseExpiredReservations()`, `getOrdersForUser()`, `getOrderDetail()`, `findOrderForTracking()` |
+| Kriteria selesai task | AC-ORDER-01-01, -04, -06, -07, -08, -09 dan AC-ORDER-02-01, -05 lulus |
+| Cara verifikasi | HTTP: buat pesanan (stok turun), buat ulang saat stok 0 (`INSUFFICIENT_STOCK`), dua permintaan bersamaan (tanpa overselling), set `stockReservedUntil` ke masa lalu lalu baca riwayat (stok kembali + CANCELED) |
+| Penanggung jawab | Agent / Developer |
+| Hambatan / catatan | Reservasi memakai `updateMany({ where: { id, stock: { gte: qty } }, data: { stock: { decrement: qty } } })` dan memeriksa `count === 1`; seluruh langkah ada di satu `$transaction` |
+
+### 6.5. Exit criteria PH-03
+
+- [x] TASK-25 sampai TASK-38 selesai dan tercatat
+- [x] Kriteria penerimaan ORDER-01, ORDER-02, ORDER-03, ORDER-04 diperiksa
+- [x] Alur demo PH-03 dapat dijalankan (checkout guest dengan OTP → buat pesanan → riwayat customer → lacak publik)
+- [x] Migrasi database diterapkan (`20261009231301_add_orders`)
+- [x] `pnpm dev` berjalan tanpa galat; `pnpm build` sukses (type check lulus)
+- [x] Checkbox pemilihan item: default kosong, tidak disimpan, ongkir hanya dari item terpilih
+- [x] Stok tidak pernah overselling: dua permintaan bersamaan untuk stok 1 → satu berhasil
+- [x] Reservasi kedaluwarsa dilepas (stok kembali, status CANCELED) tanpa penjadwal
+- [x] Ongkir yang dipakai server berasal dari hitung ulang, bukan dari body klien
+- [x] Tidak ada galat tak tertangani di console/log
+- [x] **Security checklist (OWASP Top 10 — SDD section 10):**
+  - [x] A01 Access Control: identitas diambil dari sesi/cookie, bukan body; riwayat hanya pesanan sendiri (`404` untuk pesanan orang lain); lacak publik butuh nomor pesanan **dan** nomor HP yang cocok
+  - [x] A03 Injection: seluruh query memakai Prisma (0 `$queryRaw`/`$executeRaw`); Zod memvalidasi body di setiap route baru
+  - [x] A07 Auth: guest wajib nomor HP terverifikasi (penanda server di Redis, tidak bisa dipalsukan klien)
+  - [x] A04 Insecure Design / penyalahgunaan: lacak publik dibatasi 10 percobaan / 10 menit per IP
+  - [x] XSS: 0 match `dangerouslySetInnerHTML`
+  - [x] Secrets: tidak ada kredensial baru; 0 hardcode
+  - [x] Error Messages: pesan generik berbahasa Indonesia; detail hanya ke log
+  - [x] Penanganan galat: `withRouteErrors` dipakai di seluruh route baru
+
+### 6.6. Bukti verifikasi
+
+**Ringkasan:** 23 pemeriksaan HTTP otomatis **PASS**, 0 **FAIL**. `pnpm lint` exit 0. `pnpm build` exit 0 (33 rute, termasuk `ƒ /api/orders/create`, `ƒ /api/orders/track`, `ƒ /checkout`, `ƒ /orders`, `◐ /orders/[id]`, `◐ /track-order`). 0 galat tak tertangani di console dev server.
+
+**Lingkungan:** dev server `localhost:3000`, PostgreSQL Supabase, Redis Upstash, RajaOngkir Komerce (mode API aktif, 9 opsi kurir). Skrip verifikasi sementara (`ph03-verify.mjs`, dihapus setelah dipakai) memakai Prisma hanya untuk menyiapkan data uji dan memeriksa hasil, bukan untuk mengubah perilaku aplikasi.
+
+| No | Pemeriksaan | Kriteria penerimaan | Hasil | Bukti (ringkas) |
+| --- | --- | --- | --- | --- |
+| T01 | Ongkir hanya dari item terpilih | AC-ORDER-01-02 | Lulus | 3 panggilan `POST /api/shipping` (kaos / sneakers / semua) → 200, 9 opsi, `source=api` |
+| T01b | Berat item terpilih jadi kunci cache | AC-ORDER-01-02 | Lulus | `cached=false` → ulang kaos `cached=true`; set berbeda tetap `false` |
+| T02 | `variantIds` di luar keranjang | AC-ORDER-01-02 | Lulus | `400 {"error":"CART_EMPTY","message":"Tidak ada item terpilih"}` |
+| T03 | Guest tanpa OTP | AC-ORDER-01-04 | Lulus | `403 {"error":"PHONE_NOT_VERIFIED"}` |
+| T04 | Guest terverifikasi buat pesanan | AC-ORDER-01-01, -05 | Lulus | `201`, `orderNumber=FS-20261010-WH8ZQ2`, status `WAITING_PAYMENT`, subtotal 79000, ongkir 14000, total 93000 |
+| T05 | Stok berkurang saat pesanan dibuat | AC-ORDER-01-07, PRD 5.1 | Lulus | stok kaos 25 → 24 |
+| T06 | Item terpesan keluar dari keranjang guest | AC-ORDER-01-06 | Lulus | `cart.itemCount=0` |
+| T07 | Lacak dengan nomor + HP cocok | AC-ORDER-04-01 | Lulus | `200`, 1 item, status `WAITING_PAYMENT` |
+| T08 | Lacak dengan HP salah | AC-ORDER-04-02 | Lulus | `404 {"error":"NOT_FOUND"}` |
+| T09 | Nomor pesanan tidak ada | AC-ORDER-04-02 | Lulus | `404 "Pesanan tidak ditemukan"` (generik) |
+| T10 | Format nomor pesanan | AC-ORDER-04-03 | Lulus | `400 {"error":"VALIDATION_ERROR","field":"orderNumber"}` |
+| T11 | Batas percobaan lacak per IP | AC-ORDER-04-04 | Lulus | percobaan ke-11 → `429`, total 429 = 1 |
+| T12 | Customer daftar + masuk | AC-ORDER-02-01 | Lulus | register 201, login 302 |
+| T13 | Customer buat pesanan tanpa OTP | AC-ORDER-02-01 | Lulus | `201`, `orderNumber=FS-20261010-HQT3T4`; keranjang awal 2 item |
+| T14 | Hanya item terpilih keluar dari keranjang | AC-ORDER-02-05 | Lulus | `cart.itemCount=1` (sneakers tetap) |
+| T15 | Riwayat + detail pesanan sendiri | AC-ORDER-03-01, -03 | Lulus | `/orders` 200 memuat nomor; `/orders/{id}` 200 memuat nomor |
+| T16 | Pesanan orang lain tidak terlihat | AC-ORDER-03-04 | Lulus | detail & daftar customer lain tidak memuat nomor pesanan tersebut |
+| T17 | Stok tidak cukup | AC-ORDER-01-08 | Lulus | `400 {"error":"INSUFFICIENT_STOCK","message":"Stok Kaos Polos Katun Combed 30s tidak cukup (tersisa 0)"}` |
+| T18 | Dua pesanan bersamaan (stok 1) | AC-ORDER-01-09 | Lulus | sukses 1 / ditolak 1 (`INSUFFICIENT_STOCK`), stok akhir 0 |
+| T19 | Reservasi kedaluwarsa dilepas | AC-ORDER-01-06 | Lulus | status `CANCELED` (track + DB), stok 22 → 23 |
+| T20 | Pelepasan idempoten | AC-ORDER-01-06 | Lulus | stok tetap 23 setelah pelepasan kedua |
+| T21 | Produk yang dipesan tidak bisa dihapus | integritas riwayat | Lulus | `409 {"error":"PRODUCT_IN_USE"}` |
+| T22 | `totalStock` produk konsisten | PRD 5.1 | Lulus | totalStock produk kaos 65 = jumlah stok varian |
+
+**Pemeriksaan manual (tidak otomatis):**
+
+- `/cart`: checkbox per baris default **tidak tercentang**, tanpa tombol "pilih semua", pilihan hilang setelah reload (state React), tombol "Checkout (n item)" muncul setelah ada centang, dan "Estimasi Ongkos Kirim" hanya menghitung item tercentang.
+- `/checkout`: guest menampilkan langkah OTP lebih dulu; customer langsung ke form dengan nama/email/no HP akun; kurir baru bisa dipilih setelah tujuan dipilih; tombol "Buat Pesanan" nonaktif sampai kurir dipilih.
+- `/orders`, `/orders/[id]`, `/track-order`: tampilan status berlabel Indonesia (`Menunggu Pembayaran`, `Dibatalkan`), tautan "Pesanan" pada menu pengguna masuk dan "Lacak" untuk tamu.
+
+**Catatan keamanan yang diperiksa:**
+
+- `POST /api/orders/create` mengambil identitas dari sesi/cookie (`getCartIdentity`), bukan body; `variantIds` hanya menyaring keranjang, tidak menambah item.
+- Ongkir dihitung ulang di server dari berat item terpilih; `courierCode` + `service` dicocokkan ke opsi hasil hitung server (`INVALID_SHIPPING_METHOD` bila tidak ada).
+- Harga dan berat pesanan diambil dari varian saat pesanan dibuat, bukan dari snapshot keranjang.
+- 0 `$queryRaw`/`$executeRaw`, 0 `dangerouslySetInnerHTML` di `src/`.
+- Data uji dibersihkan: `orders=0`, `orderItems=0`, user `qa.ph03.*` = 0, stok seed kaos 25 / sneakers 5, `totalStock` seluruh produk cocok dengan jumlah varian.
+
+### 6.7. Laporan untuk review
+
+**Status:** PH-03 (Checkout — ORDER-01..04) selesai dikerjakan, **siap direview**. Belum ada commit (perubahan kode + dokumen ada di working directory).
+
+**Hasil yang bisa dicoba:**
+
+1. Guest: tambah produk → `/cart` centang item → "Checkout" → verifikasi OTP (Twilio Verify) → isi alamat → pilih tujuan + kurir → "Buat Pesanan" → nomor pesanan tampil → `/track-order`.
+2. Customer: masuk → `/cart` centang sebagian item → "Checkout" → isi alamat → "Buat Pesanan" → `/orders` dan `/orders/[id]`.
+
+**Keputusan yang sudah diterapkan (bagian 6.2):** pesanan tanpa baris `Payment`; input voucher disembunyikan; AC email ditunda ke PH-05; pelepasan reservasi **malas** (tanpa penjadwal); stok dikurangi saat pesanan dibuat.
+
+**Keterbatasan yang diketahui pada fase ini (bukan regresi):**
+
+- Pesanan berstatus `WAITING_PAYMENT` dengan reservasi 10 menit belum punya jalur pembayaran; pembayaran (PAY-01/PAY-02) menyusul di PH-04. Selisih 10 menit vs masa bayar 24 jam diselesaikan di PH-04.
+- Email konfirmasi belum dikirim (`guestEmail` sudah disimpan) — PH-05/NOTIF-01.
+- Voucher belum bisa dipakai (`discount` selalu 0) — PH-05/VOUCH-01.
+- Alamat tersimpan (maks 5) belum ada; alamat disimpan per pesanan sebagai JSON.
+- Item keranjang guest dihapus dari Redis **setelah** transaksi database; bila Redis gagal, item bisa tertinggal (akan bersih saat keranjang ditulis berikutnya).
+- Pelepasan reservasi malas hanya berjalan saat ada aktivitas pesanan; tanpa aktivitas, stok baru kembali pada permintaan berikutnya.
+
+**Keputusan yang dibutuhkan dari pengguna:**
+
+1. Konfirmasi PH-03 disetujui untuk lanjut ke PH-04 (Payment Integration).
+2. Konfirmasi pesan commit yang sudah disiapkan (usulan: dua commit terpisah — kode dan dokumentasi; belum ada yang di-`git add`).
+3. Konfirmasi apakah `SHIPPING_ORIGIN_DISTRICT_ID=17590` (Cilandak, Jakarta Selatan) sudah sesuai lokasi asal toko.
 
 ---
 
@@ -550,27 +696,35 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
 | 2026-10-10 | **Kekurangan yang sengaja belum ditangani** (dicatat, tidak memblokir PH-02): lost update keranjang guest (baca-ubah-tulis JSON tanpa lock); TOCTOU stok (reservasi atomik di PH-03); snapshot harga campur saat merge; tanpa rate limit pada proxy ongkir berbayar; item non-aktif masih dihitung di subtotal/berat; `getCartItemCount` memuat keranjang penuh untuk badge; skrip verifikasi masih di luar repo | Kualitas dan ketahanan, bukan fungsi inti | Ditunda sesuai keputusan user: perbaiki A1-A3 sekarang, sisanya dicatat | Terdaftar di bagian 5.5 "Belum ditangani" dan bagian 11 |
 | 2026-10-10 | **Origin ongkir diisi.** User memilih Cilandak, Jakarta Selatan sebagai lokasi asal toko | `SHIPPING_ORIGIN_DISTRICT_ID` kosong → `isShippingApiConfigured()` false → semua hitungan memakai fallback Rp10.000 | Cari ID lewat `GET /api/shipping/cities?search=cilandak` → pilih `17590` (CILANDAK BARAT, CILANDAK, JAKARTA SELATAN), tulis ke `.env.local` | `POST /api/shipping` → `200 source:"api"` dengan 9 opsi kurir (SiCepat HALU Rp14.000, dll); `/cart` menampilkan kotak pencarian tujuan dan bukan catatan tarif flat. Fallback tetap diuji lewat tujuan tak dikenal (`999999999` → `200 source:"fallback"`) |
 | 2026-10-10 | **Berat paket dipindah ke data produk dan disembunyikan dari respons.** User: berat harus mengikuti barang aktual, tidak boleh ditentukan pengguna, dan tidak perlu dilihat customer/guest; lalu "weightgram ini tidak terpakai ... jika iya, hapus" | Sebelumnya berat = total kuantitas x 1000 gram (asumsi seragam, `SHIPPING_WEIGHT_PER_ITEM_GRAM`); tidak ada kolom berat di skema maupun input di form produk; respons `POST /api/shipping` memuat `weightGram` | Tambah `ProductVariant.weightGram` (Int, default 1000) + migrasi `20261009221836_add_variant_weight`; input "Berat (gram)" di form produk admin; `POST /api/shipping` menghitung jumlah (kuantitas x berat varian); baris "Berat paket" dihapus dari ringkasan keranjang; `weightGram` dihapus dari bentuk respons (`ShippingQuote` kini hanya `source`, `cached`, `options`) tetapi tetap dipakai server sebagai kunci cache dan parameter RajaOngkir | 8 pemeriksaan lulus: respons hanya `source,cached,options`; keranjang 400 g dan 850 g menghasilkan kunci cache berbeda (`cached: false` keduanya); keranjang sama diulang `cached: true`; body `weight`/`weightGram` dari klien diabaikan (kunci tetap 850 g -> `cached: true`); `/cart` tidak memuat "Berat paket"/`kg`; form admin punya input berat |
-| 2026-10-10 | **Pemilihan item checkout ditunda ke PH-03.** User: "saya tidak ingin seluruh produk di keranjang langsung di checkout, berikan checkbox" lalu "checkbox untuk ph-03 saja" | Checkout belum ada (PH-03), jadi checkbox belum bisa dikonsumsi | Dicatat sebagai catatan task di bagian 6 (PH-03): checkbox per baris di `/cart`, default tidak ada yang tercentang, tidak disimpan, tanpa "pilih semua"; ongkir dihitung hanya dari item terpilih | Belum diimplementasikan — menunggu PH-03 |
+| 2026-10-10 | **Pemilihan item checkout ditunda ke PH-03, lalu DIKERJAKAN di PH-03.** User: "saya tidak ingin seluruh produk di keranjang langsung di checkout, berikan checkbox" lalu "checkbox untuk ph-03 saja" | Checkout belum ada saat itu | Selesai: checkbox per baris di `/cart` (`CartView` + `CartItemRow`), default kosong, state React saja (tidak disimpan), tanpa "pilih semua"; ongkir dan subtotal hanya dari item tercentang; tombol "Checkout (n item)" mengirim `?variantIds=...` | `src/components/cart/{CartView,CartItemRow,CartSummary}.tsx`, `src/app/(storefront)/cart/page.tsx`; T01, T02 |
+| 2026-10-10 | **Keputusan cakupan PH-03 (lihat bagian 6.2).** Pesanan dibuat tanpa baris `Payment` (PH-04); input voucher disembunyikan dan `discount` tetap 0 (PH-05); AC email (`AC-ORDER-01-05`) dipindah ke PH-05; alamat disimpan per pesanan sebagai JSON | Cakupan PH-03 menyempit, tetapi tidak ada AC yang hilang — hanya dipindah ke fase yang memilikinya | Diterapkan di kode dan spesifikasi | `docs/03` ORDER-01 catatan cakupan; bagian 6.2 |
+| 2026-10-10 | **Pelepasan reservasi stok memakai mekanisme malas (lazy), bukan penjadwal.** User: "gunakan yang paling optimal" | Vercel Cron paket Hobby hanya berjalan harian, tidak cocok untuk batas 10 menit; penjadwal juga menambah infrastruktur | `releaseExpiredReservations()` dipanggil saat pesanan dibuat dan saat pesanan dibaca (riwayat, detail, lacak). Klaim baris memakai `updateMany` bersyarat sehingga idempoten walau dua permintaan bersamaan | `src/lib/orders/reservations.ts`; T19, T20 |
+| 2026-10-10 | **Stok dikurangi saat pesanan DIBUAT (reservasi), bukan saat pembayaran sukses.** Prisma tidak bisa membandingkan dua kolom di `where` (aturan "tanpa raw SQL"), jadi satu-satunya cara atomik yang tersedia adalah `stock: { decrement }` dengan syarat `stock >= qty` | PH-04 tidak lagi mengurangi stok saat pembayaran sukses — cukup mengubah status. Selaras PRD 5.1 (stok tereservasi sejak order dibuat) | `updateMany({ where: { id, stock: { gte: qty } }, data: { stock: { decrement: qty } } })` + cek `count === 0` di dalam `$transaction` | `src/lib/orders/mutations.ts`; T05, T17, T18 |
+| 2026-10-10 | **Penanda nomor HP terverifikasi disimpan di Redis, bukan cookie.** Guest tidak boleh bisa memalsukan "sudah OTP" | Checkout guest butuh bukti verifikasi tanpa memaksa login | `phone-verified:{phone}` (TTL 1 jam) di-set saat `POST /api/otp/verify` sukses; `POST /api/orders/create` menolak guest tanpa penanda (`403 PHONE_NOT_VERIFIED`) | `src/lib/auth/otp.ts`; T03, T04 |
+| 2026-10-10 | **Produk yang pernah dipesan tidak bisa dihapus.** FK `OrderItem.variantId` memakai `onDelete: Restrict`; penghapusan produk memakai cascade ke varian sehingga tertahan | Admin melihat galat yang jelas, bukan pesan "Data terkait tidak ditemukan" yang menyesatkan | Handler `DELETE /api/admin/products/[id]` menangkap `P2003` khusus → `409 PRODUCT_IN_USE` "Produk tidak bisa dihapus karena sudah pernah dipesan" | `src/app/api/admin/products/[id]/route.ts`; T21 |
+| 2026-10-10 | **Ditemukan saat verifikasi (bukan cacat kode): seeder penanda OTP di skrip uji menulis `1` (angka), sedangkan aplikasi menulis `"1"` (string JSON).** Upstash SDK men-deserialisasi JSON, jadi bentuk keduanya berbeda | Uji `T04` sempat `403` padahal penanda ada | Skrip uji diperbaiki memakai bentuk yang sama dengan aplikasi (`["SET", key, JSON.stringify("1"), "EX", 600]`). Kode aplikasi tidak diubah | Skrip verifikasi (sementara, dihapus) |
 
 ---
 
 ## 11. Catatan lanjutan sesi
 
-- **Terakhir dikerjakan:** PH-02 TASK-15 sampai TASK-24 — implementasi dan verifikasi end-to-end selesai (menunggu review)
-- **Kondisi pekerjaan:** Kode lengkap di working directory. Repository git sudah ada (4 commit: `2493a27` PH-01, `865e874` README, `dcf3caf` fix admin, `50b9f70` docs OTP). Perubahan PH-02 **belum di-commit**: 17 berkas termodifikasi (`.env.example`, `docs/02`, `docs/03`, `docs/04`, `docs/06`, `prisma/schema.prisma`, `prisma/seed.ts`, `(storefront)/layout.tsx`, detail produk, `admin/products/[id]/edit/page.tsx`, `components/admin/ProductForm.tsx`, `LoginForm`, `RegisterForm`, `Header`, `lib/products/mutations.ts`, `lib/products/validation.ts`, `lib/utils/api.ts`) + 10 berkas/folder baru (`prisma/migrations/20261009204724_add_cart_items/`, `prisma/migrations/20261009221836_add_variant_weight/`, `migration_lock.toml`, `(storefront)/cart/`, `api/cart/`, `api/shipping/`, `components/cart/`, `CartBadge.tsx`, `lib/cart/`, `lib/shipping/`)
-- **Pemeriksaan terakhir (PH-02):** `pnpm lint` exit 0; `pnpm build` exit 0 (27 rute); 40 pemeriksaan HTTP terhadap server dev + database Supabase + Redis Upstash — guest, customer, merge guest→customer, ongkir mode api dan fallback, berat varian, serta tiga halaman (rincian: bagian 5.5). 0 galat prerender `crypto.getRandomValues()` di log dev dan build. Data uji QA dihapus setelah verifikasi
-- **Keputusan terakhir:** 2026-10-10 — **PH-02 berjalan** menuju Siap direview. Berat paket dipindah ke data produk (`ProductVariant.weightGram`, diisi admin), tidak lagi ditampilkan ke customer/guest, dan `weightGram` dihapus dari respons `POST /api/shipping` (tetap dipakai server sebagai kunci cache); pemilihan item checkout (checkbox) ditunda ke PH-03. Kredensial ongkir lengkap (`SHIPPING_ORIGIN_DISTRICT_ID=17590`) sehingga `source: "api"` dengan 9 opsi kurir. Sebelumnya di hari yang sama: **PH-01 disetujui** (user: "jalankan 1 dan 2 dulu") dan soft 404 slug produk diterima apa adanya (opsi 1) — bagian 4.7
+- **Terakhir dikerjakan:** PH-03 TASK-25 sampai TASK-38 — implementasi dan verifikasi end-to-end selesai (menunggu review)
+- **Kondisi pekerjaan:** PH-02 **sudah di-commit** (`68e5ce8` kode, `f167fa4` dokumentasi). Perubahan PH-03 **belum di-commit**: 14 berkas termodifikasi (`docs/03`, `docs/04`, `prisma/schema.prisma`, `(storefront)/cart/page.tsx`, `api/admin/products/[id]/route.ts`, `api/shipping/route.ts`, `components/auth/OtpVerificationForm.tsx`, `components/cart/CartItemRow.tsx`, `components/cart/CartSummary.tsx`, `components/layout/HeaderUserMenu.tsx`, `lib/auth/otp.ts`, `lib/auth/session.ts`, `lib/cart/queries.ts`, `lib/shipping/validation.ts`) + 20 berkas baru (migrasi `20261009231301_add_orders/`, `(storefront)/checkout/`, `(storefront)/orders/`, `(storefront)/track-order/`, `api/orders/`, `components/cart/CartView.tsx`, `components/checkout/`, `components/orders/`, `components/shipping/`, `lib/orders/`). HEAD `f167fa4`
+- **Pemeriksaan terakhir (PH-03):** `pnpm lint` exit 0; `pnpm build` exit 0 (33 rute, termasuk `ƒ /api/orders/create`, `ƒ /api/orders/track`, `ƒ /checkout`, `ƒ /orders`, `◐ /orders/[id]`, `◐ /track-order`); 23 pemeriksaan HTTP terhadap server dev + database Supabase + Redis Upstash — ongkir terfilter, gerbang OTP guest, pembuatan pesanan guest/customer, lacak publik + batas percobaan per IP, anti-overselling dua permintaan bersamaan, pelepasan reservasi kedaluwarsa (idempoten), dan pesanan lintas pengguna (rincian: bagian 6.6). 0 galat tak tertangani di log dev. Data uji dibersihkan (`orders=0`, `orderItems=0`, user `qa.ph03.*`=0, stok seed kaos 25 / sneakers 5, `totalStock` seluruh produk cocok). Pemeriksaan PH-02 sebelumnya: 40 PASS / 0 FAIL (bagian 5.5)
+- **Keputusan terakhir:** 2026-10-10 — **PH-03 siap direview**. User: "implementasi hingga phase 3 selesai" (sekaligus menyetujui PH-02). Cakupan PH-03 dipersempit sesuai bagian 6.2: pesanan dibuat tanpa baris `Payment` (PH-04), input voucher disembunyikan dan `discount` tetap 0 (PH-05), AC email dipindah ke PH-05. Reservasi stok 10 menit dilepas secara **malas** (tanpa penjadwal) dan stok **dikurangi saat pesanan dibuat** sehingga PH-04 tidak mengurangi lagi. Produk yang pernah dipesan tidak bisa dihapus (`409 PRODUCT_IN_USE`)
 - **Langkah berikutnya (setelah instruksi user):**
-  1. Review dan approval PH-02; setelah disetujui, mulai PH-03 — Checkout (Order Creation), termasuk checkbox pemilihan item (bagian 6)
-  2. (Selesai) `SHIPPING_ORIGIN_DISTRICT_ID=17590` sudah diisi di `.env.local`; ubah kalau lokasi asal toko berbeda (lihat `docs/06` bagian 6)
-  3. Commit perubahan PH-02 — draf pesan disiapkan agent, `git commit` dijalankan user
-  4. (PH-01, selesai) `SEED_ADMIN_PASSWORD` sudah diisi; password dev lemah dan **wajib diganti** sebelum produksi; `pnpm db:seed` tidak menimpa akun yang sudah ada
-  5. (PH-01) Kalau menguji OTP dengan nomor selain `+6285813386371`, daftarkan nomor itu sebagai **Verified Caller ID** di Console Twilio lebih dulu
-- **Hal yang masih menghalangi:** Tidak ada yang menghalangi PH-02. Dua butir yang tetap berlaku:
+  1. Review dan approval PH-03; setelah disetujui, mulai PH-04 — Payment Integration (PAY-01, PAY-02)
+  2. Commit perubahan PH-03 — draf pesan disiapkan agent, `git commit` dijalankan user
+  3. (Prasyarat PH-04) `XENDIT_SECRET_KEY` dan `XENDIT_CALLBACK_TOKEN` belum ada di `.env.local`
+  4. (Opsional) Ubah `SHIPPING_ORIGIN_DISTRICT_ID=17590` kalau lokasi asal toko berbeda (lihat `docs/06` bagian 6)
+  5. (PH-01, selesai) `SEED_ADMIN_PASSWORD` sudah diisi; password dev lemah dan **wajib diganti** sebelum produksi; `pnpm db:seed` tidak menimpa akun yang sudah ada
+  6. (PH-01) Kalau menguji OTP dengan nomor selain `+6285813386371`, daftarkan nomor itu sebagai **Verified Caller ID** di Console Twilio lebih dulu
+- **Hal yang masih menghalangi:** Tidak ada yang menghalangi PH-03. Butir yang masih terbuka:
   (a) unggah berkas Uploadthing dengan berkas nyata belum diuji (kunci API masih placeholder; gerbang
-  autentikasi sudah terverifikasi `403`/`200`) — dikeluarkan dari daftar butir terbuka saat approval
-  PH-01, diuji saat kunci nyata tersedia; (b) kredensial ongkir sudah lengkap (`SHIPPING_ORIGIN_DISTRICT_ID=17590`)
-  dan mode API terbukti — butir ini ditutup. Pengiriman OTP sudah **Lulus** dan tidak lagi masuk daftar ini
+  autentikasi sudah terverifikasi `403`/`200`) — diuji saat kunci nyata tersedia; (b) `XENDIT_SECRET_KEY`
+  dan `XENDIT_CALLBACK_TOKEN` belum ada, dibutuhkan PH-04; (c) `RESEND_API_KEY` belum ada, dibutuhkan
+  PH-05. Pengiriman OTP sudah **Lulus**, kredensial ongkir sudah lengkap (`SHIPPING_ORIGIN_DISTRICT_ID=17590`)
+  dan mode API terbukti
 - **Catatan teknis yang berguna untuk sesi berikutnya:**
   - Next.js 16 mengganti `middleware.ts` menjadi `proxy.ts`, dan ekspor hasil destrukturisasi (`export const { auth: proxy } = ...`) **tidak** dapat dianalisis Next.js — harus `const { auth } = NextAuth(cfg); export default auth;`
   - Dengan `cacheComponents: true`, data URL (`params`, `searchParams`) wajib diakses di dalam `<Suspense>`
@@ -614,17 +768,27 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
   - **Berat paket diambil dari data produk, bukan asumsi, dan tidak ikut di respons.** `ProductVariant.weightGram` (Int, gram, default 1000) diisi admin di form produk; `POST /api/shipping` menghitung `sum(kuantitas x weightGram)` lalu memakainya sebagai kunci cache `ship:cost:{origin}:{destination}:{berat}` dan parameter `weight` ke RajaOngkir. `ShippingQuote` hanya mengembalikan `source`, `cached`, `options`; `weightGram` **tidak** ada di respons. `SHIPPING_WEIGHT_PER_ITEM_GRAM` kini hanya cadangan untuk varian yang beratnya 0, dan berat tidak ditampilkan di storefront (`/cart` tidak memuat baris "Berat paket"). Bukti berat ikut dihitung tanpa membocorkan angkanya: dua keranjang dengan berat berbeda menghasilkan `cached: false` keduanya, sedangkan berat dari body klien diabaikan (kunci tetap sama -> `cached: true`)
   - `prisma migrate dev --name <nama>` berjalan non-interaktif di repo ini selama tidak ada drift atau kehilangan data (menambah kolom ber-default aman) dan sekaligus menjalankan `generate`. Terbukti: `20261009221836_add_variant_weight`
   - **Menambah field wajib ke `productVariantSchema` berarti form admin ikut berubah.** `productSchema` divalidasi di klien (`ProductForm`) sebelum dikirim, jadi `weightGram` harus ada di `VariantRow`, `EMPTY_VARIANT`, payload `safeParse`, dan pemetaan di halaman edit — kalau salah satu tertinggal, semua submit produk gagal `VALIDATION_ERROR`
+  - **Pembuatan pesanan (PH-03):** nomor `FS-YYYYMMDD-XXXXXX` memakai tanggal Asia/Jakarta (`Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jakarta" })` lalu tanda hubung dibuang) + 6 karakter dari alfabet tanpa `I`/`O`/`0`/`1` supaya tidak salah dibaca. Kandidat dicek `findUnique` **sebelum** transaksi, jadi bentrok (sangat jarang) tidak membatalkan transaksi yang sudah mengurangi stok
+  - **Reservasi stok atomik tanpa raw SQL:** `updateMany({ where: { id, stock: { gte: qty } }, data: { stock: { decrement: qty } } })` lalu periksa `count === 0` → lempar di dalam `$transaction`. Prisma **tidak bisa** membandingkan dua kolom di `where`, jadi bentuk ini satu-satunya cara atomik yang tersedia. Bukti: dua permintaan bersamaan untuk stok 1 → satu `201`, satu `400 INSUFFICIENT_STOCK`, stok akhir 0
+  - **Pelepasan reservasi malas (lazy):** klaim baris memakai `updateMany` bersyarat (`status: "WAITING_PAYMENT"`, `stockReservedUntil: { lt: now }`) → `count === 0` berarti sudah dilepas pihak lain, jadi idempoten. Dipanggil di awal `createOrder` dan di setiap pembacaan pesanan (riwayat, detail, lacak). Tanpa penjadwal: Vercel Cron paket Hobby hanya harian, tidak cocok untuk batas 10 menit
+  - **`totalStock` produk dihitung ulang dari jumlah stok varian** setiap kali stok berubah (saat pesanan dibuat dan saat reservasi dilepas) agar katalog tidak basi
+  - **Ongkir pada pesanan selalu dihitung ulang di server** dari berat item terpilih; klien hanya mengirim `courierCode` + `service` yang harus cocok dengan opsi hasil hitung server (`INVALID_SHIPPING_METHOD` bila tidak ada). `destinationId` wajib **hanya** kalau API ongkir aktif — tanpa API key tarif flat yang dipakai
+  - **Penanda OTP di Redis disimpan sebagai string JSON.** `redis.set(key, "1")` menulis `"1"` (dengan tanda kutip); menulis lewat REST mentah harus memakai `JSON.stringify("1")`, bukan `1`, karena SDK men-deserialisasi JSON saat membaca sehingga `1` kembali sebagai angka dan `value === "1"` gagal
+  - **`OrderItem.variantId` memakai `onDelete: Restrict`** supaya riwayat pesanan tetap utuh. Menghapus produk yang pernah dipesan menghasilkan `P2003`; handler `DELETE /api/admin/products/[id]` menangkapnya khusus → `409 PRODUCT_IN_USE` (bukan `400 INVALID_REFERENCE` yang menyesatkan)
+  - **`searchParams` di `/checkout` diakses langsung dengan `export const instant = false`** di berkas halaman (pola sama seperti halaman admin). Tanpa penanda itu, data URL wajib berada di dalam `<Suspense>`
+  - **Nomor pesanan sebagai kunci lacak publik** dipadukan dengan nomor HP (`guestPhone` untuk pesanan guest, `User.phone` untuk pesanan customer). Salah satu tidak cocok → `404` generik; percobaan dibatasi 10 per 10 menit per IP (`track:limit:{ip}` di Redis, IP dari `x-forwarded-for`)
 
 ---
 
-**Status:** Implementation Plan v1.0 — **PH-02 berjalan** (2026-10-10), menunggu review. PH-01
+**Status:** Implementation Plan v1.0 — **PH-03 siap direview** (2026-10-10). PH-01 dan PH-02
 disetujui; pengiriman OTP **Lulus** end-to-end; soft 404 slug produk diterima apa adanya (opsi 1).
-Perubahan PH-02 belum di-commit. Kredensial ongkir lengkap (`SHIPPING_ORIGIN_DISTRICT_ID=17590`),
-ongkir memakai tarif asli RajaOngkir. Berat paket diambil dari berat varian (diisi admin, tidak
-ditampilkan ke customer dan tidak ikut di respons `POST /api/shipping`); checkbox pemilihan item
-checkout menyusul di PH-03.
+Perubahan PH-03 belum di-commit. Cakupan PH-03: pesanan dibuat tanpa baris `Payment` (PH-04),
+tanpa voucher (PH-05), dan tanpa email (PH-05). Stok dikurangi saat pesanan dibuat (reservasi 10
+menit) lalu dilepas secara malas tanpa penjadwal; checkbox pemilihan item sudah dikerjakan di
+`/cart`. Kredensial ongkir lengkap (`SHIPPING_ORIGIN_DISTRICT_ID=17590`), ongkir memakai tarif
+asli RajaOngkir (9 opsi kurir).
 
 **Next steps:**
-1. Review dan approval PH-02 (Shopping Flow: cart + ongkir)
-2. Commit perubahan PH-02 — draf pesan disiapkan agent, `git commit` dijalankan user
-3. Setelah disetujui, mulai PH-03 — Checkout (Order Creation)
+1. Review dan approval PH-03 (Checkout: ORDER-01, ORDER-02, ORDER-03, ORDER-04)
+2. Commit perubahan PH-03 — draf pesan disiapkan agent, `git commit` dijalankan user
+3. Setelah disetujui, mulai PH-04 — Payment Integration (butuh `XENDIT_SECRET_KEY` dan `XENDIT_CALLBACK_TOKEN`)
