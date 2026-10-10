@@ -1,23 +1,32 @@
-import { getCart, getCartIdentity } from "@/lib/cart";
+import { getCart, getCartAccess } from "@/lib/cart";
 import {
   calculateShippingQuote,
   getShippingSettings,
   isShippingApiConfigured,
 } from "@/lib/shipping";
 import { shippingCalculateSchema } from "@/lib/shipping/validation";
-import { apiError, apiSuccess, validationError, withRouteErrors } from "@/lib/utils/api";
+import {
+  apiError,
+  apiSuccess,
+  forbidden,
+  validationError,
+  withRouteErrors,
+} from "@/lib/utils/api";
 
 // Berat paket dihitung di server dari isi keranjang (total kuantitas x berat
 // per item), tidak dipercaya dari input klien.
 export async function POST(request: Request) {
   return withRouteErrors(async () => {
+    const access = await getCartAccess();
+    if (!access.ok) return forbidden();
+    const identity = access.identity;
+
     const body = await request.json().catch(() => null);
     const parsed = shippingCalculateSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error);
 
     const configured = isShippingApiConfigured();
 
-    const identity = await getCartIdentity();
     if (!identity) {
       return apiError("CART_EMPTY", "Keranjang kosong", 400);
     }

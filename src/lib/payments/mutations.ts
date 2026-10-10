@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db/prisma";
+import { sendPaymentSuccessEmail } from "@/lib/notifications";
 import { isUuid } from "@/lib/orders/queries";
 import { cancelOrderAndReleaseStock } from "@/lib/orders/reservations";
 import { createInvoice, getInvoice } from "./client";
@@ -193,7 +194,7 @@ export async function applyPaidPayment(
   externalId: string,
   paidAt: Date,
 ): Promise<ApplyWebhookResult> {
-  return prisma.$transaction(async (tx) => {
+  const outcome = await prisma.$transaction(async (tx) => {
     const claimed = await tx.payment.updateMany({
       where: { externalId, status: "PENDING" },
       data: { status: "PAID", paidAt },
@@ -203,7 +204,10 @@ export async function applyPaidPayment(
         where: { externalId },
         select: { status: true },
       });
-      return existing ? "ALREADY_PROCESSED" : "NOT_FOUND";
+      return {
+        status: existing ? ("ALREADY_PROCESSED" as const) : ("NOT_FOUND" as const),
+        orderId: null,
+      };
     }
 
     const payment = await tx.payment.findUnique({
@@ -216,8 +220,15 @@ export async function applyPaidPayment(
         data: { status: "PROCESSING" },
       });
     }
-    return "APPLIED";
+    return { status: "APPLIED" as const, orderId: payment?.orderId ?? null };
   });
+
+  // Email hanya saat pembayaran benar-benar baru diproses (bukan webhook ulang).
+  if (outcome.status === "APPLIED" && outcome.orderId) {
+    await sendPaymentSuccessEmail(outcome.orderId);
+  }
+
+  return outcome.status;
 }
 
 // Webhook EXPIRED: batalkan pesanan dan kembalikan stok segera.

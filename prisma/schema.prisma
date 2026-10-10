@@ -176,9 +176,10 @@ model Order {
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
 
-  user    User?    @relation(fields: [userId], references: [id], onDelete: Restrict)
-  items   OrderItem[]
-  payment Payment?
+  user          User?           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items         OrderItem[]
+  payment       Payment?
+  voucherUsages VoucherUsage[]
 
   @@index([userId])
   @@index([status, stockReservedUntil])
@@ -238,4 +239,76 @@ model OrderItem {
   @@index([orderId])
   @@index([variantId])
   @@map("order_items")
+}
+
+// Voucher (MOD-VOUCH, PH-05). Kalkulasi bertahap (nominal dulu, baru persentase)
+// dihitung di server; `Order.discount` menyimpan total potongan yang benar-benar
+// dipakai. `VoucherUsage` adalah catatan pemakaian (kuota total dan per nomor HP).
+enum VoucherType {
+  PERCENTAGE
+  NOMINAL
+  SHIPPING
+}
+
+model Voucher {
+  id                 String      @id @default(uuid()) @db.Uuid
+  code               String      @unique
+  type               VoucherType
+  // PERCENTAGE: discountPercentage (mis. 10 = 10%), dibatasi maxDiscount.
+  // NOMINAL: discountAmount. SHIPPING: discountAmount memotong ongkir.
+  discountPercentage Decimal?    @db.Decimal(5, 2)
+  discountAmount     Decimal?    @db.Decimal(12, 2)
+  maxDiscount        Decimal?    @db.Decimal(12, 2)
+  minTransaction     Decimal     @default(0) @db.Decimal(12, 2)
+  // null = tanpa batas.
+  usageLimit         Int?
+  usageCount         Int         @default(0)
+  usageLimitPerPhone Int?
+  validFrom          DateTime
+  validUntil         DateTime
+  isActive           Boolean     @default(true)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  compatibilitiesAsA VoucherCompatibility[] @relation("VoucherA")
+  compatibilitiesAsB VoucherCompatibility[] @relation("VoucherB")
+  usages             VoucherUsage[]
+
+  @@index([isActive, validFrom, validUntil])
+  @@map("vouchers")
+}
+
+// Matriks kompatibilitas stacking (PRD 5.4). Baris hanya dibuat untuk pasangan
+// yang eksplisit diatur admin; pasangan tanpa baris dianggap TIDAK kompatibel
+// (default menolak, seller-oriented).
+model VoucherCompatibility {
+  id         String   @id @default(uuid()) @db.Uuid
+  voucherAId String   @db.Uuid
+  voucherBId String   @db.Uuid
+  isAllowed  Boolean
+  createdAt  DateTime @default(now())
+
+  voucherA Voucher @relation("VoucherA", fields: [voucherAId], references: [id], onDelete: Cascade)
+  voucherB Voucher @relation("VoucherB", fields: [voucherBId], references: [id], onDelete: Cascade)
+
+  @@unique([voucherAId, voucherBId])
+  @@index([voucherBId])
+  @@map("voucher_compatibilities")
+}
+
+model VoucherUsage {
+  id        String   @id @default(uuid()) @db.Uuid
+  voucherId String   @db.Uuid
+  orderId   String   @db.Uuid
+  phone     String?
+  amount    Decimal  @db.Decimal(12, 2)
+  createdAt DateTime @default(now())
+
+  voucher Voucher @relation(fields: [voucherId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([voucherId, orderId])
+  @@index([voucherId])
+  @@index([phone])
+  @@map("voucher_usages")
 }

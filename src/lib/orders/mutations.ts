@@ -3,6 +3,7 @@ import { getCartRawItems, getGuestCart, setGuestCart, type CartIdentity } from "
 import { prisma } from "@/lib/db/prisma";
 import { getInvoiceDurationSeconds } from "@/lib/payments/config";
 import { calculateShippingQuote, getShippingSettings } from "@/lib/shipping";
+import { calculateDiscount, resolveVouchers } from "@/lib/vouchers";
 import { generateOrderNumber } from "./number";
 import { releaseExpiredReservations } from "./reservations";
 import type { ShippingAddress } from "./validation";
@@ -16,7 +17,8 @@ export type CreateOrderErrorCode =
   | "VARIANT_NOT_FOUND"
   | "PRODUCT_INACTIVE"
   | "INSUFFICIENT_STOCK"
-  | "INVALID_SHIPPING_METHOD";
+  | "INVALID_SHIPPING_METHOD"
+  | "INVALID_VOUCHER";
 
 export type CreateOrderError = {
   ok: false;
@@ -31,6 +33,7 @@ export type CreatedOrder = {
   status: OrderStatus;
   subtotal: number;
   shippingCost: number;
+  discount: number;
   total: number;
 };
 
@@ -45,6 +48,7 @@ export type CreateOrderInput = {
   destinationId: string;
   courierCode: string;
   service: string;
+  voucherCodes: string[];
   guestPhone: string | null;
   guestEmail: string | null;
 };
@@ -161,6 +165,20 @@ async function pickOrderNumber(): Promise<string> {
   return generateOrderNumber();
 }
 
+// Nomor HP pembeli untuk batas pemakaian voucher per nomor: guest memakai
+// nomor terverifikasi, customer memakai nomor akun.
+async function resolveBuyerPhone(
+  identity: CartIdentity,
+  guestPhone: string | null,
+): Promise<string | null> {
+  if (identity.kind === "guest") return guestPhone;
+  const user = await prisma.user.findUnique({
+    where: { id: identity.userId },
+    select: { phone: true },
+  });
+  return user?.phone ?? null;
+}
+
 // Item keranjang guest disimpan di Redis, di luar transaksi database. Kegagalan
 // di sini tidak membatalkan pesanan; sisa item akan dibersihkan saat keranjang
 // ditulis berikutnya.
@@ -214,7 +232,26 @@ export async function createOrder(
     0,
   );
   const shippingCost = option.cost;
-  const total = subtotal + shippingCost;
+
+  // Voucher dihitung ulang di server dari keranjang dan ongkir final; kode dari
+  // klien hanya sebagai masukan (PRD 5.3, AC-ORDER-01-03).
+  const buyerPhone = await resolveBuyerPhone(input.identity, input.guestPhone);
+  const resolved = await resolveVouchers(input.voucherCodes, {
+    subtotal,
+    shippingCost,
+    phone: buyerPhone,
+  });
+  if (!resolved.ok) {
+    return {
+      ok: false,
+      code: "INVALID_VOUCHER",
+      message: resolved.errors[0]?.reason ?? "Voucher tidak valid",
+      field: "voucherCodes",
+    };
+  }
+
+  const discount = calculateDiscount(resolved.vouchers, subtotal, shippingCost);
+  const total = subtotal + shippingCost - discount.totalDiscount;
   const orderNumber = await pickOrderNumber();
   const stockReservedUntil = new Date(
     Date.now() + getInvoiceDurationSeconds() * 1000,
@@ -259,6 +296,7 @@ export async function createOrder(
           guestEmail: input.guestEmail,
           subtotal,
           shippingCost,
+          discount: discount.totalDiscount,
           total,
           shippingAddress: input.address as Prisma.InputJsonValue,
           shippingCourier: option.courier,
@@ -288,6 +326,42 @@ export async function createOrder(
         });
       }
 
+      // Catat pemakaian voucher dan tambah kuota terpakai. Penambahan dijaga
+      // syarat `usageCount < usageLimit` supaya kuota tidak terlewati walau ada
+      // pesanan berbarengan; kegagalan membatalkan seluruh transaksi.
+      for (const entry of discount.breakdown) {
+        const voucher = resolved.vouchers.find(
+          (candidate) => candidate.id === entry.voucherId,
+        );
+        const where =
+          voucher?.usageLimit != null
+            ? { id: entry.voucherId, usageCount: { lt: voucher.usageLimit } }
+            : { id: entry.voucherId };
+        const bumped = await tx.voucher.updateMany({
+          where,
+          data: { usageCount: { increment: 1 } },
+        });
+        if (bumped.count === 0) {
+          throw new OrderCreationError(
+            "INVALID_VOUCHER",
+            "Kuota voucher sudah habis",
+            "voucherCodes",
+          );
+        }
+      }
+
+      if (discount.breakdown.length > 0) {
+        await tx.voucherUsage.createMany({
+          data: discount.breakdown.map((entry) => ({
+            voucherId: entry.voucherId,
+            orderId: order.id,
+            phone: buyerPhone,
+            amount: entry.amount,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
       return order;
     });
 
@@ -303,6 +377,7 @@ export async function createOrder(
         status: created.status,
         subtotal,
         shippingCost,
+        discount: discount.totalDiscount,
         total,
       },
     };

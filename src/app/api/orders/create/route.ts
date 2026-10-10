@@ -1,5 +1,6 @@
 import { isPhoneVerified } from "@/lib/auth/otp";
-import { getCartIdentity } from "@/lib/cart";
+import { getCartAccess } from "@/lib/cart";
+import { sendOrderConfirmationEmail } from "@/lib/notifications";
 import {
   attachGuestAccessCookie,
   createOrder,
@@ -10,6 +11,7 @@ import { isShippingApiConfigured } from "@/lib/shipping";
 import {
   apiError,
   apiSuccess,
+  forbidden,
   validationError,
   withRouteErrors,
 } from "@/lib/utils/api";
@@ -21,16 +23,21 @@ const ERROR_STATUS: Record<CreateOrderErrorCode, number> = {
   PRODUCT_INACTIVE: 400,
   INSUFFICIENT_STOCK: 400,
   INVALID_SHIPPING_METHOD: 400,
+  INVALID_VOUCHER: 400,
 };
 
 export async function POST(request: Request) {
   return withRouteErrors(async () => {
+    // Identitas diambil dari sesi/cookie, bukan body (OWASP A01). Hanya
+    // customer dan guest yang boleh membuat pesanan; role lain ditolak.
+    const access = await getCartAccess();
+    if (!access.ok) return forbidden();
+    const identity = access.identity;
+
     const body = await request.json().catch(() => null);
     const parsed = orderCreateSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error);
 
-    // Identitas diambil dari sesi/cookie, bukan body (OWASP A01).
-    const identity = await getCartIdentity();
     if (!identity) return apiError("CART_EMPTY", "Keranjang kosong", 400);
 
     const isGuest = identity.kind === "guest";
@@ -69,6 +76,7 @@ export async function POST(request: Request) {
       destinationId: parsed.data.destinationId ?? "",
       courierCode: parsed.data.courierCode,
       service: parsed.data.service,
+      voucherCodes: parsed.data.voucherCodes,
       guestPhone: isGuest ? (parsed.data.guestPhone ?? null) : null,
       guestEmail: parsed.data.guestEmail ?? null,
     });
@@ -88,6 +96,8 @@ export async function POST(request: Request) {
     if (isGuest && parsed.data.guestPhone) {
       attachGuestAccessCookie(response, parsed.data.guestPhone);
     }
+    // Notifikasi email (non-blocking: kegagalan hanya dicatat di log).
+    await sendOrderConfirmationEmail(result.order.id);
     return response;
   });
 }

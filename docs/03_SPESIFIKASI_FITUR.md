@@ -12,7 +12,7 @@
 ## 1. Identitas dan indeks fitur
 
 - **Versi / tanggal:** v1.3 / 2026-10-10
-- **Versi PRD / SDD:** PRD v1.0, SDD v1.0
+- **Versi PRD / SDD:** PRD v1.1, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
 ### Indeks Fitur (MVP) — Phase Bertahap
@@ -23,7 +23,7 @@
 | | | AUTH-02 | Customer Registration | Belum dirinci | - |
 | | | AUTH-03 | Customer Login | Belum dirinci | - |
 | | **MOD-PROD** | PROD-01 | Product CRUD (Admin) | Draft | [PROD-01](#prod-01) |
-| | | PROD-02 | Product List (Customer) | Belum dirinci | - |
+| | | PROD-02 | Product List (Customer) | Terimplementasi | `docs/04` bagian 4 dan 10 |
 | | | PROD-03 | Product Detail | Belum dirinci | - |
 | | | PROD-04 | Category Management | Belum dirinci | - |
 | | | PROD-05 | Brand Management | Belum dirinci | - |
@@ -38,10 +38,10 @@
 | | | ORDER-04 | Track Order (Public) | Draft | [ORDER-04](#order-04) |
 | **Phase 4** | **MOD-PAY** | PAY-01 | Create Payment (Xendit) | Terimplementasi | [PAY-01](#pay-01) |
 | | | PAY-02 | Webhook Handler (Xendit) | Terimplementasi | [PAY-02](#pay-02) |
-| **Phase 5** | **MOD-VOUCH** | VOUCH-01 | Apply Voucher | Belum dirinci | - |
-| | | VOUCH-02 | Voucher CRUD (Admin) | Belum dirinci | - |
-| | **MOD-NOTIF** | NOTIF-01 | Send Email Notification | Belum dirinci | - |
-| | **MOD-INV** | INV-01 | Generate Invoice PDF | Belum dirinci | - |
+| **Phase 5** | **MOD-VOUCH** | VOUCH-01 | Apply Voucher | Terimplementasi | `docs/04` bagian 8 |
+| | | VOUCH-02 | Voucher CRUD (Admin) | Terimplementasi | `docs/04` bagian 8 |
+| | **MOD-NOTIF** | NOTIF-01 | Send Email Notification | Terimplementasi | `docs/04` bagian 8 |
+| | **MOD-INV** | INV-01 | Generate Invoice (HTML siap-cetak) | Terimplementasi | `docs/04` bagian 8 |
 | **Phase 6** | **MOD-SHIP** | SHIP-02 | Track Shipment | Belum dirinci | - |
 | | **MOD-ORDER** | ORDER-05 | Cancel Order Request | Belum dirinci | - |
 | | | ORDER-06 | Refund (Manual) | Belum dirinci | - |
@@ -203,7 +203,7 @@ Tidak ada — ready for implementation.
 | Role | Tindakan | Cakupan | Respons jika tidak berhak |
 | --- | --- | --- | --- |
 | Store Admin | CRUD products | Own store only | N/A |
-| Site Admin | CRUD products | Own store only | N/A |
+| Site Admin | None — konfigurasi platform (PRD 2.4), bukan produk | None | 403 Forbidden |
 | Customer/Guest | None | None | 403 Forbidden |
 
 ### 4. Input dan validasi
@@ -655,7 +655,7 @@ Tidak ada.
 | --- | --- | --- | --- |
 | Guest tanpa sesi | Panggil `/api/cart/sync` | Tidak ada | `{"merged":0}` |
 | Customer login | Panggil `/api/cart/sync` | Keranjang miliknya sendiri | Item guest digabung |
-| Store Admin | Panggil `/api/cart/sync` | Keranjang miliknya sendiri | Item guest digabung (role apa pun yang punya sesi) |
+| Store Admin | Panggil `/api/cart/sync` | Tidak ada | `403 FORBIDDEN` (hanya customer dan guest yang berbelanja) |
 
 ### 4. Input dan validasi
 
@@ -895,7 +895,7 @@ Tidak ada.
 | shippingAddress | JSON | Ya | name, phone, street, city, province, postalCode | "Alamat lengkap wajib diisi" |
 | destinationId | String | Ya | ID kecamatan hasil pencarian tujuan; **sumber ongkir sekaligus sumber `city`/`province`/`postalCode`** yang diisi otomatis di UI | "Tujuan wajib dipilih" |
 | courierCode, service | String | Ya | `courierCode` + `service` harus cocok dengan salah satu opsi hasil hitung server | "Metode pengiriman tidak valid" |
-| voucherCodes | String[] | Tidak | **Ditunda ke PH-05 (VOUCH-01)** | - |
+| voucherCodes | String[] | Tidak | **Terimplementasi (PH-05, VOUCH-01)**; maks 2 kode, dihitung ulang server-side | - |
 
 ### 5. Alur berhasil
 
@@ -959,9 +959,9 @@ Tidak ada.
 | --- | --- | --- | --- |
 | AC-ORDER-01-01 | Guest, keranjang berisi, nomor HP terverifikasi | Isi form, buat pesanan | Pesanan dibuat (WAITING_PAYMENT), stok berkurang |
 | AC-ORDER-01-02 | Guest, nomor HP belum terverifikasi | Buat pesanan | `403 PHONE_NOT_VERIFIED`, tampil langkah OTP |
-| AC-ORDER-01-03 | Guest | Buat pesanan memakai voucher | **Ditunda ke PH-05 (VOUCH-01)** |
+| AC-ORDER-01-03 | Guest | Buat pesanan memakai voucher | **Lulus (PH-05, VOUCH-01)** |
 | AC-ORDER-01-04 | Guest | Buat pesanan saat stok tidak cukup | `400 INSUFFICIENT_STOCK`, tidak ada pesanan, stok tidak berubah |
-| AC-ORDER-01-05 | Guest mengisi email | Buat pesanan | **Ditunda ke PH-05 (NOTIF-01)**; email tetap disimpan di pesanan |
+| AC-ORDER-01-05 | Guest mengisi email | Buat pesanan | **Lulus (PH-05, NOTIF-01)**; email disimpan di pesanan + email konfirmasi dikirim bila `RESEND_API_KEY` ada |
 | AC-ORDER-01-06 | Pesanan dibuat, melewati masa bayar (`XENDIT_INVOICE_DURATION`) tanpa pembayaran | Buka riwayat atau lacak pesanan | Reservasi dilepas, stok kembali, status CANCELED |
 | AC-ORDER-01-07 | Hanya sebagian item dicentang di `/cart` | Buat pesanan | Hanya item tercentang menjadi OrderItem; item tercentang dihapus dari keranjang, sisanya tetap |
 | AC-ORDER-01-08 | Klien mengirim biaya ongkir sendiri di body | Buat pesanan | Biaya dari klien diabaikan; server memakai hasil hitung ulang kurir + layanan terpilih |
@@ -1016,7 +1016,7 @@ Tidak ada.
 | Role | Tindakan | Cakupan | Respons |
 | --- | --- | --- | --- |
 | Customer (login) | Buat pesanan | Pesanannya sendiri | - |
-| Store Admin (login) | Buat pesanan | Pesanannya sendiri | Diizinkan karena keranjang terikat sesi, sama seperti CART-04 |
+| Store Admin (login) | Buat pesanan | Tidak ada | `403 FORBIDDEN` (hanya customer dan guest yang berbelanja; admin diarahkan ke `/admin`) |
 | Guest tanpa sesi | Buat pesanan | - | `401 UNAUTHORIZED` (pakai jalur ORDER-01) |
 
 ### 4. Input dan validasi
@@ -1525,7 +1525,7 @@ Tidak berlaku — background process.
 | AC-PAY-02-02 | Payment PENDING | Webhook EXPIRED | Payment EXPIRED, Order CANCELED, stok dikembalikan |
 | AC-PAY-02-03 | Payment PAID | Webhook PAID diulang | `200`, tidak diproses dua kali |
 | AC-PAY-02-04 | Webhook | Token salah | `401` |
-| AC-PAY-02-05 | Payment sukses | Kirim email | Ditunda ke PH-05 (NOTIF-01) |
+| AC-PAY-02-05 | Payment sukses | Kirim email | **Lulus (PH-05, NOTIF-01)** |
 
 ### 11. Contoh data
 

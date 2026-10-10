@@ -278,12 +278,14 @@ graph TB
 | Tanggung jawab | Invoice generation, view, PDF download |
 | Di luar tanggung jawab | Order/payment data (read-only) |
 | Fitur yang dilayani | PRD 3.1.I: Invoice |
-| Komponen UI | Invoice view, download PDF button |
-| Komponen backend | Server Components, `/api/invoices/[orderId]/pdf`, @react-pdf/renderer |
+| Komponen UI | Invoice view, tombol cetak/simpan PDF (`PrintButton`) |
+| Komponen backend | Server Component `/orders/[id]/invoice` (HTML siap-cetak, `window.print()`) |
 | Data yang dikelola | Invoice (generated on-demand) |
-| Antarmuka | `generateInvoice()`, `generateInvoicePDF()` |
-| Ketergantungan | MOD-ORDER, MOD-PAY, @react-pdf/renderer |
-| Lokasi kode | `/src/app/(storefront)/orders/[id]/invoice/`, `/src/lib/invoices/` |
+| Antarmuka | `buildOrderConfirmationEmail()`, `buildPaymentSuccessEmail()` |
+| Ketergantungan | MOD-ORDER, MOD-PAY |
+| Lokasi kode | `/src/app/(storefront)/orders/[id]/invoice/`, `/src/components/invoices/` |
+
+> **Revisi PH-05 (2026-10-10):** invoice tidak memakai `@react-pdf/renderer`. Dipakai halaman HTML siap-cetak supaya tidak menambah dependensi berat; PDF dihasilkan lewat dialog cetak browser. Lihat `docs/04` bagian 10.
 
 ### 4.11. MOD-REPORT — Reporting
 
@@ -438,6 +440,7 @@ flexstore/
 │   │   ├── layout/                # Layout components
 │   │   │   ├── Header.tsx
 │   │   │   ├── Footer.tsx
+│   │   │   ├── PageContainer.tsx  # Wrapper lebar konten storefront (max-w-6xl)
 │   │   │   └── Sidebar.tsx
 │   │   ├── products/              # Product-related components
 │   │   │   ├── ProductCard.tsx

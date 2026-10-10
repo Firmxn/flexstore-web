@@ -3,7 +3,7 @@ import {
   attachGuestCartCookie,
   createGuestCartId,
   getCart,
-  getCartIdentity,
+  getCartAccess,
   removeFromCart,
   updateCartItem,
   type CartIdentity,
@@ -13,18 +13,29 @@ import {
   removeCartItemSchema,
   updateCartItemSchema,
 } from "@/lib/cart/validation";
-import { apiError, apiSuccess, validationError, withRouteErrors } from "@/lib/utils/api";
+import {
+  apiError,
+  apiSuccess,
+  forbidden,
+  validationError,
+  withRouteErrors,
+} from "@/lib/utils/api";
+import { NextResponse } from "next/server";
 
 // Identitas keranjang: customer (sesi) atau guest (cookie). Guest baru yang
-// belum punya cookie dibuatkan ID saat operasi tulis pertama.
-async function resolveIdentity(): Promise<{
-  identity: CartIdentity;
-  newGuestId: string | null;
-}> {
-  const existing = await getCartIdentity();
-  if (existing) return { identity: existing, newGuestId: null };
+// belum punya cookie dibuatkan ID saat operasi tulis pertama. Sesi dengan role
+// non-customer (mis. admin) ditolak supaya tidak jatuh ke keranjang guest.
+async function resolveIdentity(): Promise<
+  | { ok: true; identity: CartIdentity; newGuestId: string | null }
+  | { ok: false; response: NextResponse }
+> {
+  const access = await getCartAccess();
+  if (!access.ok) return { ok: false, response: forbidden() };
+  if (access.identity) {
+    return { ok: true, identity: access.identity, newGuestId: null };
+  }
   const guestId = createGuestCartId();
-  return { identity: { kind: "guest", guestId }, newGuestId: guestId };
+  return { ok: true, identity: { kind: "guest", guestId }, newGuestId: guestId };
 }
 
 function mutationErrorResponse(result: {
@@ -53,57 +64,68 @@ async function respondWithCart(identity: CartIdentity, newGuestId: string | null
 
 export async function GET() {
   return withRouteErrors(async () => {
-    const identity = await getCartIdentity();
-    if (!identity) {
+    const access = await getCartAccess();
+    if (!access.ok) return forbidden();
+    if (!access.identity) {
       return apiSuccess({ cart: { items: [], subtotal: 0, itemCount: 0 } });
     }
-    const cart = await getCart(identity);
+    const cart = await getCart(access.identity);
     return apiSuccess({ cart });
   });
 }
 
 export async function POST(request: Request) {
   return withRouteErrors(async () => {
+    const resolved = await resolveIdentity();
+    if (!resolved.ok) return resolved.response;
+
     const body = await request.json().catch(() => null);
     const parsed = addCartItemSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error);
 
-    const { identity, newGuestId } = await resolveIdentity();
-    const result = await addToCart(identity, parsed.data.variantId, parsed.data.quantity);
-    if (!result.ok) return mutationErrorResponse(result);
-
-    return respondWithCart(identity, newGuestId);
-  });
-}
-
-export async function PATCH(request: Request) {
-  return withRouteErrors(async () => {
-    const body = await request.json().catch(() => null);
-    const parsed = updateCartItemSchema.safeParse(body);
-    if (!parsed.success) return validationError(parsed.error);
-
-    const { identity, newGuestId } = await resolveIdentity();
-    const result = await updateCartItem(
-      identity,
+    const result = await addToCart(
+      resolved.identity,
       parsed.data.variantId,
       parsed.data.quantity,
     );
     if (!result.ok) return mutationErrorResponse(result);
 
-    return respondWithCart(identity, newGuestId);
+    return respondWithCart(resolved.identity, resolved.newGuestId);
+  });
+}
+
+export async function PATCH(request: Request) {
+  return withRouteErrors(async () => {
+    const resolved = await resolveIdentity();
+    if (!resolved.ok) return resolved.response;
+
+    const body = await request.json().catch(() => null);
+    const parsed = updateCartItemSchema.safeParse(body);
+    if (!parsed.success) return validationError(parsed.error);
+
+    const result = await updateCartItem(
+      resolved.identity,
+      parsed.data.variantId,
+      parsed.data.quantity,
+    );
+    if (!result.ok) return mutationErrorResponse(result);
+
+    return respondWithCart(resolved.identity, resolved.newGuestId);
   });
 }
 
 export async function DELETE(request: Request) {
   return withRouteErrors(async () => {
+    const resolved = await resolveIdentity();
+    if (!resolved.ok) return resolved.response;
+
     const body = await request.json().catch(() => null);
     const parsed = removeCartItemSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error);
 
-    const { identity, newGuestId } = await resolveIdentity();
-    const result = await removeFromCart(identity, parsed.data.variantId);
+    const result = await removeFromCart(resolved.identity, parsed.data.variantId);
     if (!result.ok) return mutationErrorResponse(result);
 
-    return respondWithCart(identity, newGuestId);
+    return respondWithCart(resolved.identity, resolved.newGuestId);
   });
 }

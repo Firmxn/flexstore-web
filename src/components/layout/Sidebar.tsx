@@ -8,6 +8,7 @@ const LINKS = [
   { href: "/admin/products", label: "Produk" },
   { href: "/admin/categories", label: "Kategori" },
   { href: "/admin/brands", label: "Brand" },
+  { href: "/admin/vouchers", label: "Voucher" },
 ];
 
 export function Sidebar() {

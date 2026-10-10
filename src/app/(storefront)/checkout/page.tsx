@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
-import { getCart, getCartIdentity } from "@/lib/cart";
+import { getCart, getCartAccess } from "@/lib/cart";
 import { prisma } from "@/lib/db/prisma";
 import { isShippingApiConfigured } from "@/lib/shipping";
 
@@ -34,7 +35,11 @@ export default async function CheckoutPage({
   const params = await searchParams;
   const variantIds = parseVariantIds(params.variantIds);
 
-  const identity = await getCartIdentity();
+  // Checkout hanya untuk customer dan guest; role lain (mis. admin)
+  // diarahkan ke area admin (PRD 2).
+  const access = await getCartAccess();
+  if (!access.ok) redirect("/admin");
+  const identity = access.identity;
   if (!identity || variantIds.length === 0) redirect("/cart");
 
   const cart = await getCart(identity);
@@ -63,7 +68,7 @@ export default async function CheckoutPage({
   );
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10">
+    <PageContainer>
       <h1 className="text-2xl font-bold tracking-tight">Checkout</h1>
       <CheckoutForm
         mode={mode}
@@ -72,6 +77,6 @@ export default async function CheckoutPage({
         shippingConfigured={isShippingApiConfigured()}
         defaults={defaults}
       />
-    </div>
+    </PageContainer>
   );
 }

@@ -36,6 +36,17 @@ type CheckoutFormProps = {
 
 type CreatedOrder = { id: string; orderNumber: string; total: number };
 
+type VoucherValidateResponse = {
+  valid: boolean;
+  subtotal: number;
+  discount: {
+    productDiscount: number;
+    shippingDiscount: number;
+    totalDiscount: number;
+  };
+  errors: { code: string; reason: string }[];
+};
+
 // ORDER-01/ORDER-02: form pembuatan pesanan. Guest wajib melewati OTP dulu;
 // customer memakai data akun. Titik tujuan dipilih lebih dulu supaya
 // provinsi/kota/kecamatan/kelurahan/kode pos terisi otomatis. Tarif kurir
@@ -63,6 +74,13 @@ export function CheckoutForm({
   const [street, setStreet] = useState("");
   const [note, setNote] = useState("");
   const [shipping, setShipping] = useState<ShippingOption | null>(null);
+  const [voucherInput, setVoucherInput] = useState("");
+  const [voucherCodes, setVoucherCodes] = useState<string[]>([]);
+  const [voucherDiscount, setVoucherDiscount] = useState(0);
+  const [voucherErrors, setVoucherErrors] = useState<
+    { code: string; reason: string }[]
+  >([]);
+  const [voucherLoading, setVoucherLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
@@ -104,7 +122,68 @@ export function CheckoutForm({
   const autoPostal = Boolean(destination?.zipCode);
   const regionLocked = shippingConfigured && !destination;
 
-  const total = subtotal + (shipping?.cost ?? 0);
+  const shippingCost = shipping?.cost ?? 0;
+  const total = subtotal + shippingCost - voucherDiscount;
+
+  // Voucher divalidasi server (subtotal dihitung ulang dari keranjang), jadi
+  // angka diskon di ringkasan selalu berasal dari server (PRD 5.3).
+  async function validateVouchers(codes: string[], cost: number) {
+    if (codes.length === 0) {
+      setVoucherDiscount(0);
+      setVoucherErrors([]);
+      return;
+    }
+
+    setVoucherLoading(true);
+    try {
+      const result = await apiRequest<VoucherValidateResponse>(
+        "/api/vouchers/validate",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            codes,
+            variantIds,
+            shippingCost: cost,
+            phone,
+          }),
+        },
+      );
+      setVoucherErrors(result.errors);
+      setVoucherDiscount(result.valid ? result.discount.totalDiscount : 0);
+    } catch (caught) {
+      setVoucherErrors([{ code: "", reason: toErrorMessage(caught) }]);
+      setVoucherDiscount(0);
+    } finally {
+      setVoucherLoading(false);
+    }
+  }
+
+  function handleAddVoucher() {
+    const code = voucherInput.trim().toUpperCase();
+    if (!code) return;
+    if (voucherCodes.includes(code)) {
+      setVoucherInput("");
+      return;
+    }
+    const next = [...voucherCodes, code].slice(0, 2);
+    setVoucherCodes(next);
+    setVoucherInput("");
+    void validateVouchers(next, shippingCost);
+  }
+
+  function handleRemoveVoucher(code: string) {
+    const next = voucherCodes.filter((item) => item !== code);
+    setVoucherCodes(next);
+    void validateVouchers(next, shippingCost);
+  }
+
+  function handleShipping(value: ShippingOption | null) {
+    setShipping(value);
+    // Voucher ongkir bergantung pada tarif terpilih, jadi divalidasi ulang.
+    if (voucherCodes.length > 0) {
+      void validateVouchers(voucherCodes, value?.cost ?? 0);
+    }
+  }
 
   function handleDestination(value: ShippingDestination | null) {
     setDestination(value);
@@ -164,6 +243,7 @@ export function CheckoutForm({
             },
             guestPhone: mode === "guest" ? verifiedPhone : undefined,
             guestEmail: email || undefined,
+            voucherCodes,
           }),
         },
       );
@@ -364,8 +444,76 @@ export function CheckoutForm({
             variantIds={variantIds}
             destinationId={destination?.id}
             configured={shippingConfigured}
-            onSelect={setShipping}
+            onSelect={handleShipping}
           />
+        </div>
+
+        <div className="flex flex-col gap-2 border-t border-border pt-4">
+          <h3 className="text-sm font-semibold">Voucher</h3>
+          <div className="flex gap-2">
+            <Input
+              value={voucherInput}
+              maxLength={30}
+              placeholder="Kode voucher"
+              aria-label="Kode voucher"
+              onChange={(event) => setVoucherInput(event.target.value.toUpperCase())}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAddVoucher}
+              disabled={
+                voucherLoading ||
+                voucherInput.trim() === "" ||
+                voucherCodes.length >= 2
+              }
+            >
+              Tambah
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Maksimal 2 voucher per transaksi.
+          </p>
+
+          {voucherCodes.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {voucherCodes.map((code) => (
+                <li
+                  key={code}
+                  className="flex flex-col gap-1 rounded-lg border border-border bg-muted/40 px-3 py-2"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold">{code}</span>
+                    <button
+                      type="button"
+                      className="text-xs text-destructive hover:underline"
+                      onClick={() => handleRemoveVoucher(code)}
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                  {voucherErrors
+                    .filter((item) => item.code === code)
+                    .map((item, index) => (
+                      <p key={`${code}-${index}`} className="text-xs text-destructive">
+                        {item.code}: {item.reason}
+                      </p>
+                    ))}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {voucherErrors
+            .filter((item) => item.code === "")
+            .map((item, index) => (
+              <p key={`error-${index}`} className="text-xs text-destructive">
+                {item.reason}
+              </p>
+            ))}
+          {voucherLoading ? (
+            <p className="text-xs text-muted-foreground">Memeriksa voucher...</p>
+          ) : null}
         </div>
 
         <dl className="flex flex-col gap-2 border-t border-border pt-4 text-sm">
@@ -377,6 +525,12 @@ export function CheckoutForm({
             <dt className="text-muted-foreground">Ongkos kirim</dt>
             <dd>{shipping ? formatRupiah(shipping.cost) : "-"}</dd>
           </div>
+          {voucherDiscount > 0 ? (
+            <div className="flex items-center justify-between text-success">
+              <dt>Diskon voucher</dt>
+              <dd>-{formatRupiah(voucherDiscount)}</dd>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between border-t border-border pt-2 font-semibold">
             <dt>Total</dt>
             <dd>{formatRupiah(total)}</dd>

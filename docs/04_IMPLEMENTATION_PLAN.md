@@ -8,11 +8,11 @@
 | --- | --- |
 | Proyek / target rilis | FlexStore MVP |
 | Versi / tanggal rencana | v1.0 / 2026-10-09 |
-| Versi PRD, SDD, dan spesifikasi | PRD v1.0, SDD v1.0, Spesifikasi Fitur v1.1 |
+| Versi PRD, SDD, dan spesifikasi | PRD v1.1, SDD v1.0, Spesifikasi Fitur v1.3 |
 | Reviewer / pemilik keputusan gate | Development Team / Product Owner |
-| Fase aktif | PH-04 — Payment Integration — **Berjalan**. PH-01, PH-02, PH-03 **Disetujui** (bagian 4.7, 5.7, 6.7); revisi PH-03 pasca-persetujuan (perbaikan OTP guest + redesign urutan alamat) tercatat di bagian 6.8 |
-| Task aktif / terakhir | PH-04 — rincian task disusun setelah keputusan desain pembayaran (bagian 7) |
-| Instruksi mulai / lanjut terakhir | User: "mulai phase 1" (2026-10-09), "lanjutkan" (2026-10-09), "sudah bisa saya coba akses?" (2026-10-09), "perbaiki di PH-01" + "error.tsx tambahkan di PH-01" (2026-10-09), "opsi 1 gua setuju" (2026-10-10), "jalankan 1 dan 2 dulu" (2026-10-10), "jika ada masalah kredensial yang diperlukan, skip dulu, dan lanjutkan coding sampai selesai" (2026-10-10), "oke next lanjut ke phase 4?" (2026-10-10) |
+| Fase aktif | PH-05 — Core Features (Voucher + Notification + Invoice) — **Siap direview**. PH-01..PH-04 **Disetujui** (bagian 4.7, 5.7, 6.7, 7.7); revisi PH-03 pasca-persetujuan (perbaikan OTP guest + redesign urutan alamat) tercatat di bagian 6.8 |
+| Task aktif / terakhir | PH-05 — TASK-47 sampai TASK-53 selesai dikerjakan dan diverifikasi (bagian 8) |
+| Instruksi mulai / lanjut terakhir | User: "mulai phase 1" (2026-10-09), "lanjutkan" (2026-10-09), "sudah bisa saya coba akses?" (2026-10-09), "perbaiki di PH-01" + "error.tsx tambahkan di PH-01" (2026-10-09), "opsi 1 gua setuju" (2026-10-10), "jalankan 1 dan 2 dulu" (2026-10-10), "jika ada masalah kredensial yang diperlukan, skip dulu, dan lanjutkan coding sampai selesai" (2026-10-10), "oke next lanjut ke phase 4?" (2026-10-10), "lanjutkan" (2026-10-10, memulai PH-05 tanpa menunggu jawaban `EMAIL_FROM`/format invoice) |
 | Hambatan saat ini | Tidak ada. Kredensial ongkir sudah lengkap di `.env.local` (`RAJAONGKIR_API_KEY` + `SHIPPING_ORIGIN_DISTRICT_ID=17590`, Cilandak Barat, Jakarta Selatan), sehingga ongkir memakai tarif asli (`source: "api"`, 9 opsi kurir). Fallback tarif flat Rp10.000 tetap ada sebagai jalur kegagalan (SDD section 9) |
 
 ## 2. Status dan aturan gate
@@ -39,10 +39,11 @@
 | PH-01 | Foundation (Auth + Product) | Admin/Customer login, CRUD products, view product list | MOD-AUTH (AUTH-01, AUTH-02, AUTH-03), MOD-PROD (PROD-01, PROD-02, PROD-03, PROD-04, PROD-05) | Setup project, DB, Redis, Supabase, Upstash | **Disetujui** (2026-10-10) |
 | PH-02 | Shopping Flow (Cart + Shipping) | Add to cart, update/remove cart, calculate shipping cost | MOD-CART (CART-01, CART-02, CART-03, CART-04), MOD-SHIP (SHIP-01) | PH-01 disetujui | **Disetujui** (2026-10-10) |
 | PH-03 | Checkout (Order Creation) | Guest checkout (OTP), Customer checkout, order history, track order | MOD-ORDER (ORDER-01, ORDER-02, ORDER-03, ORDER-04) | PH-02 disetujui | **Disetujui** (2026-10-10) |
-| PH-04 | Payment Integration | Create payment (Xendit), webhook handler, stock reservation release | MOD-PAY (PAY-01, PAY-02) | PH-03 disetujui, Xendit sandbox setup | **Berjalan** (2026-10-10) |
-| PH-05 | Core Features (Voucher + Notification + Invoice) | Apply voucher, voucher CRUD, email notification, invoice PDF | MOD-VOUCH (VOUCH-01, VOUCH-02), MOD-NOTIF (NOTIF-01), MOD-INV (INV-01) | PH-04 disetujui, Resend setup | Belum dimulai |
-| PH-06 | Polish MVP (Reports + Config + Advanced) | Sales report, store settings, shipping tracking, cancel/refund order | MOD-SHIP (SHIP-02), MOD-ORDER (ORDER-05, ORDER-06), MOD-REPORT (REPORT-01), MOD-CONFIG (CONFIG-01) | PH-05 disetujui | Belum dimulai |
-| PH-07 | Customer Management (Alamat Tersimpan) | Simpan/ubah/hapus alamat (maks 5), pilih alamat saat checkout | MOD-CUST (CUST-01) | PH-03 disetujui; **tidak** bergantung PH-04..PH-06 | Belum dimulai |
+| PH-04 | Payment Integration | Create payment (Xendit), webhook handler, stock reservation release | MOD-PAY (PAY-01, PAY-02) | PH-03 disetujui, Xendit sandbox setup | **Disetujui** (2026-10-10) |
+| PH-05 | Core Features (Voucher + Notification + Invoice) | Apply voucher, voucher CRUD, email notification, invoice PDF | MOD-VOUCH (VOUCH-01, VOUCH-02), MOD-NOTIF (NOTIF-01), MOD-INV (INV-01) | PH-04 disetujui, Resend setup | **Siap direview** (2026-10-10) |
+| PH-06 | Polish MVP (Reports + Config + Advanced) | Kelola pesanan admin (status, resi, status pembayaran), sales report (5 laporan PRD 4.11), store settings + template alasan penolakan, shipping tracking, cancel/refund, pickup, voucher dibatasi produk/kategori, email lanjutan (shipped/cancel/refund) | MOD-SHIP (SHIP-02, SHIP-03), MOD-ORDER (ORDER-05, ORDER-06, ORDER-07), MOD-REPORT (REPORT-01), MOD-CONFIG (CONFIG-01), MOD-VOUCH (lanjutan VOUCH-01), MOD-PROD (lanjutan PROD-01), MOD-NOTIF (lanjutan NOTIF-01) | PH-05 disetujui | Belum dimulai |
+| PH-07 | Customer Management (Akun + Alamat) | Simpan/ubah/hapus alamat (maks 5), pilih alamat saat checkout, pesan lagi dari pesanan lama, set password (guest isi email), reset password, preferensi notifikasi | MOD-CUST (CUST-01, CUST-02), MOD-ORDER (lanjutan ORDER-03), MOD-AUTH (AUTH-04, AUTH-05) | PH-03 + PH-05 disetujui (email untuk set/reset password; diubah dari "hanya PH-03" oleh audit 2026-10-10) | Belum dimulai |
+| PH-08 | Site Admin (Platform Configuration) | Login Site Admin, kelola akun Store Admin, konfigurasi payment gateway (Xendit), konfigurasi shipping provider (RajaOngkir), pengaturan platform | MOD-SITE (SITE-01, SITE-02, SITE-03, SITE-04) | PH-05 disetujui (disarankan setelah PH-06) | Belum dimulai |
 
 **Phase Checkpoint:**
 - **PH-01:** Admin bisa CRUD products, Customer bisa register/login/view products → Foundation ready
@@ -50,8 +51,9 @@
 - **PH-03:** User bisa checkout (guest + customer), stock reserved → Checkout ready (no payment)
 - **PH-04:** Payment flow, webhook, stock deduction work → Payment integration complete
 - **PH-05:** Voucher calculation, email, invoice work → Core features complete
-- **PH-06:** Reports, settings, shipping tracking, cancel/refund work → MVP complete
-- **PH-07:** Customer bisa menyimpan alamat dan memilihnya saat checkout → MOD-CUST ready
+- **PH-06:** Reports (5 laporan PRD 4.11), settings + template alasan penolakan, kelola pesanan admin, shipping tracking, cancel/refund, pickup, cakupan voucher per produk/kategori, email lanjutan work → MVP complete
+- **PH-07:** Customer bisa menyimpan alamat, memilihnya saat checkout, pesan lagi, set/reset password, atur preferensi notifikasi → fitur akun customer ready
+- **PH-08:** Site Admin bisa login dan mengonfigurasi platform (payment gateway, shipping provider, akun Store Admin) → kriteria sukses PRD #10 ready
 
 ---
 
@@ -732,6 +734,8 @@ Skrip verifikasi sementara (`ph04-verify.mjs`, `ph04-guest.mjs`, `ph04-dbcheck.m
 
 **Status:** PH-04 (Payment Integration — PAY-01, PAY-02) selesai dikerjakan, **siap direview**.
 
+> **Disetujui 2026-10-10.** User: "lanjutkan" setelah laporan review PH-04 (implisit menerima hasil sekaligus memberi izin lanjut ke PH-05).
+
 **Yang bisa dicoba:**
 
 1. Buat pesanan (guest/customer) → klik "Bayar Sekarang" → dialihkan ke halaman invoice Xendit → bayar (Test Mode) → pesanan jadi "Diproses".
@@ -757,19 +761,75 @@ Skrip verifikasi sementara (`ph04-verify.mjs`, `ph04-guest.mjs`, `ph04-dbcheck.m
 
 *Task detail dirinci saat PH-04 selesai dan PH-05 dimulai.*
 
+### 8.2. Keputusan desain (dasar implementasi)
+
+1. **Skema voucher:** enum `VoucherType` (`PERCENTAGE`, `NOMINAL`, `SHIPPING`) + model `Voucher`, `VoucherCompatibility` (matriks stacking per pasangan), `VoucherUsage` (catatan pemakaian per pesanan/nomor HP). Relasi baru `Order.voucherUsages`. Migrasi `20261010125215_add_vouchers`.
+2. **Kalkulasi bertahap (PRD 5.3):** nominal dulu, lalu persentase dihitung dari harga sisa (seller-oriented), dibatasi `maxDiscount`; urutan antar voucher sejenis memakai kode menaik supaya hasil konsisten; voucher ongkir dihitung terpisah dan tidak menyentuh potongan produk. Maksimal 2 voucher.
+3. **Stacking = default menolak.** Pasangan voucher hanya boleh digabung bila admin mencatat baris `VoucherCompatibility` `isAllowed = true`. Pasangan tanpa baris tidak boleh digabung (explicit opt-in, seller-oriented).
+4. **Kuota dijaga di transaksi.** Penambahan `usageCount` memakai `updateMany` bersyarat (`usageCount < usageLimit`); `count === 0` membatalkan seluruh transaksi. Mencegah kuota terlewati pada pesanan berbarengan.
+5. **Pratinjau voucher dihitung server.** `POST /api/vouchers/validate` menghitung subtotal dari keranjang (bukan dari klien); `shippingCost` dari klien hanya untuk pratinjau voucher ongkir. Angka final selalu dihitung ulang saat pesanan dibuat.
+6. **`EMAIL_FROM` dibaca dari env** (`getEmailFrom()`), default dev `onboarding@resend.dev`. Email dikirim lewat HTTP API Resend (`fetch`, tanpa SDK).
+7. **Invoice = halaman HTML siap-cetak** (`/orders/[id]/invoice` + `PrintButton` `window.print()`), bukan `@react-pdf/renderer`. Deviasi dari SDD 4.10 (lihat bagian 10).
+
+### 8.3. Daftar task
+
+| ID | Task | Hasil |
+| --- | --- | --- |
+| TASK-47 | Skema voucher + migrasi | `prisma/schema.prisma`, `20261010125215_add_vouchers` |
+| TASK-48 | Engine kalkulasi + eligibilitas | `src/lib/vouchers/{calculation,eligibility,validation,queries,mutations,index}.ts` |
+| TASK-49 | API pratinjau voucher | `POST /api/vouchers/validate` |
+| TASK-50 | CRUD voucher admin | `GET/POST /api/admin/vouchers`, `GET/PATCH/DELETE /api/admin/vouchers/[id]`, `/admin/vouchers` (list/new/edit), `VoucherForm`, link Sidebar |
+| TASK-51 | Integrasi checkout | `orderCreateSchema.voucherCodes`, `createOrder` (diskon + `Order.discount` + `VoucherUsage` + `usageCount`), input voucher di `CheckoutForm` |
+| TASK-52 | Email notifikasi (Resend) | `src/lib/notifications/`, `src/emails/`; konfirmasi pesanan (`/api/orders/create`) + pembayaran sukses (`applyPaidPayment`); non-blocking |
+| TASK-53 | Invoice | `/orders/[id]/invoice`, `PrintButton`, tautan dari halaman pesanan |
+
+### 8.4. Bukti verifikasi
+
+`pnpm lint` exit 0; `pnpm build` exit 0 (rute baru: `ƒ /api/admin/vouchers`, `ƒ /api/admin/vouchers/[id]`, `ƒ /api/vouchers/validate`, `◐ /orders/[id]/invoice`). Skrip verifikasi sementara (dihapus setelah dipakai):
+
+| Kode | Uji | Hasil |
+| --- | --- | --- |
+| E1-E13 | Engine: nominal tunggal, stacking default ditolak, stacking setelah kompatibilitas (nominal lalu persen dari sisa), voucher ongkir, min transaksi, kuota habis, batas per nomor HP, >2 voucher | 13 PASS / 0 FAIL |
+| H1-H24 | HTTP: login customer/admin, admin POST 201, kode duplikat 409, list, 401 tanpa sesi, 403 customer, keranjang, validate valid/tak dikenal, tarif, buat pesanan dengan voucher 201 + `Order.discount` + `VoucherUsage` + `usageCount`, invoice 200, PATCH 200, DELETE 200 → 404 | 24 PASS / 0 FAIL |
+| M1-M7 | Email: konfigurasi, template konfirmasi/pembayaran, `sendEmail` sukses (Resend), `applyPaidPayment` APPLIED → `PROCESSING`, webhook ulang `ALREADY_PROCESSED` | 7 PASS / 0 FAIL |
+
+Catatan: jalur email terbukti **non-blocking** — pada uji H15 Resend menolak `403` (domain uji hanya bisa kirim ke alamat pemilik akun) namun pesanan tetap dibuat `201` dan kegagalan hanya tercatat di log server. Data uji dibersihkan (pesanan uji dihapus + stok dikembalikan; voucher uji dihapus).
+
+### 8.5. Laporan untuk review
+
+**Status:** PH-05 (VOUCH-01, VOUCH-02, NOTIF-01, INV-01) selesai dikerjakan, **siap direview**.
+
+**Yang bisa dicoba:**
+
+1. Login admin → menu **Voucher** → Tambah Voucher (jenis nominal/persentase/ongkir, periode, kuota, kompatibilitas stacking) → voucher tampil di daftar.
+2. Customer: tambah produk ke keranjang → `/checkout` → isi kode voucher → diskon muncul di ringkasan → Buat Pesanan → halaman pesanan menampilkan baris "Diskon voucher" + tautan **Lihat Invoice**.
+3. Invoice: `/orders/<id>/invoice` → tombol **Cetak / Simpan PDF**.
+
+**Catatan untuk review:**
+- Email hanya terkirim ke alamat pemilik akun Resend selama `EMAIL_FROM` masih `onboarding@resend.dev`. Untuk kirim ke pembeli mana pun, isi `EMAIL_FROM` dengan domain terverifikasi di Resend (lihat `docs/06`).
+- Invoice berupa HTML siap-cetak; penyimpanan PDF dilakukan lewat dialog cetak browser.
+
 ---
 
 ## 9. Rincian Fase: PH-06 — Polish MVP (Reports + Config + Advanced)
 
 ### 9.1. Tujuan dan batas
 
-- **Tujuan:** Admin reports work, store settings work, shipping tracking works, cancel/refund order works
-- **Termasuk:** SHIP-02 (Shipping Tracking), ORDER-05 (Cancel Order), ORDER-06 (Refund), REPORT-01 (Sales Report), CONFIG-01 (Store Settings)
-- **Tidak termasuk:** Advanced analytics, multi-store (future)
-- **Referensi:** Spesifikasi SHIP-02, ORDER-05, ORDER-06, REPORT-01, CONFIG-01, SDD 4.7, SDD 4.11, SDD 4.12
-- **Prasyarat:** PH-05 disetujui
-- **Langkah demo:** Admin view sales report → Update store settings → Customer cancel order → Admin approve refund → Track shipment
-- **Estimasi:** 3-4 hari
+- **Tujuan:** Admin reports work, store settings work, shipping tracking works, cancel/refund order works, voucher bisa dibatasi ke produk/kategori tertentu, admin bisa mengelola pesanan dan statusnya, email lanjutan terkirim
+- **Termasuk:** 
+  - SHIP-02 (Shipping Tracking), ORDER-05 (Cancel Order), ORDER-06 (Refund), REPORT-01 (Sales Report), CONFIG-01 (Store Settings)
+  - Lanjutan VOUCH-01 (cakupan voucher: produk eligible, produk dikecualikan, kategori — PRD 5.4 butir 1-3)
+  - ORDER-07 (Admin Order Management — ID baru dari audit 2026-10-10: daftar + detail pesanan di `/admin/orders`, ubah status pesanan `SHIPPED`/`COMPLETED` + isi nomor resi, lihat status pembayaran — PRD 2.3/3.1.K/4.4). Tanpa fitur ini tidak ada pemilik transisi pesanan ke `SHIPPED`/`COMPLETED`; SHIP-02/ORDER-05/ORDER-06 di fase ini menggantung padanya sebagai tulang punggung UI admin
+  - SHIP-03 (Pickup — PRD 3.1.F/3.1.J/4.7: opsi ambil di toko bila diaktifkan, tanpa ongkir)
+  - Lanjutan PROD-01 (peran gambar: size chart / info tambahan, 1 opsional — PRD 3.1.A/7.4; `ProductImage` belum punya peran). Lanjutan PROD-02 (filter katalog) **sudah dikerjakan lebih awal pada 2026-10-10** — lihat bagian 10
+  - Lanjutan NOTIF-01 (email order shipped + tracking link, cancellation approved/rejected, refund completed — PRD 3.1.I; 2 dari 6 jenis email sudah jalan sejak PH-05)
+  - REPORT-01 diperluas mencakup lima laporan PRD 4.11 (sales, kinerja produk, stok, order, refund)
+  - Template alasan penolakan pembatalan masuk CONFIG-01 (CRUD + nonaktifkan + pilih template atau manual — PRD 3.1.G/4.12/5.5)
+- **Tidak termasuk:** Advanced analytics, multi-store (future), set/reset password customer (PH-07), konfigurasi platform Site Admin (PH-08)
+- **Referensi:** Spesifikasi SHIP-02, ORDER-05, ORDER-06, REPORT-01, CONFIG-01 (ditulis saat PH-06 dimulai), PRD 3.1.A/F/G/I/K, PRD 4.4, PRD 4.11, PRD 4.12, PRD 5.4, PRD 5.5, `docs/04` bagian 10 (keputusan cakupan produk voucher + audit 2026-10-10), SDD 4.7, SDD 4.11, SDD 4.12
+- **Prasyarat:** PH-05 disetujui — mesin voucher, form voucher admin, `eligibility.ts`, dan email (Resend) sudah ada sejak PH-05
+- **Langkah demo:** Admin buat sales report → Update store settings + template alasan → Admin ubah status pesanan jadi Dikirim + isi nomor resi → Customer dapat email shipped + bisa lacak → Customer cancel order → Admin approve refund (upload bukti) → Customer pilih pickup saat checkout (bila diaktifkan) → Buat voucher khusus satu kategori dan buktikan voucher itu ditolak untuk produk di luar kategori
+- **Estimasi:** 4-5 hari (naik dari 3-4 setelah audit 2026-10-10 menambah cakupan)
 
 *Task detail dirinci saat PH-05 selesai dan PH-06 dimulai.*
 
@@ -828,27 +888,38 @@ Skrip verifikasi sementara (`ph04-verify.mjs`, `ph04-guest.mjs`, `ph04-dbcheck.m
 | 2026-10-10 | **`404 PAYMENT_NOT_FOUND` pada webhook membuat Xendit mengirim ulang.** Dibiarkan sesuai tabel kondisi gagal PAY-02 | Retry berulang untuk pembayaran tak dikenal | Dicatat di pertanyaan terbuka PAY-02; bisa diubah ke `200` bila mengganggu | `src/app/api/webhooks/xendit/route.ts` |
 | 2026-10-10 | **Revisi pasca-persetujuan PH-03: bug OTP guest + redesign urutan alamat.** User: "sebagai guest ... sudah melewati [OTP], dan somehow ingin membuat pesanan masih muncul 'Verifikasi nomor HP terlebih dahulu'"; lalu "memilih kecamatan ... data kota, provinsi, kode pos terisi otomatis, kecuali alamat lengkap ... posisi input juga disesuaikan" | (1) Guest tidak bisa checkout sama sekali walau OTP sukses; (2) alamat memaksa mengetik kota/provinsi/kode pos manual padahal ongkir sudah ditentukan `destinationId` | (1) Perbaiki penanda Redis (`"verified"`), `markPhoneVerified` melempar galat, dan form checkout mereset ke langkah OTP saat `403 PHONE_NOT_VERIFIED`; (2) `ShippingDestination` diperluas (provinsi/kota/kecamatan/kelurahan/kode pos dari RajaOngkir), picker dipecah jadi `DestinationPicker` + `CourierPicker`, urutan form: penerima → kecamatan → kota/provinsi/kode pos (otomatis, read-only) → alamat lengkap | `src/lib/auth/otp.ts`, `src/lib/shipping/client.ts`, `src/components/shipping/{types,DestinationPicker,CourierPicker}.tsx`, `src/components/checkout/CheckoutForm.tsx`, `src/components/cart/{CartSummary,CartView}.tsx`; bagian 6.8 |
 | 2026-10-10 | **MOD-CUST (alamat tersimpan, maks 5, PRD 5.8) akhirnya diberi rumah: PH-07 Customer Management.** Selama ini fitur ini tercatat "belum punya fase" di tiga tempat — `docs/03` ORDER-01 bagian 12, ORDER-02 bagian 12, dan pertanyaan terbuka ORDER-02 — sementara `docs/02` bagian 899 sudah menuliskan alur target "checkout (select saved address)" | Satu fitur wajib PRD tanpa fase; alamat terpaksa diketik ulang tiap checkout dan hanya tersimpan sebagai `shippingAddress` (JSON) per pesanan | Ditempatkan di **PH-07 terpisah**, bukan disisipkan ke PH-06 yang sudah memuat REPORT-01/CONFIG-01/SHIP-02/ORDER-05/06. Prasyaratnya hanya PH-03, jadi fase ini bisa dikerjakan kapan saja setelah PH-03 disetujui tanpa menunggu PH-04..PH-06. Rincian dan daftar task: bagian 12 | `docs/04` bagian 3 dan 12; `docs/03` ORDER-01/ORDER-02 bagian 12 |
-| 2026-10-10 | **Keputusan desain awal PH-07** (dasar rancangan, bisa ditinjau ulang saat spesifikasi ditulis): (a) alamat tersimpan hanya untuk **customer login**, guest tetap mengetik per pesanan; (b) batas maksimal 5 alamat ditegakkan di **server** (Zod + pengecekan jumlah baris), bukan hanya di UI; (c) menyimpan alamat **tidak** mengubah pesanan lama — `Order.shippingAddress` tetap snapshot JSON; (d) baris `Address` menyimpan `destinationId` kecamatan supaya ongkir dihitung ulang tanpa pencarian RajaOngkir lagi | (a) sesuai PRD 5.8 yang hanya mengatur customer; (b) mencegah spam/data fiktif sesuai tujuan PRD; (c) riwayat pesanan tidak ikut berubah saat alamat diedit/dihapus; (d) mengulang hasil kerja PH-02/PH-03 | Disetujui sebagai dasar TASK-48..52 | PRD 5.8, SDD 4.8, SDD 6.2 |
+| 2026-10-10 | **Keputusan desain awal PH-07** (dasar rancangan, bisa ditinjau ulang saat spesifikasi ditulis): (a) alamat tersimpan hanya untuk **customer login**, guest tetap mengetik per pesanan; (b) batas maksimal 5 alamat ditegakkan di **server** (Zod + pengecekan jumlah baris), bukan hanya di UI; (c) menyimpan alamat **tidak** mengubah pesanan lama — `Order.shippingAddress` tetap snapshot JSON; (d) baris `Address` menyimpan `destinationId` kecamatan supaya ongkir dihitung ulang tanpa pencarian RajaOngkir lagi | (a) sesuai PRD 5.8 yang hanya mengatur customer; (b) mencegah spam/data fiktif sesuai tujuan PRD; (c) riwayat pesanan tidak ikut berubah saat alamat diedit/dihapus; (d) mengulang hasil kerja PH-02/PH-03 | Disetujui sebagai dasar TASK-55..59 | PRD 5.8, SDD 4.8, SDD 6.2 |
 | 2026-10-10 | **Halaman `/verify-phone` dihapus.** Sejak PH-03 verifikasi nomor HP guest dilakukan langsung di langkah OTP `/checkout` memakai komponen yang sama (`OtpVerificationForm`); halaman mandiri itu tidak lagi punya tautan masuk dan menjadi rute mati | Dua tempat verifikasi membingungkan, satu di antaranya tidak terjangkau | Halaman dihapus; `OtpVerificationForm` tetap satu-satunya sumber dan komentarnya diperbarui. Referensi lama di bagian 4.5/4.6, `README.md`, dan `docs/06_SETUP_KREDENSIAL.md` dirapikan | `src/app/(storefront)/verify-phone/`, `src/components/auth/OtpVerificationForm.tsx`, `README.md`, `docs/06_SETUP_KREDENSIAL.md` |
+| 2026-10-10 | **PH-05 dimulai tanpa menunggu jawaban `EMAIL_FROM` dan format invoice.** User: "lanjutkan" | Dua pertanyaan terbuka (alamat pengirim Resend, `@react-pdf/renderer` vs HTML) tidak terjawab | Keputusan sementara yang aman: (a) `EMAIL_FROM` dibaca dari env, default `onboarding@resend.dev`; (b) invoice memakai halaman HTML siap-cetak (tanpa dependensi PDF). Keduanya bisa diubah tanpa menyentuh alur inti | `.env.example`, `src/lib/notifications/config.ts`, `src/app/(storefront)/orders/[id]/invoice/page.tsx` |
+| 2026-10-10 | **Deviasi dari SDD 4.10: invoice tidak memakai `@react-pdf/renderer`.** SDD menulis invoice dihasilkan sebagai PDF di server | Menambah dependensi berat dan berisiko dengan React 19 | Invoice dirender sebagai halaman HTML siap-cetak (`/orders/[id]/invoice` + `window.print()`), pengguna menyimpan PDF lewat dialog cetak browser. KISS, tanpa dependensi baru | SDD 4.10 perlu direvisi saat dokumentasi dirapikan |
+| 2026-10-10 | **Stacking voucher = default menolak.** PRD 5.4 menyebut kompatibilitas per pasangan tetapi tidak menentukan nilai bawaan | Menentukan perilaku pasangan voucher yang belum diatur admin | Pasangan tanpa baris `VoucherCompatibility` **tidak** boleh digabung; admin mencentang pasangan yang boleh lewat form voucher. Explicit opt-in (seller-oriented) | `src/lib/vouchers/eligibility.ts`, `src/components/admin/VoucherForm.tsx` |
+| 2026-10-10 | **Kuota voucher dijaga di dalam transaksi pesanan.** Pemeriksaan kuota saat resolusi saja bisa dilewati oleh dua pesanan berbarengan | Risiko kuota terlewati (race) | Penambahan `usageCount` memakai `updateMany` bersyarat `usageCount < usageLimit`; `count === 0` melempar `INVALID_VOUCHER` dan membatalkan seluruh transaksi | `src/lib/orders/mutations.ts` |
+| 2026-10-10 | **KOREKSI: role selain customer/guest bisa berbelanja.** `getCartIdentity` menerima sesi role apa pun, sehingga Store Admin mendapat keranjang database, bisa menambah item, menghitung ongkir, memakai voucher, dan membuat pesanan; `requireCustomerPage` juga mengizinkan role apa pun. Ketahuan dari laporan pengguna | Pelanggaran A01: batas peran Guest/Customer tidak ditegakkan di jalur belanja | Diganti `getCartAccess` yang mengembalikan `ok:false` untuk role non-customer (tidak jatuh ke keranjang guest); semua API belanja (`/api/cart`, `/api/cart/sync`, `/api/shipping`, `/api/vouchers/validate`, `/api/orders/create`) menjawab `403 FORBIDDEN` **sebelum** validasi body; halaman `/cart`, `/checkout`, `/orders`, `/orders/[id]`, `/orders/[id]/invoice` mengalihkan admin ke `/admin`; badge keranjang disembunyikan untuk non-customer | `src/lib/cart/session.ts`, `src/lib/auth/session.ts`, `src/app/api/{cart,cart/sync,shipping,vouchers/validate,orders/create}/route.ts`, `src/app/(storefront)/{cart,checkout,orders}/`, `src/components/layout/CartBadge.tsx`; uji peran 18 PASS/0 FAIL |
+| 2026-10-10 | **Cakupan produk voucher ditunda (PRD 5.4 butir 1-3).** PRD menyebut tiap voucher bisa diatur "produk eligible", "produk yang dikecualikan", dan "kategori"; tiga butir itu tidak pernah turun ke spesifikasi fitur dan tidak masuk desain PH-05 | Bagian 8.1 menulis "Advanced voucher rules (future)" tanpa merinci, sehingga tidak ada task yang meminta penyaringan produk; ketahuan dari pertanyaan user "apakah sudah tertulis bahwa voucher bisa diatur ke produk mana saja" | Keputusan sementara: voucher berlaku untuk **seluruh produk di keranjang**; admin mengatur besaran, periode, kuota, batas per HP, maksimal potongan, dan kompatibilitas (5 dari 8 butir PRD 5.4 sudah jalan), sedangkan jangkauan produk/kategori dijadwalkan ke **PH-06 — Polish MVP (Reports + Config + Advanced), bagian 9**. PH-06 dipilih karena judulnya sudah memuat "Advanced" (sesuai redaksi bagian 8.1 "Advanced voucher rules (future)") dan prasyaratnya PH-05, sedangkan PH-07 sengaja tidak dipakai supaya tetap murni MOD-CUST dengan prasyarat PH-03. Butuh relasi baru `VoucherProduct`/`VoucherCategory`, perubahan `eligibility.ts`, dan form admin | `docs/01_PRD.md` 5.4, `docs/04` 8.1 dan 9.1, `prisma/schema.prisma` (model `Voucher`), `src/lib/vouchers/calculation.ts` |
+| 2026-10-10 | **Audit PRD vs peta fase: 13 kebutuhan PRD belum punya task.** Dipicu pertanyaan user "apakah masih ada detail task yang belum ditulis pada dokumentasi implementasi task". **Tujuh tanpa rumah sama sekali:** admin order management (PRD 2.3/3.1.K/4.4 — admin hanya punya halaman Produk/Kategori/Brand/Voucher, tidak ada `/admin/orders`, dan tidak ada pemilik transisi pesanan `SHIPPED`/`COMPLETED`); re-order (PRD 2.2 — `docs/03` ORDER-01/02 bagian 12 mengecualikannya tanpa rumah pengganti); set password link (PRD 2.1/3.1.I/5.7 — `guestEmail` tersimpan sejak PH-03 tapi tidak ada alurnya); password reset (PRD 4.1); template alasan penolakan pembatalan (PRD 3.1.G/4.12/5.5); pickup (PRD 3.1.F/4.7); preferensi notifikasi customer (PRD 4.8). **Lima parsial/ambigu:** filter katalog (PRD 3.1.A — baru `search` + paginasi di `products/page.tsx` dan `listProductsSchema`); email notifikasi (PRD 3.1.I — 2 dari 6 jenis jalan: order created, payment success); size chart (PRD 3.1.A/7.4 — `ProductImage` tanpa peran gambar); cakupan REPORT-01 (PRD 4.11 menyebut 5 laporan, REPORT-01 hanya "Sales Report"); dashboard admin (PRD 3.1.K — `/admin` masih redirect) | Kebutuhan PRD tersebar tanpa pemilik task akan hilang dari rencana — pola yang sama dengan alamat tersimpan dan cakupan voucher sebelum dicatat | **Penempatan disetujui user 2026-10-10:** PH-06 += ORDER-07 (admin order management), SHIP-03 (pickup), filter katalog (PROD-02 lanjutan), size chart (PROD-01 lanjutan), email shipped/cancel/refund (NOTIF-01 lanjutan), REPORT-01 diperluas 5 laporan PRD 4.11, template alasan masuk CONFIG-01, dashboard admin ditangani saat PH-06 dirinci; PH-07 += re-order (ORDER-03 lanjutan), AUTH-04 (set password), AUTH-05 (password reset), CUST-02 (preferensi notifikasi) — prasyarat PH-07 berubah jadi PH-03 + PH-05 (fitur email). Set password menimbulkan pertanyaan desain (apakah pesanan guest lama ikut terikat ke akun baru) — dijawab saat spesifikasi PH-07 ditulis | `docs/04` bagian 3, 9.1, 12.1-12.3; `docs/01_PRD.md` 2.1, 2.2, 2.3, 3.1.A/F/G/I/K, 4.1, 4.4, 4.8, 4.11, 4.12, 5.5, 5.7 |
+| 2026-10-10 | **Site Admin dipastikan ADA (keputusan user).** Audit menandai PRD kontradiktif: bagian 2.3 menulis "NO platform-level config (single-store MVP, no Site Admin role)" padahal bagian 1 (tujuan: memisahkan Site Admin vs Store Admin), 3.1.K (Site Admin features), 4.1 (daftar role eksplisit: Guest, Customer, Store Admin, Site Admin), dan kriteria sukses #10 meminta Site Admin mengonfigurasi payment gateway dan shipping provider; SDD 587 bahkan sudah mendesain `SITE_ADMIN` di enum role sejak awal | Autentikasi hanya punya role `STORE_ADMIN`; konfigurasi Xendit/RajaOngkir hanya lewat env; tidak ada manajemen akun Store Admin; kriteria sukses #10 tidak mungkin lulus tanpa fase ini | User: "site admin jelas ada sesuai prd awal". Baris PRD 2.3 "no Site Admin role" dikesampingkan — yang berlaku bagian 1/3.1.K/kriteria #10. Fase baru **PH-08 — Site Admin (Platform Configuration)** dibuat (bagian 13): SITE-01 platform settings, SITE-02 konfigurasi payment gateway, SITE-03 konfigurasi shipping provider, SITE-04 manajemen akun Store Admin. **PRD sudah direvisi 2026-10-10 (v1.1):** baris "3 role utama" (bagian 2) jadi 4 role, baris "no Site Admin role" (2.3) dicabut, bagian 2.4 Site Admin ditambah; `AGENTS.md` "3 roles only" dan matriks hak akses PROD-01 (`docs/03`) ikut dibetulkan. Catatan desain untuk PH-08: menyimpan kunci Xendit/RajaOngkir di database vs env adalah keputusan keamanan (A02) — dijawab saat fase dirinci | `docs/04` bagian 3 dan 13; `docs/01_PRD.md` 1, 2, 2.3, 2.4, 3.1.K, 4.1, 4.12, kriteria sukses #10; `docs/02_SDD.md` 587, 696; `AGENTS.md` |
+| 2026-10-10 | **Redesign kartu katalog + tombol aksi cepat.** User: "redesign katalog produk seperti gambar tapi instead of nampilkan stock dan sold, ubah ke tombol keranjang dan beli"; lalu "5 produk ditemukan di sini, useless. hapus" | Kartu lama menampilkan badge stok, kategori, dan brand, tanpa aksi cepat. Baris "N produk ditemukan" dinilai tidak berguna | Kartu baru: gambar di tile abu (`p-3`, `rounded-lg`, `bg-muted`), nama (2 baris), harga, lalu tombol `Keranjang` (tambah ke keranjang) dan `Beli` (tambah lalu `router.push('/checkout?variantIds=...')`). Varian yang dipakai = varian pertama dengan stok > 0; tombol disabled "Stok habis" bila semua kosong. Badge stok/kategori/brand dan baris jumlah produk dihapus. Tombol disembunyikan untuk role non-customer (`canShop` dari `getCartAccess()`), konsisten dengan gerbang peran 2026-10-10 | `src/components/products/{ProductCard,ProductCardActions,ProductGrid}.tsx`, `src/app/(storefront)/products/page.tsx`, `src/app/(storefront)/page.tsx` |
+| 2026-10-10 | **Filter katalog (PROD-02 lanjutan) ditarik dari PH-06 ke sekarang.** User: "pada katalog hanya ada fitur search, tanpa filter/sort? di prd harusnya ada" (PRD 3.1.A: filter by name, category, price range, sort) | PRD 3.1.A baru sebagian terpenuhi: `search` + paginasi jalan; kategori, kisaran harga, dan urutan belum ada. Audit 2026-10-10 sudah menaruh sisanya di PH-06 | User memilih "Implement sekarang". Ditambahkan: pil kategori (dari `Category`), filter kisaran harga, dan urutan (Terbaru/Harga termurah/Harga termahal/Nama A-Z) di `/products`; `catalogFilterSchema` (toleran, nilai rusak jatuh ke default) memvalidasi query string. `Product.minPrice` (Decimal, denormalisasi harga varian termurah — pola sama seperti `totalStock`) ditambah lewat migrasi `20261010140000_add_product_min_price` + backfill, karena Prisma 5.22 tidak mendukung `orderBy` agregat relasi (`_min` ditolak: "Unknown argument `_min`"). Urutan harga memakai `minPrice` untuk naik dan turun; `id` jadi pemecah seri. PH-06 kehilangan butir filter katalog (bagian 3, 9.1) | `src/lib/products/{validation,queries,mutations}.ts`, `src/components/products/{CategoryPills,CatalogFilters}.tsx`, `src/app/(storefront)/products/page.tsx`, `prisma/schema.prisma`, `prisma/seed.ts`, `prisma/migrations/20261010140000_add_product_min_price/`; `docs/03` PROD-02 |
+
 
 ---
 
 ## 11. Catatan lanjutan sesi
 
-- **Terakhir dikerjakan:** PH-04 TASK-39 sampai TASK-46 — implementasi dan verifikasi end-to-end selesai (menunggu review). PH-03 sudah di-commit: `e1f5ab9` (kode) + `a0a7961` (docs). Ditambah revisi pasca-persetujuan PH-03 (perbaikan OTP guest + redesign urutan alamat) — lihat bagian 6.8; kode revisi belum di-commit
+- **Terakhir dikerjakan:** PH-05 TASK-47 sampai TASK-53 — implementasi dan verifikasi end-to-end selesai (menunggu review). PH-04 sudah **Disetujui** (2026-10-10); kode + dokumen PH-04 belum di-commit. PH-03 sudah di-commit: `e1f5ab9` (kode) + `a0a7961` (docs). Ditambah revisi pasca-persetujuan PH-03 (perbaikan OTP guest + redesign urutan alamat) dan penghapusan `/verify-phone` — lihat bagian 6.8 dan 10; belum di-commit
 - **Kondisi pekerjaan (PH-03, riwayat):** PH-02 **sudah di-commit** (`68e5ce8` kode, `f167fa4` dokumentasi). Perubahan PH-03 **belum di-commit**: 14 berkas termodifikasi (`docs/03`, `docs/04`, `prisma/schema.prisma`, `(storefront)/cart/page.tsx`, `api/admin/products/[id]/route.ts`, `api/shipping/route.ts`, `components/auth/OtpVerificationForm.tsx`, `components/cart/CartItemRow.tsx`, `components/cart/CartSummary.tsx`, `components/layout/HeaderUserMenu.tsx`, `lib/auth/otp.ts`, `lib/auth/session.ts`, `lib/cart/queries.ts`, `lib/shipping/validation.ts`) + 20 berkas baru (migrasi `20261009231301_add_orders/`, `(storefront)/checkout/`, `(storefront)/orders/`, `(storefront)/track-order/`, `api/orders/`, `components/cart/CartView.tsx`, `components/checkout/`, `components/orders/`, `components/shipping/`, `lib/orders/`). HEAD `f167fa4`
 - **Pemeriksaan terakhir (PH-03):** `pnpm lint` exit 0; `pnpm build` exit 0 (33 rute, termasuk `ƒ /api/orders/create`, `ƒ /api/orders/track`, `ƒ /checkout`, `ƒ /orders`, `◐ /orders/[id]`, `◐ /track-order`); 23 pemeriksaan HTTP terhadap server dev + database Supabase + Redis Upstash — ongkir terfilter, gerbang OTP guest, pembuatan pesanan guest/customer, lacak publik + batas percobaan per IP, anti-overselling dua permintaan bersamaan, pelepasan reservasi kedaluwarsa (idempoten), dan pesanan lintas pengguna (rincian: bagian 6.6). 0 galat tak tertangani di log dev. Data uji dibersihkan (`orders=0`, `orderItems=0`, user `qa.ph03.*`=0, stok seed kaos 25 / sneakers 5, `totalStock` seluruh produk cocok). Pemeriksaan PH-02 sebelumnya: 40 PASS / 0 FAIL (bagian 5.5)
-- **Keputusan terakhir:** 2026-10-10 — **PH-03 Disetujui; PH-04 dikerjakan dan siap direview.** User: "oke next lanjut ke phase 4?". Keputusan PH-04 (bagian 7.2): Invoice API v2 (hosted page); masa bayar = reservasi stok = `XENDIT_INVOICE_DURATION` (default 900 detik, bisa diubah tanpa ubah kode); webhook PAID **tidak** mengurangi stok lagi; idempotensi lewat klaim baris `Payment` di database
+- **Keputusan terakhir:** 2026-10-10 — **PH-04 Disetujui; PH-05 dikerjakan dan siap direview.** User: "lanjutkan". Keputusan PH-05 (bagian 8.2): kalkulasi bertahap (nominal lalu persen dari sisa); stacking default menolak (opt-in lewat matriks kompatibilitas); kuota dijaga di transaksi; `EMAIL_FROM` dari env (default `onboarding@resend.dev`); invoice HTML siap-cetak
 - **Langkah berikutnya (setelah instruksi user):**
-  1. Review dan approval PH-04; setelah disetujui, mulai PH-05 — Core Features (Voucher, Email, Invoice PDF)
-  2. Commit perubahan PH-04 — draf pesan disiapkan agent, `git commit` dijalankan user
-  3. (PH-05) `RESEND_API_KEY` sudah ada di `.env.local`; alamat pengirim (`EMAIL_FROM`) belum diputuskan
-  4. (Opsional) Ubah `XENDIT_INVOICE_DURATION` (mis. 1800 = 30 menit) bila masa bayar perlu lebih longgar
-  5. (Opsional) Ubah `SHIPPING_ORIGIN_DISTRICT_ID=17590` kalau lokasi asal toko berbeda (lihat `docs/06` bagian 6)
+  1. Review dan approval PH-05; setelah disetujui, mulai PH-06 — Polish MVP (Reports, Config, Shipping Tracking, Cancel/Refund, Admin Order, Pickup, Filter Katalog, Email lanjutan — cakupan diperluas audit 2026-10-10)
+  2. Commit perubahan PH-04 + revisi PH-03 + PH-05 — draf pesan disiapkan agent, `git commit` dijalankan user
+  3. (PH-05) Isi `EMAIL_FROM` dengan domain terverifikasi Resend bila email harus sampai ke pembeli mana pun (default hanya bisa kirim ke alamat pemilik akun)
+  4. (PH-05) Revisi SDD 4.10 (invoice HTML siap-cetak, bukan `@react-pdf/renderer`) saat dokumentasi dirapikan
+  5. (Opsional) Ubah `XENDIT_INVOICE_DURATION` (mis. 1800 = 30 menit) bila masa bayar perlu lebih longgar
   6. (PH-01) `SEED_ADMIN_PASSWORD` dev lemah dan **wajib diganti** sebelum produksi
-- **Hal yang masih menghalangi:** Tidak ada yang menghalangi PH-04. Butir yang masih terbuka:
-  (a) verifikasi webhook dari Xendit asli (tunnel publik / tombol "Test webhook" dashboard) belum dijalankan — verifikasi 7.6 memanggil endpoint webhook langsung ke server dev; (b) unggah berkas Uploadthing
-  dengan berkas nyata belum diuji (kunci masih placeholder); (c) alamat pengirim email (`EMAIL_FROM`) belum diputuskan untuk PH-05. Pengiriman OTP, kredensial ongkir, dan kredensial Xendit Test Mode sudah lengkap.
+- **Hal yang masih menghalangi:** Tidak ada yang menghalangi PH-05. Butir yang masih terbuka:
+  (a) verifikasi webhook dari Xendit asli (tunnel publik / tombol "Test webhook" dashboard) belum dijalankan — verifikasi PH-04 memanggil endpoint webhook langsung ke server dev; (b) unggah berkas Uploadthing
+  dengan berkas nyata belum diuji (kunci masih placeholder); (c) `EMAIL_FROM` domain terverifikasi belum diisi sehingga email baru sampai ke alamat pemilik akun Resend; (d) format PDF invoice final menunggu keputusan (saat ini HTML siap-cetak). Pengiriman OTP, kredensial ongkir, dan kredensial Xendit Test Mode sudah lengkap.
 - **Catatan teknis yang berguna untuk sesi berikutnya:**
   - Next.js 16 mengganti `middleware.ts` menjadi `proxy.ts`, dan ekspor hasil destrukturisasi (`export const { auth: proxy } = ...`) **tidak** dapat dianalisis Next.js — harus `const { auth } = NextAuth(cfg); export default auth;`
   - Dengan `cacheComponents: true`, data URL (`params`, `searchParams`) wajib diakses di dalam `<Suspense>`
@@ -918,52 +989,91 @@ Skrip verifikasi sementara (`ph04-verify.mjs`, `ph04-guest.mjs`, `ph04-dbcheck.m
 
 ### 12.1. Tujuan dan batas
 
-- **Tujuan:** Customer bisa menyimpan alamat (maksimal 5) dan memilihnya saat checkout tanpa mengetik ulang
-- **Termasuk:** CUST-01 (Alamat Tersimpan — tambah/ubah/hapus + batas 5 alamat), integrasi pemilihan alamat di `/checkout`
-- **Tidak termasuk:** Alamat guest (tetap diisi per pesanan, `Order.guestAddress`), buku alamat toko/pengirim, perubahan bentuk `Order.shippingAddress`
-- **Referensi:** PRD 5.8 (Customer Address), PRD 4.8 (Customer Management), SDD 4.8 (MOD-CUST), SDD 6.2 (`shippingAddress`)
-- **Prasyarat:** PH-03 disetujui — checkout, `DestinationPicker`, dan `Order.shippingAddress` sudah ada. **Tidak bergantung pada PH-04, PH-05, atau PH-06**
-- **Langkah demo:** Login → tambah alamat → checkout → pilih alamat tersimpan → isian alamat terisi otomatis → pesanan dibuat → ubah alamat tersimpan → pesanan lama tidak berubah
-- **Estimasi:** 1-2 hari
+- **Tujuan:** Customer bisa menyimpan alamat (maksimal 5) dan memilihnya saat checkout tanpa mengetik ulang, memesan ulang dari pesanan lama, dan mengelola akunnya (set/reset password, preferensi notifikasi)
+- **Termasuk:** 
+  - CUST-01 (Alamat Tersimpan — tambah/ubah/hapus + batas 5 alamat), integrasi pemilihan alamat di `/checkout`
+  - Lanjutan ORDER-03 (Re-order — PRD 2.2: tombol "Pesan Lagi" di riwayat/detail pesanan yang menambahkan produk pesanan lama ke keranjang, dengan validasi stok/status produk; `docs/03` ORDER-01/02 selama ini mengecualikannya tanpa rumah pengganti)
+  - AUTH-04 (Set Password Link — PRD 2.1/2.2/3.1.I/5.7: guest yang mengisi email saat checkout menerima link untuk membuat akun customer; `guestEmail` sudah tersimpan sejak PH-03)
+  - AUTH-05 (Password Reset — PRD 4.1: "lupa password" lewat email link)
+  - CUST-02 (Notification Preferences — PRD 4.8: customer memilih jenis email yang diterima)
+- **Tidak termasuk:** Alamat guest (tetap diisi per pesanan, `Order.guestAddress`), buku alamat toko/pengirim, perubahan bentuk `Order.shippingAddress`, email order shipped/cancel/refund (PH-06)
+- **Referensi:** PRD 2.1, PRD 2.2, PRD 3.1.I, PRD 4.1, PRD 4.8, PRD 4.9, PRD 5.7, PRD 5.8, SDD 4.8 (MOD-CUST), SDD 6.2 (`shippingAddress`), `docs/04` bagian 10 (audit 2026-10-10)
+- **Prasyarat:** PH-03 + PH-05 disetujui — checkout/`DestinationPicker`/`Order.shippingAddress` dari PH-03, email (Resend) dari PH-05 untuk set/reset password. **Diubah oleh audit 2026-10-10** dari "hanya PH-03, tidak bergantung PH-04..PH-06" karena fitur email baru masuk fase ini
+- **Langkah demo:** Login → tambah alamat → checkout → pilih alamat tersimpan → isian alamat terisi otomatis → pesanan dibuat → ubah alamat tersimpan → pesanan lama tidak berubah → "Pesan Lagi" dari pesanan lama → item masuk keranjang → guest isi email saat checkout → terima link set password → akun jadi customer → "Lupa password" → reset lewat email → atur preferensi notifikasi
+- **Estimasi:** 3-4 hari (naik dari 1-2 setelah audit 2026-10-10 menambah cakupan)
 
-*Spesifikasi CUST-01 belum ada di `docs/03`; menulisnya adalah langkah pertama fase ini (TASK-47).*
+*Spesifikasi CUST-01 belum ada di `docs/03`; menulisnya adalah langkah pertama fase ini (TASK-54). Spesifikasi AUTH-04, AUTH-05, CUST-02, dan revisi ORDER-03 (re-order) ditulis saat fase ini dimulai.*
 
 ### 12.2. Daftar task (rencana)
 
 | ID | Pekerjaan / hasil | Fitur | Bergantung pada | Status | Bukti |
 | --- | --- | --- | --- | --- | --- |
-| TASK-47 | Tulis spesifikasi CUST-01 di `docs/03` (aturan, AC-*, validasi, batas fitur, pertanyaan terbuka) | CUST-01 | - | Belum dimulai | - |
-| TASK-48 | Skema Prisma `Address` (relasi N→1 `User`, label, nama penerima, no. HP, `destinationId`, provinsi/kota/kecamatan/kelurahan/kode pos, alamat lengkap, penanda alamat utama) + migrasi + `db:generate` | CUST-01 | TASK-47 | Belum dimulai | - |
-| TASK-49 | Lib `src/lib/customers/`: Zod schema, batas maksimal 5 alamat ditegakkan di server, query/mutasi milik sendiri, penjaga alamat utama tunggal | CUST-01 | TASK-48 | Belum dimulai | - |
-| TASK-50 | API `/api/customer/addresses` (`GET`/`POST`/`PATCH`/`DELETE`) + Zod sebelum query + penangkap galat | CUST-01 | TASK-49 | Belum dimulai | - |
-| TASK-51 | Halaman `/profile`: daftar, tambah, ubah, hapus alamat; penanda alamat utama | CUST-01 | TASK-50 | Belum dimulai | - |
-| TASK-52 | Integrasi `/checkout`: pilih alamat tersimpan → isian terisi otomatis lewat `DestinationPicker`; guest tetap mengetik manual | CUST-01 | TASK-51 | Belum dimulai | - |
-| TASK-53 | Navigasi: menu akun menautkan ke `/profile` (Alamat Saya) | CUST-01 | TASK-51 | Belum dimulai | - |
-| TASK-54 | Lint + build | Semua | TASK-53 | Belum dimulai | - |
-| TASK-55 | Verifikasi exit criteria + laporan review (berhenti, tunggu approval) | Semua | TASK-54 | Belum dimulai | - |
+| TASK-54 | Tulis spesifikasi CUST-01 di `docs/03` (aturan, AC-*, validasi, batas fitur, pertanyaan terbuka) | CUST-01 | - | Belum dimulai | - |
+| TASK-55 | Skema Prisma `Address` (relasi N→1 `User`, label, nama penerima, no. HP, `destinationId`, provinsi/kota/kecamatan/kelurahan/kode pos, alamat lengkap, penanda alamat utama) + migrasi + `db:generate` | CUST-01 | TASK-54 | Belum dimulai | - |
+| TASK-56 | Lib `src/lib/customers/`: Zod schema, batas maksimal 5 alamat ditegakkan di server, query/mutasi milik sendiri, penjaga alamat utama tunggal | CUST-01 | TASK-55 | Belum dimulai | - |
+| TASK-57 | API `/api/customer/addresses` (`GET`/`POST`/`PATCH`/`DELETE`) + Zod sebelum query + penangkap galat | CUST-01 | TASK-56 | Belum dimulai | - |
+| TASK-58 | Halaman `/profile`: daftar, tambah, ubah, hapus alamat; penanda alamat utama | CUST-01 | TASK-57 | Belum dimulai | - |
+| TASK-59 | Integrasi `/checkout`: pilih alamat tersimpan → isian terisi otomatis lewat `DestinationPicker`; guest tetap mengetik manual | CUST-01 | TASK-58 | Belum dimulai | - |
+| TASK-60 | Navigasi: menu akun menautkan ke `/profile` (Alamat Saya) | CUST-01 | TASK-58 | Belum dimulai | - |
+| TASK-61 | Re-order: tombol "Pesan Lagi" di `/orders` dan `/orders/[id]` menambahkan varian pesanan lama ke keranjang (validasi stok, produk aktif, varian masih ada) | ORDER-03 (lanjutan) | TASK-57 | Belum dimulai | - |
+| TASK-62 | AUTH-04: token + halaman set password untuk guest yang mengisi email saat checkout → akun customer baru (mengikat `guestEmail` yang tersimpan sejak PH-03) | AUTH-04 | TASK-61 | Belum dimulai | - |
+| TASK-63 | AUTH-05: alur "Lupa password" (form email → token → halaman set password baru) | AUTH-05 | TASK-62 | Belum dimulai | - |
+| TASK-64 | CUST-02: preferensi notifikasi customer (pilih jenis email yang diterima; ditegakkan saat kirim di jalur email) | CUST-02 | TASK-62 | Belum dimulai | - |
+| TASK-65 | Lint + build | Semua | TASK-64 | Belum dimulai | - |
+| TASK-66 | Verifikasi exit criteria + laporan review (berhenti, tunggu approval) | Semua | TASK-65 | Belum dimulai | - |
 
-*Penomoran TASK bersifat global dan berurutan. PH-04 berhenti di TASK-46, jadi PH-07 memakai TASK-47 sampai TASK-55. Bila PH-05 atau PH-06 ternyata dikerjakan lebih dulu, ambil blok nomor berikutnya dan geser penomoran fase ini.*
+*Penomoran TASK bersifat global dan berurutan. PH-04 berhenti di TASK-46, PH-05 memakai TASK-47 sampai TASK-53, jadi PH-07 memakai TASK-54 sampai TASK-66 (diperluas dari TASK-62 oleh audit 2026-10-10). Bila PH-06 dikerjakan lebih dulu dan mengambil blok nomor berikutnya, geser penomoran fase ini.*
 
 ### 12.3. Exit criteria (rencana)
 
-- [ ] Customer bisa menyimpan **maksimal 5 alamat**; percobaan ke-6 ditolak **di server** (kode galat ditetapkan di spesifikasi TASK-47)
+- [ ] Customer bisa menyimpan **maksimal 5 alamat**; percobaan ke-6 ditolak **di server** (kode galat ditetapkan di spesifikasi TASK-54)
 - [ ] Customer bisa memilih alamat tersimpan di `/checkout` dan seluruh isian alamat terisi otomatis, termasuk `destinationId` untuk ongkir
 - [ ] Customer bisa mengubah dan menghapus alamat miliknya sendiri
 - [ ] Alamat customer lain tidak bisa dibaca, diubah, maupun dihapus (OWASP A01)
 - [ ] Menambah/mengubah/menghapus alamat **tidak mengubah pesanan lama** — `Order.shippingAddress` tetap snapshot
 - [ ] Guest tetap bisa checkout tanpa menyimpan alamat
+- [ ] "Pesan Lagi" dari pesanan lama menambahkan item ke keranjang; varian yang sudah tidak ada/stok habis ditolak dengan pesan jelas (tidak ada pesanan yang ikut berubah)
+- [ ] Guest yang mengisi email saat checkout menerima link set password; setelah diset, akun bisa login dan melihat pesanan guest-nya tidak hilang (sesuai keputusan cakupan)
+- [ ] "Lupa password" mengirim link reset ke email terdaftar; token sekali pakai dan berkedaluwarsa
+- [ ] Preferensi notifikasi ditegakkan saat email dikirim (customer yang menonaktifkan jenis email tidak menerimanya)
 - [ ] `pnpm lint` exit 0 dan `pnpm build` exit 0
 
 ---
 
-**Status:** Implementation Plan v1.0 — **PH-04 siap direview** (2026-10-10). PH-01, PH-02, PH-03
-disetujui. PH-04 memakai Xendit Invoice API v2 (hosted page); masa bayar = reservasi stok
-(`XENDIT_INVOICE_DURATION`, default 900 detik, bisa diubah tanpa ubah kode); webhook PAID tidak
-mengurangi stok lagi (sudah dipotong saat pesanan dibuat); webhook EXPIRED membatalkan pesanan dan
-mengembalikan stok. 29 pemeriksaan lulus (bagian 7.6). Revisi pasca-persetujuan PH-03 (perbaikan OTP
-guest + redesign urutan alamat) selesai dan terverifikasi — bagian 6.8; menunggu commit.
+## 13. Rincian Fase: PH-08 — Site Admin (Platform Configuration)
+
+> Bagian ini ditempatkan setelah bagian 12 dengan alasan yang sama: nomor **bagian 10 ("Perubahan scope dan hambatan") tidak boleh bergeser** karena sudah dirujuk oleh `AGENTS.md`, `docs/05`, dan `docs/04` sendiri.
+
+### 13.1. Tujuan dan batas
+
+- **Tujuan:** Site Admin dapat login dan mengonfigurasi level platform: payment gateway (Xendit), shipping provider (RajaOngkir), akun Store Admin, dan pengaturan platform — menutup kriteria sukses PRD #10
+- **Termasuk:** 
+  - SITE-01 (Platform Settings — pengaturan platform)
+  - SITE-02 (Payment Gateway Configuration — konfigurasi Xendit, PRD 3.1.K)
+  - SITE-03 (Shipping Provider Configuration — konfigurasi RajaOngkir, PRD 3.1.K)
+  - SITE-04 (User Management — kelola akun Store Admin: buat, nonaktifkan, reset password)
+  - Role baru `SITE_ADMIN` di NextAuth + area Site Admin terpisah dari `/admin` (Store Admin), dengan pengecekan role di setiap handler (OWASP A01) — selaras SDD 587 yang memang sudah mendesain `SITE_ADMIN` di enum role (skema saat ini baru `GUEST`, `CUSTOMER`, `STORE_ADMIN`); komentar di `src/lib/auth/session.ts` yang menyitir "PRD 2: role Guest, Customer, Store Admin" ikut diperbarui saat fase ini mendaratkan role-nya
+- **Tidak termasuk:** Multi-store (PRD 3.2 — future)
+- **Referensi:** PRD 1 (tujuan: pemisahan Site Admin vs Store Admin), PRD 2.4 (Site Admin), PRD 3.1.K, PRD 4.1, PRD 4.12, kriteria sukses PRD #10, SDD 587/696, keputusan bagian 10 (2026-10-10: Site Admin dipastikan ada)
+- **Prasyarat:** PH-05 disetujui — NextAuth, area admin, dan pola proteksi role sudah ada sejak PH-01. **Disarankan dikerjakan setelah PH-06** supaya hal yang dikonfigurasi (payment gateway, shipping provider) sudah punya fitur lengkap di sisi Store Admin
+- **Langkah demo:** Login Site Admin → buat akun Store Admin baru → nonaktifkan akun Store Admin → ubah konfigurasi payment gateway → ubah konfigurasi shipping provider (termasuk origin) → simpan pengaturan platform → Store Admin login dan bekerja seperti biasa
+- **Estimasi:** 2-3 hari
+
+*Task detail dirinci saat PH-08 dimulai. Pertanyaan desain yang harus dijawab saat itu: (a) apakah kunci Xendit/RajaOngkir disimpan di database atau tetap di env (implikasi OWASP A02 — kunci pembayaran di database butuh perlindungan ekstra); (b) apakah area Site Admin memakai prefix rute terpisah atau subdomain; (c) bagaimana akun Site Admin pertama dibuat (seed, seperti admin Store Admin).*
+
+---
+
+**Status:** Implementation Plan v1.0 — **PH-05 siap direview** (2026-10-10). PH-01 sampai PH-04
+disetujui. Audit PRD 2026-10-10 (bagian 10) menutup 13 kebutuhan PRD yang belum punya task: PH-06
+diperluas (kelola pesanan admin, pickup, email lanjutan, lima laporan, size chart,
+template alasan penolakan), PH-07 diperluas (re-order, set password, reset password, preferensi
+notifikasi), dan PH-08 dibuat (Site Admin — konfigurasi platform; Site Admin dipastikan ada oleh
+user).
 
 **Next steps:**
-1. Review dan approval PH-04 (Payment: PAY-01, PAY-02)
-2. Commit perubahan PH-04 — draf pesan disiapkan agent, `git commit` dijalankan user
-3. Setelah disetujui, mulai PH-05 — Core Features (Voucher, Email, Invoice PDF; butuh `EMAIL_FROM`)
+1. Review dan approval PH-05 (Voucher, Email, Invoice)
+2. Commit perubahan PH-04 + revisi PH-03 + PH-05 — draf pesan disiapkan agent, `git commit` dijalankan user
+3. Setelah disetujui, mulai PH-06 — Polish MVP (Reports, Config, Shipping Tracking, Cancel/Refund, Admin Order, Pickup, Email lanjutan)
+4. Isi `EMAIL_FROM` dengan domain terverifikasi Resend bila email harus sampai ke pembeli mana pun
+5. Revisi SDD 4.10 (invoice HTML siap-cetak) saat dokumentasi dirapikan — revisi PRD 2.3/model role sudah selesai 2026-10-10 (bagian 10)
+6. Sinkronisasi indeks fitur `docs/03`: fitur terimplementasi yang masih tercatat "Belum dirinci" (PROD-02..05, AUTH-02/03, dsb.) plus ID baru dari audit 2026-10-10 (ORDER-07, SHIP-03, AUTH-04, AUTH-05, CUST-02, SITE-01..04)

@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { CartView } from "@/components/cart/CartView";
-import { getCart, getCartIdentity } from "@/lib/cart";
+import { getCart, getCartAccess } from "@/lib/cart";
 
 export const metadata = { title: "Keranjang" };
 
@@ -16,13 +18,17 @@ export default async function CartPage() {
   // cacheComponents). Lihat docs/messages/blocking-prerender-crypto.
   await connection();
 
-  const identity = await getCartIdentity();
-  const cart = identity
-    ? await getCart(identity)
+  // Keranjang hanya untuk customer dan guest; role lain (mis. admin)
+  // diarahkan ke area admin (PRD 2).
+  const access = await getCartAccess();
+  if (!access.ok) redirect("/admin");
+
+  const cart = access.identity
+    ? await getCart(access.identity)
     : { items: [], subtotal: 0, itemCount: 0 };
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-10">
+    <PageContainer>
       <h1 className="text-2xl font-bold tracking-tight">Keranjang</h1>
 
       {cart.items.length === 0 ? (
@@ -47,6 +53,6 @@ export default async function CartPage() {
           <CartView items={cart.items} />
         </>
       )}
-    </div>
+    </PageContainer>
   );
 }

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { GuestOrderNotice } from "@/components/orders/GuestOrderNotice";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { PaymentDeadline } from "@/components/orders/PaymentDeadline";
 import { PaymentStatusWatcher } from "@/components/payments/PaymentStatusWatcher";
 import { PayNowButton } from "@/components/payments/PayNowButton";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getShopperUser } from "@/lib/auth/session";
 import {
   getGuestAccessPhone,
   getGuestOrderDetail,
@@ -43,8 +44,8 @@ export default async function OrderDetailPage({
   // Satu halaman untuk guest dan customer. Customer lewat sesi; guest lewat
   // cookie bertanda-tangan tanpa login. Query mengembalikan null untuk pesanan
   // milik orang lain atau ID bukan UUID, sehingga keduanya jadi 404
-  // (AC-ORDER-02-04).
-  const user = await getCurrentUser();
+  // (AC-ORDER-02-04). Role non-customer diarahkan ke area admin.
+  const user = await getShopperUser();
   const guestPhone = user ? null : await getGuestAccessPhone();
 
   const loadOrder = () =>
@@ -69,7 +70,7 @@ export default async function OrderDetailPage({
   const address = (order.shippingAddress ?? {}) as AddressJson;
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-6 px-4 py-10">
+    <PageContainer>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold tracking-tight">
@@ -149,11 +150,23 @@ export default async function OrderDetailPage({
               </dt>
               <dd>{formatRupiah(Number(order.shippingCost))}</dd>
             </div>
+            {Number(order.discount) > 0 ? (
+              <div className="flex justify-between">
+                <dt className="text-muted-foreground">Diskon voucher</dt>
+                <dd>-{formatRupiah(Number(order.discount))}</dd>
+              </div>
+            ) : null}
             <div className="flex justify-between border-t border-border pt-2 font-semibold">
               <dt>Total</dt>
               <dd>{formatRupiah(Number(order.total))}</dd>
             </div>
           </dl>
+          <Link
+            href={`/orders/${order.id}/invoice`}
+            className="mt-4 inline-flex h-9 items-center rounded-md border border-input px-3 text-sm hover:bg-accent"
+          >
+            Lihat Invoice
+          </Link>
           {order.status === "WAITING_PAYMENT" ? (
             <div className="mt-4 flex flex-col gap-3">
               {order.stockReservedUntil ? (
@@ -179,6 +192,6 @@ export default async function OrderDetailPage({
       >
         {user ? "Kembali ke daftar pesanan" : "Lacak pesanan lain"}
       </Link>
-    </div>
+    </PageContainer>
   );
 }

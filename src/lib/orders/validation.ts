@@ -94,6 +94,19 @@ export const orderCreateSchema = z.object({
     .min(1, "Layanan wajib dipilih")
     .max(100, "Layanan tidak valid"),
   address: shippingAddressSchema,
+  // Maksimal 2 voucher (PRD 7.5). Potongan dihitung ulang di server; klien
+  // hanya mengirim kode.
+  voucherCodes: z
+    .array(
+      z
+        .string({ invalid_type_error: "Kode voucher tidak valid" })
+        .trim()
+        .min(1, "Kode voucher wajib diisi")
+        .max(30, "Kode voucher tidak valid"),
+    )
+    .max(2, "Maksimal 2 voucher per transaksi")
+    .optional()
+    .default([]),
   guestPhone: phoneSchema.optional(),
   guestEmail: z
     .union([

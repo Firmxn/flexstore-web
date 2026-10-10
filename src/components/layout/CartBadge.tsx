@@ -2,7 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { getCartIdentity, getCartItemCount } from "@/lib/cart";
+import { getCartAccess, getCartItemCount } from "@/lib/cart";
 
 // Komponen async di dalam Suspense (Header): jumlah item dibaca per request
 // dari Redis/Postgres, lalu di-stream ke shell halaman yang sudah terprerender.
@@ -13,8 +13,11 @@ export async function CartBadge() {
   // sama seperti HeaderUserMenu.
   await connection();
 
-  const identity = await getCartIdentity();
-  const count = await getCartItemCount(identity);
+  // Role non-customer (mis. admin) tidak berbelanja: badge disembunyikan.
+  const access = await getCartAccess();
+  if (!access.ok) return null;
+
+  const count = await getCartItemCount(access.identity);
 
   return (
     <Link
