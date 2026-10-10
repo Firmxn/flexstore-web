@@ -15,3 +15,13 @@ export async function requireStoreAdminPage() {
 
   return user;
 }
+
+// Untuk halaman storefront yang butuh login (riwayat pesanan, PH-03). Semua
+// role yang punya sesi boleh melihat riwayat pesanannya sendiri.
+export async function requireCustomerPage() {
+  const user = await getCurrentUser();
+
+  if (!user) redirect("/login");
+
+  return user;
+}

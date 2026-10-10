@@ -8,6 +8,14 @@ export const shippingCalculateSchema = z.object({
     .trim()
     .regex(/^\d{1,10}$/, "Tujuan tidak valid")
     .optional(),
+  // Item terpilih di keranjang (checkbox). Kalau kosong, seluruh keranjang
+  // dihitung. Kuantitas tetap diambil dari keranjang, bukan dari body.
+  variantIds: z
+    .array(z.string().uuid("Varian tidak valid"), {
+      invalid_type_error: "Pilihan produk tidak valid",
+    })
+    .max(50, "Terlalu banyak produk dipilih")
+    .optional(),
 });
 
 export const citySearchSchema = z.object({

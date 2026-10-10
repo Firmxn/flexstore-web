@@ -43,6 +43,17 @@ async function getRawItems(
   }));
 }
 
+// Dipakai checkout (PH-03) untuk membaca isi keranjang mentah: kuantitas dari
+// keranjang, sedangkan harga dan berat diambil ulang dari varian saat pesanan
+// dibuat. Harga snapshot keranjang tidak dipakai untuk pesanan.
+export type RawCartItem = { variantId: string; quantity: number; price: number };
+
+export async function getCartRawItems(
+  identity: CartIdentity,
+): Promise<RawCartItem[]> {
+  return getRawItems(identity);
+}
+
 // Keranjang disimpan minimal (variantId, quantity, snapshot harga); info
 // produk diperkaya saat dibaca supaya halaman cart selalu menampilkan data
 // terbaru (stok, status, gambar).

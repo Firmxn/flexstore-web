@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { requireStoreAdmin } from "@/lib/auth/guard";
 import { getBrandById } from "@/lib/brands";
 import { getCategoryById } from "@/lib/categories";
@@ -77,6 +78,18 @@ export async function DELETE(_request: Request, context: Context) {
     await deleteProduct(id);
     return apiSuccess({ deleted: true });
   } catch (error) {
+    // Produk yang pernah dipesan tidak boleh dihapus supaya riwayat pesanan
+    // tetap utuh (OrderItem.variantId memakai Restrict). Lihat docs/04 PH-03.
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2003"
+    ) {
+      return apiError(
+        "PRODUCT_IN_USE",
+        "Produk tidak bisa dihapus karena sudah pernah dipesan",
+        409,
+      );
+    }
     return prismaErrorResponse(error, "api/admin/products/[id]:DELETE");
   }
 }

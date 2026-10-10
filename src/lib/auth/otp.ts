@@ -9,6 +9,28 @@ const SEND_WINDOW_SECONDS = 60 * 60;
 const otpKey = (phone: string) => `otp:${phone}`;
 const attemptsKey = (phone: string) => `otp:attempts:${phone}`;
 const sendLimitKey = (phone: string) => `otp:send-limit:${phone}`;
+const verifiedKey = (phone: string) => `phone-verified:${phone}`;
+
+// Penanda "nomor ini sudah lolos OTP" disimpan di Redis (server-side), bukan di
+// cookie, supaya checkout guest tidak bisa memalsukan nomor terverifikasi.
+// Berlaku 1 jam: cukup untuk mengisi form checkout setelah verifikasi.
+const PHONE_VERIFIED_TTL_SECONDS = 60 * 60;
+
+export async function markPhoneVerified(phone: string): Promise<void> {
+  try {
+    await redis.set(verifiedKey(phone), "1", {
+      ex: PHONE_VERIFIED_TTL_SECONDS,
+    });
+  } catch (error) {
+    // Verifikasi tetap dianggap sukses; kegagalan penanda hanya ke log.
+    console.error("[otp] gagal menandai nomor terverifikasi", { phone, error });
+  }
+}
+
+export async function isPhoneVerified(phone: string): Promise<boolean> {
+  const value = await redis.get<string>(verifiedKey(phone));
+  return value === "1";
+}
 
 export type SendOtpResult =
   | { ok: true }
@@ -127,6 +149,7 @@ async function checkVerification(
     if (check.status === "approved") {
       await redis.del(otpKey(phone));
       await redis.del(attemptsKey(phone));
+      await markPhoneVerified(phone);
       return { ok: true };
     }
     if (check.status === "expired") {

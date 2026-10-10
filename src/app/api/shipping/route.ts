@@ -27,6 +27,17 @@ export async function POST(request: Request) {
       return apiError("CART_EMPTY", "Keranjang kosong", 400);
     }
 
+    // Hanya item terpilih yang dihitung (checkbox di /cart). Kuantitas tetap
+    // berasal dari keranjang; daftar ID dari klien hanya menyaring.
+    const selectedIds = parsed.data.variantIds;
+    const items =
+      selectedIds && selectedIds.length > 0
+        ? cart.items.filter((item) => selectedIds.includes(item.variantId))
+        : cart.items;
+    if (items.length === 0) {
+      return apiError("CART_EMPTY", "Tidak ada item terpilih", 400);
+    }
+
     // Tujuan hanya wajib kalau API ongkir aktif; tanpa API key tarif flat dipakai.
     if (configured && !parsed.data.destinationId) {
       return apiError("VALIDATION_ERROR", "Tujuan wajib dipilih", 400, "destinationId");
@@ -38,7 +49,7 @@ export async function POST(request: Request) {
     // data produk yang diisi admin, bukan dari body request. Env hanya dipakai
     // sebagai cadangan untuk varian yang beratnya 0/belum diisi.
     const fallbackGram = settings.weightPerItemGram;
-    const weightGram = cart.items.reduce(
+    const weightGram = items.reduce(
       (total, item) =>
         total +
         item.quantity * (item.weightGram > 0 ? item.weightGram : fallbackGram),

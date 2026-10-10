@@ -10,9 +10,15 @@ import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 
 type Step = "phone" | "code" | "verified";
 
+type OtpVerificationFormProps = {
+  // Dipakai alur checkout (PH-03): memberi tahu nomor yang sudah terverifikasi
+  // supaya form pesanan bisa mengisi `guestPhone`.
+  onVerified?: (phone: string) => void;
+};
+
 // AUTH-01: verifikasi nomor HP guest lewat OTP.
-// Dipakai di /verify-phone (demo PH-01) dan nanti di alur checkout.
-export function OtpVerificationForm() {
+// Dipakai di /verify-phone (demo PH-01) dan alur checkout (PH-03).
+export function OtpVerificationForm({ onVerified }: OtpVerificationFormProps = {}) {
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
@@ -65,6 +71,7 @@ export function OtpVerificationForm() {
       });
       setNotice(null);
       setStep("verified");
+      onVerified?.(phone);
     } catch (caught) {
       setError(toErrorMessage(caught));
     } finally {

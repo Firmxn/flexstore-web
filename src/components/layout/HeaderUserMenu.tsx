@@ -23,6 +23,12 @@ export async function HeaderUserMenu() {
           Produk
         </Link>
         <Link
+          href="/track-order"
+          className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          Lacak
+        </Link>
+        <Link
           href="/login"
           className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
@@ -45,6 +51,12 @@ export async function HeaderUserMenu() {
         className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
       >
         Produk
+      </Link>
+      <Link
+        href="/orders"
+        className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
+      >
+        Pesanan
       </Link>
       {user.role === "STORE_ADMIN" ? (
         <Link

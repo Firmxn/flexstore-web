@@ -1,10 +1,8 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { CartItemRow } from "@/components/cart/CartItemRow";
-import { CartSummary } from "@/components/cart/CartSummary";
+import { CartView } from "@/components/cart/CartView";
 import { getCart, getCartIdentity } from "@/lib/cart";
 import { isShippingApiConfigured } from "@/lib/shipping";
-import { formatRupiah } from "@/lib/utils/format";
 
 export const metadata = { title: "Keranjang" };
 
@@ -42,39 +40,17 @@ export default async function CartPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-          <ul className="rounded-xl border border-border bg-background">
-            {cart.items.map((item) => (
-              <CartItemRow
-                key={item.variantId}
-                variantId={item.variantId}
-                productName={item.productName}
-                productSlug={item.productSlug}
-                variantName={item.variantName}
-                sku={item.sku}
-                imageUrl={item.imageUrl}
-                price={item.price}
-                quantity={item.quantity}
-                stock={item.stock}
-                available={item.productStatus === "ACTIVE"}
-              />
-            ))}
-          </ul>
-
-          <CartSummary
-            subtotal={cart.subtotal}
-            itemCount={cart.itemCount}
+        <>
+          <p className="text-sm text-muted-foreground">
+            Centang item yang ingin di-checkout. Item yang tidak dicentang
+            tetap tersimpan di keranjang.
+          </p>
+          <CartView
+            items={cart.items}
             shippingConfigured={isShippingApiConfigured()}
           />
-        </div>
+        </>
       )}
-
-      {cart.items.length > 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Total sementara {formatRupiah(cart.subtotal)} sebelum ongkos kirim.
-          Checkout dan pembuatan pesanan menyusul di PH-03.
-        </p>
-      ) : null}
     </div>
   );
 }

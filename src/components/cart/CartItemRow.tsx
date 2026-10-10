@@ -19,6 +19,8 @@ type CartItemRowProps = {
   quantity: number;
   stock: number;
   available: boolean;
+  selected: boolean;
+  onSelectChange: (selected: boolean) => void;
 };
 
 export function CartItemRow({
@@ -32,6 +34,8 @@ export function CartItemRow({
   quantity,
   stock,
   available,
+  selected,
+  onSelectChange,
 }: CartItemRowProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -73,6 +77,15 @@ export function CartItemRow({
   return (
     <li className="flex flex-col gap-3 border-b border-border p-4 last:border-b-0">
       <div className="flex gap-4">
+        <input
+          type="checkbox"
+          className="mt-1 h-4 w-4 shrink-0"
+          checked={selected}
+          disabled={!available}
+          onChange={(event) => onSelectChange(event.target.checked)}
+          aria-label={`Pilih ${productName} ${variantName}`}
+        />
+
         <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
           {imageUrl ? (
             <Image
