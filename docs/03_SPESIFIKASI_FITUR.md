@@ -11,7 +11,7 @@
 
 ## 1. Identitas dan indeks fitur
 
-- **Versi / tanggal:** v1.2 / 2026-10-10
+- **Versi / tanggal:** v1.3 / 2026-10-10
 - **Versi PRD / SDD:** PRD v1.0, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
@@ -36,8 +36,8 @@
 | | | ORDER-02 | Create Order (Customer) | Draft | [ORDER-02](#order-02) |
 | | | ORDER-03 | Order History | Draft | [ORDER-03](#order-03) |
 | | | ORDER-04 | Track Order (Public) | Draft | [ORDER-04](#order-04) |
-| **Phase 4** | **MOD-PAY** | PAY-01 | Create Payment (Xendit) | Draft | [PAY-01](#pay-01) |
-| | | PAY-02 | Webhook Handler (Xendit) | Draft | [PAY-02](#pay-02) |
+| **Phase 4** | **MOD-PAY** | PAY-01 | Create Payment (Xendit) | Terimplementasi | [PAY-01](#pay-01) |
+| | | PAY-02 | Webhook Handler (Xendit) | Terimplementasi | [PAY-02](#pay-02) |
 | **Phase 5** | **MOD-VOUCH** | VOUCH-01 | Apply Voucher | Belum dirinci | - |
 | | | VOUCH-02 | Voucher CRUD (Admin) | Belum dirinci | - |
 | | **MOD-NOTIF** | NOTIF-01 | Send Email Notification | Belum dirinci | - |
@@ -754,7 +754,7 @@ Tidak ada.
 
 - **Prasyarat:** Keranjang tidak kosong
 - **Pemicu:** User memilih tujuan lalu klik "Hitung Ongkos Kirim"
-- **Titik masuk:** Ringkasan di halaman `/cart`
+- **Titik masuk:** Halaman `/checkout` (setelah item dicentang di `/cart`)
 - **Jika tidak terpenuhi:** Endpoint menjawab `400 CART_EMPTY`
 
 ### 3. Hak akses
@@ -776,7 +776,7 @@ Tidak ada.
 
 | Langkah | Tindakan | Respons | Hasil |
 | --- | --- | --- | --- |
-| 1 | User mengetik nama kecamatan | `GET /api/shipping/cities?search=...` | Daftar tujuan (id + label) |
+| 1 | User mengetik nama kecamatan | `GET /api/shipping/cities?search=...` | Daftar tujuan (id + label + provinsi/kota/kecamatan/kelurahan/kode pos) |
 | 2 | User memilih tujuan | Client menyimpan `destinationId` | Tujuan terpilih |
 | 3 | User klik "Hitung Ongkos Kirim" | `POST /api/shipping` | Server menghitung berat = jumlah (kuantitas x berat varian); berat varian dibaca dari data produk |
 | 4 | System | Panggil RajaOngkir, cache 10 menit per (origin, tujuan, berat) | Daftar opsi kurir |
@@ -786,7 +786,7 @@ Tidak ada.
 
 - **Hasil:** `{source, cached, options:[{courier,code,service,description,cost,etd}]}` — berat paket **tidak** ikut di respons supaya tidak terbaca customer/guest; berat tetap dipakai server sebagai kunci cache dan parameter RajaOngkir
 - **Data dibaca:** Keranjang (kuantitas per item), berat varian dari data produk, pengaturan env (origin, kurir)
-- **Data dibuat:** Cache Redis `ship:cost:*` (TTL 10 menit), `ship:search:*` (TTL 5 menit)
+- **Data dibuat:** Cache Redis `ship:cost:*` (TTL 10 menit), `ship:search:v2:*` (TTL 5 menit; versi naik saat bentuk entri bertambah field)
 - **Kondisi akhir:** Ongkir terhitung; belum ada pesanan yang dibuat (itu PH-03)
 - **Setelah reload:** Hasil hitung tidak disimpan di klien; user menghitung ulang bila perlu
 
@@ -893,7 +893,7 @@ Tidak ada.
 | guestPhone | String | Ya (guest) | Format +62xxx **dan** sudah diverifikasi lewat OTP | "Nomor HP belum diverifikasi" |
 | guestEmail | String | Tidak | Valid email format | "Email tidak valid" |
 | shippingAddress | JSON | Ya | name, phone, street, city, province, postalCode | "Alamat lengkap wajib diisi" |
-| destinationId | String | Ya | ID kecamatan hasil pencarian tujuan | "Tujuan wajib dipilih" |
+| destinationId | String | Ya | ID kecamatan hasil pencarian tujuan; **sumber ongkir sekaligus sumber `city`/`province`/`postalCode`** yang diisi otomatis di UI | "Tujuan wajib dipilih" |
 | courierCode, service | String | Ya | `courierCode` + `service` harus cocok dengan salah satu opsi hasil hitung server | "Metode pengiriman tidak valid" |
 | voucherCodes | String[] | Tidak | **Ditunda ke PH-05 (VOUCH-01)** | - |
 
@@ -903,8 +903,8 @@ Tidak ada.
 | --- | --- | --- | --- |
 | 1 | Guest pilih item di `/cart` lalu klik "Checkout" | Halaman `/checkout` dibuka dengan daftar `variantIds` terpilih | Form checkout tampil |
 | 2 | Guest verifikasi nomor HP (bila belum) | `POST /api/otp/send` lalu `POST /api/otp/verify` | Nomor ditandai terverifikasi di Redis |
-| 3 | Guest isi alamat dan email (opsional) | Validasi Zod | Data valid |
-| 4 | Guest pilih tujuan dan kurir | `POST /api/shipping` untuk item terpilih | Opsi kurir dan biaya tampil |
+| 3 | Guest pilih kecamatan tujuan | `GET /api/shipping/cities?search=...` | `city`/`province`/`postalCode` terisi otomatis (read-only); alamat lengkap + email (opsional) diisi manual |
+| 4 | Guest hitung ongkir dan pilih kurir | `POST /api/shipping` untuk item terpilih | Opsi kurir dan biaya tampil |
 | 5 | Guest klik "Buat Pesanan" | `POST /api/orders/create`: kurangi stok (reservasi), buat Order + OrderItem, hapus item terpilih dari keranjang | Pesanan dibuat (Waiting Payment) |
 | 6 | System | Tampilkan konfirmasi berisi nomor pesanan dan tautan lacak | Nomor pesanan dan tautan `/track-order` |
 
@@ -962,7 +962,7 @@ Tidak ada.
 | AC-ORDER-01-03 | Guest | Buat pesanan memakai voucher | **Ditunda ke PH-05 (VOUCH-01)** |
 | AC-ORDER-01-04 | Guest | Buat pesanan saat stok tidak cukup | `400 INSUFFICIENT_STOCK`, tidak ada pesanan, stok tidak berubah |
 | AC-ORDER-01-05 | Guest mengisi email | Buat pesanan | **Ditunda ke PH-05 (NOTIF-01)**; email tetap disimpan di pesanan |
-| AC-ORDER-01-06 | Pesanan dibuat, 10 menit tanpa pembayaran | Buka riwayat atau lacak pesanan | Reservasi dilepas, stok kembali, status CANCELED |
+| AC-ORDER-01-06 | Pesanan dibuat, melewati masa bayar (`XENDIT_INVOICE_DURATION`) tanpa pembayaran | Buka riwayat atau lacak pesanan | Reservasi dilepas, stok kembali, status CANCELED |
 | AC-ORDER-01-07 | Hanya sebagian item dicentang di `/cart` | Buat pesanan | Hanya item tercentang menjadi OrderItem; item tercentang dihapus dari keranjang, sisanya tetap |
 | AC-ORDER-01-08 | Klien mengirim biaya ongkir sendiri di body | Buat pesanan | Biaya dari klien diabaikan; server memakai hasil hitung ulang kurir + layanan terpilih |
 | AC-ORDER-01-09 | Dua permintaan bersamaan untuk varian berstok 1 | Keduanya diproses | Hanya satu berhasil; yang lain `400 INSUFFICIENT_STOCK` (tanpa overselling) |
@@ -979,13 +979,13 @@ Tidak ada.
 ### 12. Batas fitur
 
 - **Termasuk:** Guest checkout, verifikasi OTP, pemilihan item, reservasi stok, ongkir dari berat varian
-- **Tidak termasuk:** Pembayaran (PH-04), voucher (PH-05), email konfirmasi (PH-05), alamat tersimpan (belum masuk peta fase), re-order
+- **Tidak termasuk:** Pembayaran (PH-04), voucher (PH-05), email konfirmasi (PH-05), alamat tersimpan (PH-07), re-order
 - **Ketergantungan:** AUTH-01 (OTP), MOD-CART, MOD-SHIP
 
 ### 13. Pertanyaan terbuka
 
 - Pelepasan reservasi 10 menit memakai **pelepasan malas**: diperiksa saat ada permintaan yang membaca pesanan, bukan lewat penjadwal. Alasan: Vercel Cron di paket Hobby hanya berjalan harian sehingga tidak cocok untuk batas 10 menit, sedangkan pelepasan malas tidak butuh infrastruktur tambahan dan tetap idempoten. Rincian: `docs/04` bagian 6.
-- Batas 10 menit (AC-ORDER-01-06) berasal dari SDD 4.4, sementara PAY-01 memberi masa bayar 24 jam. Selisih ini diselesaikan di PH-04: perpanjang `stockReservedUntil` saat pembayaran dibuat, atau selaraskan batas bayar.
+- **Selesai di PH-04:** batas reservasi kini sama dengan masa bayar invoice Xendit, diambil dari env `XENDIT_INVOICE_DURATION` (detik). Saat pembayaran dibuat, `stockReservedUntil` diselaraskan ke `expiry_date` invoice sehingga stok tidak dilepas saat pembeli masih bisa membayar.
 - Stok dikurangi saat pesanan dibuat lalu dikembalikan saat reservasi kedaluwarsa. PH-04 tidak perlu mengurangi stok lagi saat pembayaran berhasil — cukup mengubah status pesanan.
 
 ---
@@ -1100,12 +1100,12 @@ Tidak ada.
 ### 12. Batas fitur
 
 - **Termasuk:** Checkout customer, pemilihan item, reservasi stok, ongkir dari berat varian
-- **Tidak termasuk:** Alamat tersimpan (belum masuk peta fase), pembayaran (PH-04), voucher (PH-05), email (PH-05)
+- **Tidak termasuk:** Alamat tersimpan (PH-07), pembayaran (PH-04), voucher (PH-05), email (PH-05)
 - **Ketergantungan:** MOD-AUTH (sesi), MOD-CART, MOD-SHIP, ORDER-01 (logika pembuatan pesanan yang sama)
 
 ### 13. Pertanyaan terbuka
 
-- Alamat tersimpan (maks 5, PRD 5.8) belum punya fase di peta `docs/04`. Sementara ini alamat diisi per pesanan dan disimpan sebagai `shippingAddress` (JSON) di Order, sesuai SDD 6.2.
+- **Diperbarui 2026-10-10:** alamat tersimpan (maks 5, PRD 5.8) kini punya fase — **PH-07 Customer Management** (`docs/04` bagian 12). Sampai fase itu selesai, alamat tetap diisi per pesanan dan disimpan sebagai `shippingAddress` (JSON) di Order, sesuai SDD 6.2.
 
 ---
 
@@ -1193,7 +1193,7 @@ Tidak ada.
 | AC-ORDER-03-02 | Customer punya pesanan | Buka `/orders/[id]` miliknya | Detail lengkap tampil |
 | AC-ORDER-03-03 | Customer A | Buka `/orders/[id]` milik customer B | `404` |
 | AC-ORDER-03-04 | Tanpa sesi | Buka `/orders` | Dialihkan ke `/login` |
-| AC-ORDER-03-05 | Pesanan kedaluwarsa (> 10 menit, belum dibayar) | Buka `/orders` | Status CANCELED, stok sudah kembali |
+| AC-ORDER-03-05 | Pesanan melewati masa bayar (`XENDIT_INVOICE_DURATION`, belum dibayar) | Buka `/orders` | Status CANCELED, stok sudah kembali |
 
 ### 11. Contoh data
 
@@ -1334,46 +1334,48 @@ Tidak ada.
 | Modul | MOD-PAY |
 | Tujuan | Generate payment invoice via Xendit untuk order |
 | Aktor utama | System (triggered after order creation) |
-| Status | Draft |
+| Status | Terimplementasi (PH-04) |
 | Referensi PRD | PRD 3.1.D (Payment), PRD 7.1 (Payment Gateway) |
-| Referensi SDD | SDD 4.5 (MOD-PAY), Payment schema |
+| Referensi SDD | SDD 4.5 (MOD-PAY), SDD 6.2 (Payment schema) |
 
 ### 2. Prasyarat dan pemicu
 
-- **Prasyarat:** Order created with status WAITING_PAYMENT
-- **Pemicu:** Order creation flow (ORDER-01)
-- **Titik masuk:** `/api/payments/create`
-- **Jika tidak terpenuhi:** Cannot create payment
+- **Prasyarat:** Pesanan dibuat dengan status WAITING_PAYMENT
+- **Pemicu:** Tombol "Bayar Sekarang" (detail pesanan / layar sukses checkout)
+- **Titik masuk:** `POST /api/payments/create`
+- **Jika tidak terpenuhi:** Pembayaran tidak dibuat
 
 ### 3. Hak akses
 
 | Role | Tindakan | Cakupan | Respons |
 | --- | --- | --- | --- |
-| System (internal) | Create payment | Any order | N/A |
-| Guest/Customer (indirect) | Trigger via order | Own order | N/A |
+| Customer (sesi) | Buat pembayaran | Pesanan miliknya | `403` bila bukan pemilik |
+| Guest (nomor HP) | Buat pembayaran | Pesanan dengan `guestPhone` sama | `403` bila nomor tidak cocok |
 
 ### 4. Input dan validasi
 
 | Input | Tipe | Wajib | Validasi | Pesan error |
 | --- | --- | --- | --- | --- |
-| orderId | UUID | Ya | Order exists, status = WAITING_PAYMENT | "Order tidak valid" |
-| paymentMethod | Enum | Ya | QRIS, VIRTUAL_ACCOUNT, E_WALLET | "Metode tidak valid" |
-| amount | Decimal | Ya | = order.total | "Amount tidak sesuai" |
+| orderId | UUID | Ya | Pesanan ada, pemilik cocok, status = WAITING_PAYMENT | "Pesanan tidak ditemukan" |
+| phone | String | Guest | = `Order.guestPhone` (hanya pesanan guest) | "Anda tidak memiliki akses" |
+
+Jumlah (`amount`) tidak diterima dari klien; server memakai `Order.total` (AC-ORDER-01-08).
 
 ### 5. Alur berhasil
 
 | Langkah | Tindakan | Respons | Hasil |
 | --- | --- | --- | --- |
-| 1 | System call `/api/payments/create` | Validate order | Order valid |
-| 2 | System | Call Xendit API (create invoice) | Invoice created |
-| 3 | System | Save Payment record (externalId, status: WAITING) | Payment saved |
-| 4 | System | Return payment URL | User redirected |
+| 1 | Klien panggil `POST /api/payments/create` | Validasi pesanan + otorisasi | Pesanan valid |
+| 2 | Server | `POST /v2/invoices` ke Xendit (`invoice_duration` dari env) | Invoice dibuat |
+| 3 | Server | Simpan `Payment` (`externalId` = nomor pesanan, status PENDING, `expiresAt`) | Payment tersimpan |
+| 4 | Server | Selaraskan `Order.stockReservedUntil` = `expiry_date` invoice | Reservasi selaras |
+| 5 | Server | Balas `invoiceUrl` | Klien dialihkan ke halaman Xendit |
 
 ### 6. Output dan perubahan data
 
-- **Hasil:** Payment invoice created, payment URL returned
+- **Hasil:** Invoice Xendit dibuat, `invoiceUrl` dikembalikan
 - **Data dibaca:** Order
-- **Data dibuat:** Payment (externalId, method, status: WAITING, amount)
+- **Data dibuat:** Payment (externalId, invoiceId, invoiceUrl, status: PENDING, amount, expiresAt)
 - **Kondisi akhir:** Payment exists, linked to order
 - **Setelah reload:** Payment persists
 
@@ -1381,53 +1383,58 @@ Tidak ada.
 
 | Kondisi | Perilaku | Hasil |
 | --- | --- | --- |
-| Xendit timeout | Retry 1x | If still fail, error |
-| Payment exists | Return existing URL | No duplicate |
+| Xendit timeout/error | Tidak diulang otomatis | `502 PAYMENT_PROVIDER_ERROR`; klien bisa coba lagi |
+| Payment sudah ada | Kembalikan `invoiceUrl` yang sama | Tidak ada duplikat (idempoten) |
 
 ### 8. Kondisi gagal
 
 | Kondisi | Respons | Tindakan |
 | --- | --- | --- |
-| Order not found | "Order tidak ditemukan" | Check orderId |
-| Order not WAITING_PAYMENT | "Order sudah dibayar" | Cannot create |
-| Xendit API error | "Gagal membuat pembayaran" | Retry |
+| Order not found | `404 ORDER_NOT_FOUND` "Pesanan tidak ditemukan" | Periksa orderId |
+| Bukan pemilik / nomor guest tidak cocok | `403 FORBIDDEN` | Periksa sesi/nomor |
+| Order not WAITING_PAYMENT | `409 ORDER_NOT_PAYABLE` "Pesanan sudah tidak menunggu pembayaran" | Tidak bisa dibuat |
+| Xendit API error | `502 PAYMENT_PROVIDER_ERROR` "Gagal membuat pembayaran, coba lagi" | Ulangi |
 
 ### 9. Perilaku UI
 
-- **Halaman:** Payment instructions
-- **Elemen:** QR code (QRIS), VA number, amount, expiry timer (24h), instructions
+- **Halaman:** tombol "Bayar Sekarang" di `/orders/[id]` (customer) dan layar sukses checkout (guest + customer).
+- **Elemen:** tombol, batas waktu (`stockReservedUntil`), pesan galat.
+- **Alur:** klik -> `POST /api/payments/create` -> dialihkan ke halaman invoice Xendit (hosted page menampilkan QRIS/VA/e-wallet).
 
 | Kondisi | Tampilan | Tindakan |
 | --- | --- | --- |
-| Loading | Spinner | Wait |
-| Created | Show QR/VA, countdown | Pay |
-| Error | Error, retry button | Retry |
+| Loading | Tombol "Mengalihkan ke pembayaran..." | Tunggu |
+| Created | Halaman invoice Xendit | Bayar |
+| Error | Pesan galat, tombol bisa dicoba lagi | Ulangi |
 
 ### 10. Kriteria penerimaan
 
 | ID | Kondisi awal | Ketika | Hasil |
 | --- | --- | --- | --- |
-| AC-PAY-01-01 | Order (Waiting) | Create payment QRIS | Invoice created, QR shown |
-| AC-PAY-01-02 | Order (Waiting) | Create payment VA | VA number shown |
-| AC-PAY-01-03 | Payment created | Reload | Payment persists |
-| AC-PAY-01-04 | Order paid | Try create | Error "sudah dibayar" |
+| AC-PAY-01-01 | Pesanan WAITING_PAYMENT | Buat pembayaran | `200` + `invoiceUrl` Xendit |
+| AC-PAY-01-02 | Pembayaran sudah ada | Buat ulang | `200`, `invoiceUrl` sama (idempoten) |
+| AC-PAY-01-03 | Setelah dibuat | Reload halaman | Payment tetap ada; `expiresAt` = masa berlaku invoice |
+| AC-PAY-01-04 | Pesanan sudah dibayar/dibatalkan | Buat pembayaran | `409 ORDER_NOT_PAYABLE` |
+| AC-PAY-01-05 | Bukan pemilik (sesi lain / nomor guest tidak cocok) | Buat pembayaran | `403 FORBIDDEN` |
 
 ### 11. Contoh data
 
 | Skenario | Data | Hasil | Kriteria |
 | --- | --- | --- | --- |
-| Valid QRIS | orderId: valid, method: QRIS, amount: 100000 | Payment created | AC-PAY-01-01 |
-| Order paid | order.status: PROCESSING | Error | AC-PAY-01-04 |
+| Valid | orderId valid, pemilik cocok | `200` + invoiceUrl | AC-PAY-01-01 |
+| Idempoten | orderId sama dipanggil dua kali | invoiceUrl sama | AC-PAY-01-02 |
+| Sudah dibayar | order.status: PROCESSING | `409` | AC-PAY-01-04 |
 
 ### 12. Batas fitur
 
-- **Termasuk:** Create payment (QRIS, VA, E-Wallet)
-- **Tidak termasuk:** Webhook (PAY-02), refund
-- **Ketergantungan:** Xendit API, ORDER-01
+- **Termasuk:** Create invoice Xendit (hosted page: QRIS/VA/e-wallet), idempotensi
+- **Tidak termasuk:** Webhook (PAY-02), refund, pemilihan metode per-channel
+- **Ketergantungan:** Xendit Invoice API v2, ORDER-01
 
 ### 13. Pertanyaan terbuka
 
-Tidak ada.
+- Pemilihan metode per-channel (QRIS/VA/e-wallet langsung, tanpa hosted page) ditunda. PH-04 memakai Invoice API; bila dibutuhkan, ganti ke `/v3/payment_requests`.
+- Masa bayar diatur `XENDIT_INVOICE_DURATION` (detik). Nilai yang sama menjadi batas reservasi stok.
 
 ---
 
@@ -1441,69 +1448,70 @@ Tidak ada.
 | Modul | MOD-PAY |
 | Tujuan | Process Xendit webhook untuk update payment/order status |
 | Aktor utama | Xendit (external) |
-| Status | Draft |
+| Status | Terimplementasi (PH-04) |
 | Referensi PRD | PRD 3.1.D (Payment), PRD 5.2 (Payment Rules) |
-| Referensi SDD | SDD 4.5 (MOD-PAY), Webhook idempotency |
+| Referensi SDD | SDD 4.5 (MOD-PAY), SDD 6.3 (webhook idempotency) |
 
 ### 2. Prasyarat dan pemicu
 
-- **Prasyarat:** Payment created, customer paid
-- **Pemicu:** Xendit POST webhook
-- **Titik masuk:** `/api/webhooks/xendit`
-- **Jika tidak terpenuhi:** N/A (external)
+- **Prasyarat:** Payment dibuat, pembeli membayar (atau invoice kedaluwarsa)
+- **Pemicu:** Xendit POST webhook (invoice callback)
+- **Titik masuk:** `POST /api/webhooks/xendit`
+- **Jika tidak terpenuhi:** N/A (eksternal)
 
 ### 3. Hak akses
 
 | Role | Tindakan | Cakupan | Respons |
 | --- | --- | --- | --- |
-| Xendit (verified sig) | Send webhook | Any payment | N/A |
-| Invalid sig | None | None | 401 |
+| Xendit (token valid) | Kirim webhook | Semua pembayaran | `200` |
+| Token tidak valid | Tidak ada | Tidak ada | `401` |
 
 ### 4. Input dan validasi
 
 | Input | Tipe | Wajib | Validasi | Pesan |
 | --- | --- | --- | --- | --- |
-| payload | JSON | Ya | Valid Xendit format | "Invalid payload" |
-| signature | String (header) | Ya | Xendit signature verify | "Invalid signature" |
-| externalId | String | Ya | Payment exists | "Payment not found" |
-| status | String | Ya | PAID, EXPIRED, FAILED | "Invalid status" |
+| payload | JSON | Ya | Zod `xenditWebhookSchema` (`id`, `external_id`, `status`) | `400 INVALID_PAYLOAD` |
+| x-callback-token | String (header) | Ya | Sama dengan `XENDIT_WEBHOOK_TOKEN` (perbandingan waktu-tetap) | `401 INVALID_CALLBACK_TOKEN` |
+| external_id | String | Ya | Payment exists | `404 PAYMENT_NOT_FOUND` |
+| status | String | Ya | PAID/SETTLED/EXPIRED | Status lain diabaikan (`200`) |
 
 ### 5. Alur berhasil (Payment Success)
 
 | Langkah | Tindakan | Respons | Hasil |
 | --- | --- | --- | --- |
-| 1 | Xendit POST | Receive payload | Webhook received |
-| 2 | System | Verify signature | Valid |
-| 3 | System | Check idempotency (Redis) | Not processed |
-| 4 | System | Find Payment by externalId | Found |
-| 5 | System | Update Payment = PAID, Order = PROCESSING | Updated |
-| 6 | System | Deduct stock, delete locks | Stock updated |
-| 7 | System | Send email | Email sent |
-| 8 | System | Mark processed (Redis 24h) | Return 200 |
+| 1 | Xendit POST | Terima payload | Webhook diterima |
+| 2 | Server | Verifikasi `x-callback-token` | Token valid |
+| 3 | Server | Klaim baris `Payment` (PENDING -> PAID) | Idempoten |
+| 4 | Server | Ubah `Order` (WAITING_PAYMENT -> PROCESSING) | Status berubah |
+| 5 | Server | Balas `200` | Xendit berhenti kirim ulang |
+
+Catatan: **stok tidak dikurangi di sini.** Stok sudah dipotong saat pesanan dibuat (PH-03); webhook PAID hanya mengubah status.
 
 ### 6. Output dan perubahan data
 
-- **Hasil:** Payment/order status updated, stock deducted
-- **Data diubah:** Payment (status, paidAt), Order (status), ProductVariant (stock), Redis (delete locks)
-- **Kondisi akhir:** Payment = PAID, Order = PROCESSING, stock reduced
-- **Efek samping:** Email sent, Redis webhook ID saved (24h)
+- **Hasil:** Status Payment/Order diperbarui. Stok tidak disentuh.
+- **Data diubah:** Payment (status, paidAt), Order (status)
+- **Kondisi akhir:** Payment = PAID, Order = PROCESSING, stok tetap (sudah dipotong saat pesanan dibuat)
+- **Efek samping:** Tidak ada. Email ditunda ke PH-05 (NOTIF-01).
 
 ### 7. Alur alternatif
 
 | Kondisi | Perilaku | Hasil |
 | --- | --- | --- |
-| EXPIRED | Payment/Order = CANCELED, release locks | Stock released |
-| FAILED | Payment/Order = CANCELED, release locks | Stock released |
-| Duplicate | Check Redis, return 200 | No duplicate |
+| EXPIRED | Payment = EXPIRED, Order = CANCELED, stok dikembalikan | Stock released |
+| Duplicate PAID | `200`, tidak diproses dua kali | No duplicate |
+| Duplicate EXPIRED | `200`, idempoten | No duplicate |
 
 ### 8. Kondisi gagal
 
 | Kondisi | Respons | Tindakan |
 | --- | --- | --- |
-| Invalid sig | 401 | Xendit retry |
-| Payment not found | 404 | Log error |
-| Already processed | 200 (no-op) | Stop retry |
-| DB fail | 500 | Xendit retry |
+| Token salah | `401 INVALID_CALLBACK_TOKEN` | Xendit retry |
+| Token belum dikonfigurasi | `503 WEBHOOK_NOT_CONFIGURED` | Log; isi `XENDIT_WEBHOOK_TOKEN` |
+| Payment not found | `404 PAYMENT_NOT_FOUND` | Log error |
+| Already processed | `200 ALREADY_PROCESSED` (no-op) | Stop retry |
+| Payload tidak valid | `400 INVALID_PAYLOAD` | Log |
+| DB fail | `500 INTERNAL_ERROR` | Xendit retry |
 
 ### 9. Perilaku UI
 
@@ -1513,32 +1521,33 @@ Tidak berlaku — background process.
 
 | ID | Kondisi awal | Ketika | Hasil |
 | --- | --- | --- | --- |
-| AC-PAY-02-01 | Payment (Waiting) | Webhook PAID | Payment/Order updated, stock deducted |
-| AC-PAY-02-02 | Payment (Waiting) | Webhook EXPIRED | Payment/Order canceled, stock released |
-| AC-PAY-02-03 | Payment (Paid) | Resend webhook | 200, no duplicate |
-| AC-PAY-02-04 | Webhook | Invalid sig | 401 |
-| AC-PAY-02-05 | Payment success | Check email | Email sent |
+| AC-PAY-02-01 | Payment PENDING | Webhook PAID | Payment PAID, Order PROCESSING, stok TIDAK berubah |
+| AC-PAY-02-02 | Payment PENDING | Webhook EXPIRED | Payment EXPIRED, Order CANCELED, stok dikembalikan |
+| AC-PAY-02-03 | Payment PAID | Webhook PAID diulang | `200`, tidak diproses dua kali |
+| AC-PAY-02-04 | Webhook | Token salah | `401` |
+| AC-PAY-02-05 | Payment sukses | Kirim email | Ditunda ke PH-05 (NOTIF-01) |
 
 ### 11. Contoh data
 
 | Skenario | Data | Hasil | Kriteria |
 | --- | --- | --- | --- |
-| Success | payload: {id: "wh_123", externalId: "order_456", status: "PAID"}, valid sig | Updated, stock deducted | AC-PAY-02-01 |
-| Duplicate | Same webhook 2x | 200 both, processed once | AC-PAY-02-03 |
+| Success | {external_id: "FS-...", status: "PAID"}, token valid | Order PROCESSING | AC-PAY-02-01 |
+| Duplicate | Webhook sama 2x | `200` keduanya, diproses sekali | AC-PAY-02-03 |
 
 ### 12. Batas fitur
 
-- **Termasuk:** Webhook (PAID, EXPIRED, FAILED), idempotency, stock update, email
-- **Tidak termasuk:** Refund webhook (separate)
-- **Ketergantungan:** PAY-01, MOD-ORDER, MOD-NOTIF
+- **Termasuk:** Webhook PAID/EXPIRED, verifikasi token, idempotensi, pelepasan stok saat EXPIRED
+- **Tidak termasuk:** Refund webhook, email (PH-05)
+- **Ketergantungan:** PAY-01, MOD-ORDER
 
 ### 13. Pertanyaan terbuka
 
-Tidak ada.
+- Idempotensi memakai klaim baris `Payment` di database (`updateMany` bersyarat), bukan penanda Redis. Redis hanya dipakai fitur lain (OTP, keranjang guest, pembatasan lacak).
+- `404 PAYMENT_NOT_FOUND` membuat Xendit mengirim ulang webhook untuk pembayaran yang tidak dikenal. Dibiarkan sesuai tabel kondisi gagal; bisa diubah ke `200` bila kebisingan retry mengganggu.
 
 ---
 
-**Status:** Draft Spesifikasi Fitur v1.0 complete (6 fitur prioritas dirinci).
+**Status:** Spesifikasi Fitur v1.3 — PAY-01/PAY-02 terimplementasi (PH-04).
 
 **Next steps:**
 1. Review spesifikasi dengan team

@@ -10,9 +10,9 @@
 | Versi / tanggal rencana | v1.0 / 2026-10-09 |
 | Versi PRD, SDD, dan spesifikasi | PRD v1.0, SDD v1.0, Spesifikasi Fitur v1.1 |
 | Reviewer / pemilik keputusan gate | Development Team / Product Owner |
-| Fase aktif | PH-03 — Checkout (Order Creation) — **Siap direview** (lihat bagian 6). PH-01 **Disetujui**, PH-02 **Disetujui** (bagian 4.7, 5.7) |
-| Task aktif / terakhir | TASK-38 — Dokumentasi dan laporan review PH-03 (selesai) |
-| Instruksi mulai / lanjut terakhir | User: "mulai phase 1" (2026-10-09), "lanjutkan" (2026-10-09), "sudah bisa saya coba akses?" (2026-10-09), "perbaiki di PH-01" + "error.tsx tambahkan di PH-01" (2026-10-09), "opsi 1 gua setuju" (2026-10-10), "jalankan 1 dan 2 dulu" (2026-10-10), "jika ada masalah kredensial yang diperlukan, skip dulu, dan lanjutkan coding sampai selesai" (2026-10-10) |
+| Fase aktif | PH-04 — Payment Integration — **Berjalan**. PH-01, PH-02, PH-03 **Disetujui** (bagian 4.7, 5.7, 6.7); revisi PH-03 pasca-persetujuan (perbaikan OTP guest + redesign urutan alamat) tercatat di bagian 6.8 |
+| Task aktif / terakhir | PH-04 — rincian task disusun setelah keputusan desain pembayaran (bagian 7) |
+| Instruksi mulai / lanjut terakhir | User: "mulai phase 1" (2026-10-09), "lanjutkan" (2026-10-09), "sudah bisa saya coba akses?" (2026-10-09), "perbaiki di PH-01" + "error.tsx tambahkan di PH-01" (2026-10-09), "opsi 1 gua setuju" (2026-10-10), "jalankan 1 dan 2 dulu" (2026-10-10), "jika ada masalah kredensial yang diperlukan, skip dulu, dan lanjutkan coding sampai selesai" (2026-10-10), "oke next lanjut ke phase 4?" (2026-10-10) |
 | Hambatan saat ini | Tidak ada. Kredensial ongkir sudah lengkap di `.env.local` (`RAJAONGKIR_API_KEY` + `SHIPPING_ORIGIN_DISTRICT_ID=17590`, Cilandak Barat, Jakarta Selatan), sehingga ongkir memakai tarif asli (`source: "api"`, 9 opsi kurir). Fallback tarif flat Rp10.000 tetap ada sebagai jalur kegagalan (SDD section 9) |
 
 ## 2. Status dan aturan gate
@@ -38,10 +38,11 @@
 | --- | --- | --- | --- | --- | --- |
 | PH-01 | Foundation (Auth + Product) | Admin/Customer login, CRUD products, view product list | MOD-AUTH (AUTH-01, AUTH-02, AUTH-03), MOD-PROD (PROD-01, PROD-02, PROD-03, PROD-04, PROD-05) | Setup project, DB, Redis, Supabase, Upstash | **Disetujui** (2026-10-10) |
 | PH-02 | Shopping Flow (Cart + Shipping) | Add to cart, update/remove cart, calculate shipping cost | MOD-CART (CART-01, CART-02, CART-03, CART-04), MOD-SHIP (SHIP-01) | PH-01 disetujui | **Disetujui** (2026-10-10) |
-| PH-03 | Checkout (Order Creation) | Guest checkout (OTP), Customer checkout, order history, track order | MOD-ORDER (ORDER-01, ORDER-02, ORDER-03, ORDER-04) | PH-02 disetujui | **Siap direview** (2026-10-10) |
-| PH-04 | Payment Integration | Create payment (Xendit), webhook handler, stock deduction | MOD-PAY (PAY-01, PAY-02) | PH-03 disetujui, Xendit sandbox setup | Belum dimulai |
+| PH-03 | Checkout (Order Creation) | Guest checkout (OTP), Customer checkout, order history, track order | MOD-ORDER (ORDER-01, ORDER-02, ORDER-03, ORDER-04) | PH-02 disetujui | **Disetujui** (2026-10-10) |
+| PH-04 | Payment Integration | Create payment (Xendit), webhook handler, stock reservation release | MOD-PAY (PAY-01, PAY-02) | PH-03 disetujui, Xendit sandbox setup | **Berjalan** (2026-10-10) |
 | PH-05 | Core Features (Voucher + Notification + Invoice) | Apply voucher, voucher CRUD, email notification, invoice PDF | MOD-VOUCH (VOUCH-01, VOUCH-02), MOD-NOTIF (NOTIF-01), MOD-INV (INV-01) | PH-04 disetujui, Resend setup | Belum dimulai |
 | PH-06 | Polish MVP (Reports + Config + Advanced) | Sales report, store settings, shipping tracking, cancel/refund order | MOD-SHIP (SHIP-02), MOD-ORDER (ORDER-05, ORDER-06), MOD-REPORT (REPORT-01), MOD-CONFIG (CONFIG-01) | PH-05 disetujui | Belum dimulai |
+| PH-07 | Customer Management (Alamat Tersimpan) | Simpan/ubah/hapus alamat (maks 5), pilih alamat saat checkout | MOD-CUST (CUST-01) | PH-03 disetujui; **tidak** bergantung PH-04..PH-06 | Belum dimulai |
 
 **Phase Checkpoint:**
 - **PH-01:** Admin bisa CRUD products, Customer bisa register/login/view products → Foundation ready
@@ -50,6 +51,7 @@
 - **PH-04:** Payment flow, webhook, stock deduction work → Payment integration complete
 - **PH-05:** Voucher calculation, email, invoice work → Core features complete
 - **PH-06:** Reports, settings, shipping tracking, cancel/refund work → MVP complete
+- **PH-07:** Customer bisa menyimpan alamat dan memilihnya saat checkout → MOD-CUST ready
 
 ---
 
@@ -193,7 +195,7 @@ database Supabase aktif (migrasi + seed dijalankan), 2026-10-09.
 | — | **A03** tidak ada raw SQL | 0 match `$queryRaw`/`$executeRaw` di `src/` dan `prisma/` | Lulus | grep |
 | — | **XSS** | 0 match `dangerouslySetInnerHTML` | Lulus | grep |
 | — | **Secrets** | 0 match pola token Twilio/Uploadthing/AUTH_SECRET/DSN. `.env*` di `.gitignore`, `!.env.example` dikecualikan | Lulus | grep + `.gitignore` |
-| — | Halaman publik | `/`, `/products`, `/login`, `/register`, `/verify-phone` → `200` | Lulus | curl |
+| — | Halaman publik | `/`, `/products`, `/login`, `/register` → `200` | Lulus | curl |
 
 **Cacat yang ditemukan dan diperbaiki selama verifikasi:**
 
@@ -204,7 +206,7 @@ database Supabase aktif (migrasi + seed dijalankan), 2026-10-09.
 | Pesan validasi berbahasa Inggris ("Required") | Pesan ke pengguna tidak konsisten | `required_error`/`invalid_type_error` Indonesia di semua schema Zod | `400 "Nama wajib diisi"` |
 | `pnpx prisma` tidak membaca `.env.local` | Perintah migrasi di dokumen gagal `P1012` | Script `db:*` dibungkus `dotenv-cli` (termasuk `db:deploy` yang sebelumnya terlewat) | `pnpm db:*` berfungsi |
 | Prefix `whatsapp:` ganda pada `TWILIO_WHATSAPP_FROM` menghasilkan alamat `whatsapp:whatsapp:+62...` | Dulu: alamat pengirim tidak valid dengan pesan error yang menyesatkan | **Digantikan, bukan diperbaiki.** Seluruh `deliverOtp` beserta `toWhatsappAddress()` dihapus saat `src/lib/auth/otp.ts` ditulis ulang memakai Twilio Verify. `TWILIO_WHATSAPP_FROM`, `TWILIO_PHONE_NUMBER`, dan `TWILIO_CONTENT_SID` kini tidak dibaca kode mana pun, jadi cacat ini tidak mungkin muncul lagi | 0 referensi ke `deliverOtp`/`toWhatsappAddress` di `src/`; hanya `TWILIO_VERIFY_SERVICE_SID` dan `TWILIO_VERIFY_CHANNEL` yang dibaca |
-| `loading.tsx` di level grup `(storefront)` membungkus **semua** halaman storefront dengan skeleton grid produk | `/login`, `/register`, `/verify-phone` menampilkan kerangka produk yang tidak relevan saat memuat | Berkas dihapus. Halaman yang memang butuh loading UI sudah punya boundary `<Suspense>` sendiri | `pnpm build` exit 0; kelima halaman publik tetap `200` |
+| `loading.tsx` di level grup `(storefront)` membungkus **semua** halaman storefront dengan skeleton grid produk | `/login`, `/register` menampilkan kerangka produk yang tidak relevan saat memuat | Berkas dihapus. Halaman yang memang butuh loading UI sudah punya boundary `<Suspense>` sendiri | `pnpm build` exit 0; halaman publik tetap `200` |
 | Tidak ada `error.tsx` / `global-error.tsx` | Kegagalan render (mis. database mati) menampilkan halaman error bawaan Next.js, bukan pesan ramah berbahasa Indonesia | Ditambahkan `src/app/error.tsx` (boundary untuk seluruh route) dan `src/app/global-error.tsx` (kegagalan root layout; menyediakan `<html>`/`<body>` sendiri). Keduanya memakai `retry` dan mencatat detail hanya ke console | Dengan `DATABASE_URL` diarahkan ke host mati: server mencatat `prisma:error ... Can't reach database server` + `digest: '1562576419'`; respons ke klien `<html id="__next_error__">` + `noindex`, **tanpa** pesan server (0 match `findFirst`/`127.0.0.1:1`) |
 | Komentar pada rute detail produk mengklaim `instant = false` membuat rute *blocking* | Klaim itu keliru dan menyesatkan pembaca berikutnya | Komentar ditulis ulang: `instant = false` hanya mengizinkan akses `params` di luar Suspense, **bukan** mengubah status HTTP | Penanda build tetap `◐` (Partial Prerender) |
 
@@ -239,7 +241,7 @@ database Supabase aktif (migrasi + seed dijalankan), 2026-10-09.
    (22 route). Rincian: bagian 4.5
 5. **Cara mencoba:**
    - Jalankan `pnpm dev`, lalu buka `http://localhost:3000`
-   - Guest OTP: buka `/verify-phone` → isi nomor → Kirim OTP → Verifikasi (**butuh sender Twilio diisi lebih dulu**, kalau kosong endpoint menjawab `502`)
+   - Guest OTP: tambahkan produk ke keranjang → buka `/checkout` → isi nomor HP → Kirim OTP → Verifikasi (**butuh sender Twilio diisi lebih dulu**, kalau kosong endpoint menjawab `502`)
    - Customer: buka `/register` → isi form → daftar → login di `/login`
    - Admin: login di `/login` dengan `admin@flexstore.local` / password yang tercetak saat `pnpm db:seed` → `/admin/products` → Tambah produk → Edit → Hapus
    - Customer: buka `/` dan `/products` → klik produk → lihat detail
@@ -478,7 +480,7 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
 | **AC-ORDER-01-05 (email)** dipindah ke PH-05 | NOTIF-01 ada di PH-05; `guestEmail` tetap disimpan di pesanan | Tidak ada pengiriman email di PH-03 |
 | Reservasi stok dilepas **malas (lazy)**, bukan penjadwal | Vercel Cron paket Hobby hanya harian, tidak cocok untuk batas 10 menit; pelepasan malas tanpa infrastruktur tambahan dan idempoten | `releaseExpiredReservations()` dipanggil saat pesanan dibuat dan saat pesanan dibaca (riwayat, detail, lacak) |
 | Stok **dikurangi saat pesanan dibuat**, dikembalikan saat reservasi kedaluwarsa | Prisma tidak bisa membandingkan dua kolom di `where` (aturan "tanpa raw SQL"), sehingga cara atomik yang tersedia adalah `stock: { decrement }` dengan syarat `stock >= qty` | PH-04 **tidak** mengurangi stok lagi saat pembayaran berhasil — cukup ubah status. Selaras dengan PRD 5.1 (stok tereservasi sejak order dibuat) |
-| Alamat disimpan sebagai `shippingAddress` (JSON) per pesanan | MOD-CUST (alamat tersimpan, maks 5) belum punya fase di peta | Tidak ada tabel `Address` di PH-03 |
+| Alamat disimpan sebagai `shippingAddress` (JSON) per pesanan | MOD-CUST (alamat tersimpan, maks 5) belum punya fase di peta | Tidak ada tabel `Address` di PH-03. **Koreksi 2026-10-10:** kini ada di PH-07 (bagian 12) |
 
 ### 6.3. Daftar task
 
@@ -491,7 +493,7 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
 | TASK-29 | API `POST /api/orders/track` + pembatasan percobaan per IP | ORDER-04 | TASK-27 | Selesai | `src/app/api/orders/track/route.ts`; T07, T08, T09, T10, T11 |
 | TASK-30 | Filter `variantIds` di `POST /api/shipping` (ongkir hanya dari item terpilih) | ORDER-01, ORDER-02 | TASK-19 | Selesai | `src/lib/shipping/validation.ts`, `src/app/api/shipping/route.ts`; T01, T01b, T02 |
 | TASK-31 | UI checkbox per baris di `/cart` + tombol "Checkout (n)" (default kosong, tidak disimpan) | ORDER-01, ORDER-02 | TASK-30 | Selesai | `src/components/cart/{CartView,CartItemRow,CartSummary}.tsx`; pemeriksaan manual |
-| TASK-32 | Halaman `/checkout` + form (guest: OTP inline; customer: data akun), pemilih kurir, ringkasan, tombol "Buat Pesanan" | ORDER-01, ORDER-02 | TASK-28, TASK-31 | Selesai | `src/app/(storefront)/checkout/page.tsx`, `src/components/checkout/CheckoutForm.tsx`, `src/components/shipping/ShippingPicker.tsx`; T04, T13 |
+| TASK-32 | Halaman `/checkout` + form (guest: OTP inline; customer: data akun), pemilih kurir, ringkasan, tombol "Buat Pesanan" | ORDER-01, ORDER-02 | TASK-28, TASK-31 | Selesai | `src/app/(storefront)/checkout/page.tsx`, `src/components/checkout/CheckoutForm.tsx`, `src/components/shipping/` (pemilih tujuan/kurir; dipecah pada revisi 6.8); T04, T13 |
 | TASK-33 | Halaman `/orders` + `/orders/[id]` (riwayat customer) | ORDER-03 | TASK-27 | Selesai | `src/app/(storefront)/orders/**`; T15, T16 |
 | TASK-34 | Halaman publik `/track-order` | ORDER-04 | TASK-29 | Selesai | `src/app/(storefront)/track-order/page.tsx`, `src/components/orders/TrackOrderForm.tsx`; T07 |
 | TASK-35 | Integrasi navigasi (tautan "Pesanan Saya", "Lacak Pesanan") | ORDER-03, ORDER-04 | TASK-33, TASK-34 | Selesai | `src/components/layout/HeaderUserMenu.tsx`; pemeriksaan manual |
@@ -571,8 +573,8 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
 
 **Pemeriksaan manual (tidak otomatis):**
 
-- `/cart`: checkbox per baris default **tidak tercentang**, tanpa tombol "pilih semua", pilihan hilang setelah reload (state React), tombol "Checkout (n item)" muncul setelah ada centang, dan "Estimasi Ongkos Kirim" hanya menghitung item tercentang.
-- `/checkout`: guest menampilkan langkah OTP lebih dulu; customer langsung ke form dengan nama/email/no HP akun; kurir baru bisa dipilih setelah tujuan dipilih; tombol "Buat Pesanan" nonaktif sampai kurir dipilih.
+- `/cart`: checkbox per baris default **tidak tercentang**, tanpa tombol "pilih semua", pilihan hilang setelah reload (state React), tombol "Checkout (n item)" muncul setelah ada centang. Tidak ada lagi blok "Estimasi Ongkos Kirim" di sini (dipindah ke `/checkout` pada revisi 6.8).
+- `/checkout`: guest menampilkan langkah OTP lebih dulu; customer langsung ke form dengan nama/email/no HP akun. Urutan input: nama + nomor HP penerima, lalu kecamatan tujuan, lalu kota/provinsi/kode pos (terisi otomatis, read-only), baru alamat lengkap; kurir baru bisa dihitung setelah kecamatan dipilih; tombol "Buat Pesanan" menolak tanpa kecamatan/kurir. Guest yang penanda OTP-nya hilang/kedaluwarsa dikembalikan ke langkah OTP saat server menjawab `403 PHONE_NOT_VERIFIED`.
 - `/orders`, `/orders/[id]`, `/track-order`: tampilan status berlabel Indonesia (`Menunggu Pembayaran`, `Dibatalkan`), tautan "Pesanan" pada menu pengguna masuk dan "Lacak" untuk tamu.
 
 **Catatan keamanan yang diperiksa:**
@@ -585,7 +587,7 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
 
 ### 6.7. Laporan untuk review
 
-**Status:** PH-03 (Checkout — ORDER-01..04) selesai dikerjakan, **siap direview**. Belum ada commit (perubahan kode + dokumen ada di working directory).
+**Status:** PH-03 (Checkout — ORDER-01..04) **Disetujui** (2026-10-10). Commit: `e1f5ab9` (kode) dan `a0a7961` (docs).
 
 **Hasil yang bisa dicoba:**
 
@@ -609,21 +611,135 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
 2. Konfirmasi pesan commit yang sudah disiapkan (usulan: dua commit terpisah — kode dan dokumentasi; belum ada yang di-`git add`).
 3. Konfirmasi apakah `SHIPPING_ORIGIN_DISTRICT_ID=17590` (Cilandak, Jakarta Selatan) sudah sesuai lokasi asal toko.
 
+### 6.8. Revisi pasca-persetujuan PH-03 (2026-10-10)
+
+PH-03 sudah disetujui dan di-commit (`e1f5ab9` kode, `a0a7961` docs), tetapi dua hal dilaporkan pengguna setelahnya dan dikerjakan sebagai revisi (bukan fase baru). Kode revisi berada di working directory, menunggu commit.
+
+**1. Bug: guest selalu ditolak `403 PHONE_NOT_VERIFIED` walau OTP sukses.**
+
+- **Akar masalah:** `src/lib/auth/otp.ts` menulis penanda `redis.set(key, "1")` lalu membacanya dengan `value === "1"`. SDK Upstash men-JSON-parse nilai saat `get`, sehingga `"1"` kembali sebagai **number 1** dan perbandingan selalu `false`. Akibatnya setiap guest yang membuat pesanan ditolak, sekalipun baru lolos OTP.
+- **Kenapa lolos verifikasi PH-03:** skrip uji `T04` menyemai penanda lewat REST mentah dengan `JSON.stringify("1")` (menyimpan string `"1"`), bukan lewat fungsi aplikasi. Bentuk itu satu-satunya yang lolos, sehingga jalur aplikasi asli tidak pernah teruji. Catatan lama di bagian 10 dan 11 bahkan membalik kesimpulannya dan ikut menutupi bug; keduanya sudah dikoreksi.
+- **Bukti probe (fungsi aplikasi langsung ke Redis):** `markPhoneVerified` lalu `isPhoneVerified` → `false`; nilai mentah `1` bertipe `number`; `1 === "1"` → `false`. Setelah perbaikan: penanda `"verified"` → `true`, nomor tanpa penanda → `false`.
+- **Perbaikan:** penanda diganti string non-JSON `"verified"` dan `isPhoneVerified` memakai `String(value) === "verified"`; `markPhoneVerified` tidak lagi menelan galat (verifikasi tidak boleh dilaporkan sukses bila penanda gagal tersimpan). Di `CheckoutForm`, respons `403 PHONE_NOT_VERIFIED` mengembalikan form ke langkah OTP.
+- **Bukti end-to-end (dev server + Supabase + Redis + RajaOngkir):** keranjang guest `200` + cookie ter-set; `POST /api/shipping` `200 source:"api"` (opsi `sicepat:HALU`); nomor belum terverifikasi → `403 {"error":"PHONE_NOT_VERIFIED"}`; nomor terverifikasi → `201 orderNumber=FS-20261010-H8X6M5`; stok kembali setelah pembatalan. Data uji dibersihkan (`orders=0`, `payments=0`, `cartItems=0`).
+
+**2. UX: alamat vs metode pengiriman tidak terhubung.**
+
+- **Masalah:** kota/provinsi/kode pos diketik manual, padahal sumber ongkir adalah `destinationId` (ID kecamatan RajaOngkir); field manual hanya catatan dan tidak memengaruhi ongkir.
+- **Perbaikan:** `searchDestinations` kini memetakan `province_name`/`city_name`/`district_name`/`subdistrict_name`/`zip_code` (sebelumnya hanya `id` + `label`). Urutan form checkout: penerima (nama, nomor HP) → kecamatan tujuan → kota/provinsi/kode pos (terisi otomatis, read-only; tetap editable bila API ongkir nonaktif) → alamat lengkap → catatan → email → kurir. Komponen pemilih dipecah: `DestinationPicker` (pencarian) + `CourierPicker` (tarif). Kunci cache pencarian naik ke `ship:search:v2:` karena bentuk entri berubah.
+- **Verifikasi:** `GET /api/shipping/cities?search=cilandak` mengembalikan field baru (`cityName:"JAKARTA SELATAN"`, `provinceName:"DKI JAKARTA"`, `zipCode:"12430"`).
+
+**3. UX: pemilih ongkir dipindah sepenuhnya ke `/checkout`.**
+
+- **Masalah:** kotak "Estimasi Ongkos Kirim" + pencarian kecamatan ada di `/cart`, lalu `/checkout` meminta memilih kecamatan lagi. Pilihan di `/cart` juga tidak terbawa karena `destinationId` tidak pernah dikirim antar halaman.
+- **Perbaikan:** blok ongkir dihapus dari ringkasan `/cart`; `CartSummary` hanya menampilkan subtotal + tombol Checkout. Pencarian kecamatan dan hitung kurir hanya ada di `/checkout`. Komponen gabungan `ShippingPicker.tsx` dihapus karena tidak terpakai lagi.
+- **Verifikasi:** `/cart` tidak lagi memuat "Estimasi Ongkos Kirim"; `pnpm lint` exit 0; `pnpm build` exit 0.
+
+**Pemeriksaan:** `pnpm lint` exit 0; `pnpm build` exit 0 (35 rute); probe OTP + end-to-end guest lulus; DB bersih.
+
 ---
 
 ## 7. Rincian Fase: PH-04 — Payment Integration
 
 ### 7.1. Tujuan dan batas
 
-- **Tujuan:** Payment flow works (Xendit), webhook handler updates order/payment status, stock deducted after payment success
-- **Termasuk:** PAY-01 (Create Payment), PAY-02 (Webhook Handler)
-- **Tidak termasuk:** Refund (PH-06)
-- **Referensi:** Spesifikasi PAY-01, PAY-02, SDD 4.5
-- **Prasyarat:** PH-03 disetujui, Xendit sandbox account
-- **Langkah demo:** Create order → Create payment (Xendit) → Pay via sandbox → Webhook received → Order status updated → Stock deducted
+- **Tujuan:** Pembayaran Xendit berjalan; webhook memperbarui status `Payment` dan `Order`; stok **tidak** dikurangi lagi saat pembayaran sukses (sudah dipotong saat pesanan dibuat di PH-03)
+- **Termasuk:** PAY-01 (Create Payment — Xendit Invoice API), PAY-02 (Webhook Handler)
+- **Tidak termasuk:** Refund (PH-06), email notifikasi (PH-05), pemilihan metode per-channel
+- **Referensi:** Spesifikasi PAY-01, PAY-02, SDD 4.4/4.5/6.2/6.3
+- **Prasyarat:** PH-03 disetujui; akun Xendit (Test Mode) + `XENDIT_SECRET_KEY` + `XENDIT_WEBHOOK_TOKEN`
+- **Langkah demo:** Buat pesanan → "Bayar Sekarang" → halaman invoice Xendit → bayar (Test Mode) → webhook PAID → status pesanan PROCESSING → stok tidak berubah
 - **Estimasi:** 2-3 hari
 
-*Task detail dirinci saat PH-03 selesai dan PH-04 dimulai.*
+### 7.2. Keputusan desain PH-04 (2026-10-10)
+
+| Isian | Keputusan | Alasan |
+| --- | --- | --- |
+| Jalur Xendit | **Invoice API v2 (hosted page)** — `POST /v2/invoices` | Satu endpoint; Xendit yang menampilkan QRIS/VA/e-wallet. Kode dan state paling sedikit (KISS). Pemilihan per-channel (`/v3/payment_requests`) ditunda |
+| Masa bayar | **Satu nilai** `XENDIT_INVOICE_DURATION` (detik, default 900 = 15 menit) untuk `invoice_duration` Xendit **dan** `stockReservedUntil` | Stok sudah dipotong saat pesanan dibuat, jadi lama stok tertahan = lama masa bayar. Dua nilai terpisah berisiko oversell |
+| Stok saat PAID | **Tidak dikurangi lagi** | Stok sudah dipotong di PH-03 (reservasi). Webhook PAID hanya mengubah status |
+| Idempotensi | Klaim baris `Payment` lewat `updateMany` bersyarat (`status: PENDING`) | Tidak butuh penanda Redis; tahan pengiriman ulang webhook |
+| Otorisasi buat pembayaran | Customer: sesi pemilik pesanan. Guest: `phone` = `Order.guestPhone` | Selaras model kepercayaan ORDER-04 (lacak publik) |
+| Titik masuk | `POST /api/payments/create`, `POST /api/webhooks/xendit` | Selaras SDD 4.5 |
+| Jumlah | Selalu dari `Order.total` (server) | Klien tidak boleh menentukan nominal |
+
+### 7.3. Daftar task
+
+| ID | Task | Hasil | Status |
+| --- | --- | --- | --- |
+| TASK-39 | Model `Payment` + enum `PaymentStatus` + migrasi | Tabel `payments` | Selesai |
+| TASK-40 | Klien Xendit + konfigurasi (`src/lib/payments/{config,client,validation}.ts`) | `createInvoice`, env | Selesai |
+| TASK-41 | Mutasi pembayaran (`createPaymentForOrder`, `applyPaidPayment`, `applyExpiredPayment`) | `src/lib/payments/mutations.ts` | Selesai |
+| TASK-42 | `POST /api/payments/create` | Endpoint + otorisasi + Zod | Selesai |
+| TASK-43 | `POST /api/webhooks/xendit` | Verifikasi token + idempotensi | Selesai |
+| TASK-44 | UI: `PayNowButton` + tombol di detail pesanan & sukses checkout | `src/components/payments/` | Selesai |
+| TASK-45 | Selaraskan reservasi stok dengan masa bayar + `cancelOrderAndReleaseStock` | `src/lib/orders/{mutations,reservations}.ts` | Selesai |
+| TASK-46 | Dokumentasi + verifikasi + laporan review PH-04 | docs/03, docs/04 | Selesai |
+
+### 7.4. Kartu task (sample: TASK-41 — Mutasi pembayaran)
+
+- **Tujuan:** Membuat invoice dan menyimpan `Payment`; menerapkan webhook secara idempoten
+- **Langkah:** `createPaymentForOrder` (otorisasi → idempoten → `createInvoice` → upsert `Payment` → selaraskan `stockReservedUntil`); `applyPaidPayment` (PENDING → PAID, Order → PROCESSING); `applyExpiredPayment` (PENDING → EXPIRED, Order → CANCELED + stok kembali)
+- **Berkas:** `src/lib/payments/{mutations,client,config,validation}.ts`, `src/lib/orders/reservations.ts`
+- **Selesai bila:** webhook PAID/EXPIRED diterapkan sekali; pengiriman ulang `200 ALREADY_PROCESSED`
+
+### 7.5. Exit criteria PH-04
+
+- [x] `Payment` + `PaymentStatus` termigrasi (`20261010041046_add_payments`)
+- [x] `POST /api/payments/create` mengembalikan `invoiceUrl` Xendit; jumlah dari `Order.total`
+- [x] Otorisasi: `403` untuk bukan pemilik / nomor guest tidak cocok
+- [x] Webhook memverifikasi `x-callback-token` (`401` bila salah, `503` bila belum dikonfigurasi)
+- [x] Webhook PAID: `Payment=PAID`, `Order=PROCESSING`, **stok tidak berubah**
+- [x] Webhook EXPIRED: `Payment=EXPIRED`, `Order=CANCELED`, stok dikembalikan
+- [x] Idempotensi: webhook ulang `200 ALREADY_PROCESSED`
+- [x] `stockReservedUntil` selaras dengan `expiry_date` invoice
+- [x] 0 `$queryRaw`/`$executeRaw`; Zod di kedua route; tanpa hardcode secret
+- [x] `pnpm lint` exit 0; `pnpm build` exit 0 (35 rute)
+- [x] Data uji dibersihkan
+
+### 7.6. Bukti verifikasi
+
+Skrip verifikasi sementara (`ph04-verify.mjs`, `ph04-guest.mjs`, `ph04-dbcheck.mjs`, dihapus setelah dipakai) dijalankan terhadap server dev + database Supabase + Xendit Test Mode asli.
+
+| Kode | Uji | Hasil |
+| --- | --- | --- |
+| V01 | Login admin (kredensial `identifier`) | `302`, sesi aktif |
+| V02 | Tambah keranjang + hitung ongkir | `200`, opsi `source:"api"` |
+| V03 | Buat pesanan | `201`, stok 25 → 24 |
+| V04 | Buat pembayaran | `200`, `invoiceUrl` `https://checkout-staging.xendit.co/...` |
+| V05 | Baris `Payment` | `PENDING`, `expiresAt` terisi |
+| V06 | `stockReservedUntil` vs `expiry_date` | drift 0 ms |
+| V07 | Buat pembayaran ulang | `200`, `invoiceUrl` sama (idempoten) |
+| V08 | Webhook token salah | `401` |
+| V09 | Webhook PAID | `200 APPLIED` |
+| V10 | Status pesanan | `PROCESSING` |
+| V11 | Status pembayaran | `PAID` + `paidAt` |
+| V12 | Stok setelah PAID | tetap 24 (tidak dikurangi lagi) |
+| V13 | Webhook PAID diulang | `200 ALREADY_PROCESSED` |
+| V14 | Pesanan kedua + webhook EXPIRED | `200 APPLIED` |
+| V15 | Status pesanan kedua | `CANCELED` |
+| V16 | Stok setelah EXPIRED | 23 → 24 (kembali) |
+| V17 | Buat pembayaran tanpa sesi | `403 FORBIDDEN` |
+| V18 | OrderId tak ada | `404 ORDER_NOT_FOUND` |
+| V19 | Body tidak valid | `400 VALIDATION_ERROR` |
+| V20 | Guest nomor salah | `403` |
+| V21 | Guest nomor cocok | `200` + `invoiceUrl` |
+| V22 | Guest tanpa nomor | `403` |
+
+**Total:** 29 PASS / 0 FAIL. Data uji dibersihkan (`orders=0`, `payments=0`, `cartItems=0`, stok seed kaos 25, `totalStock` produk cocok). `pnpm lint` exit 0; `pnpm build` exit 0 (35 rute, termasuk `ƒ /api/payments/create`, `ƒ /api/webhooks/xendit`). 0 galat tak tertangani di log dev.
+
+### 7.7. Laporan untuk review
+
+**Status:** PH-04 (Payment Integration — PAY-01, PAY-02) selesai dikerjakan, **siap direview**.
+
+**Yang bisa dicoba:**
+
+1. Buat pesanan (guest/customer) → klik "Bayar Sekarang" → dialihkan ke halaman invoice Xendit → bayar (Test Mode) → pesanan jadi "Diproses".
+2. Biarkan invoice kedaluwarsa (atau kirim webhook EXPIRED) → pesanan "Dibatalkan", stok kembali.
+
+**Prasyarat uji manual:** `XENDIT_SECRET_KEY` + `XENDIT_WEBHOOK_TOKEN` sudah diisi user; webhook publik (ngrok/cloudflared → `/api/webhooks/xendit`) atau tombol "Test webhook" dashboard Xendit. Verifikasi otomatis di 7.6 memanggil webhook langsung ke server dev (tanpa tunnel).
+
+**Catatan:** `docs/04` dulu menulis `XENDIT_CALLBACK_TOKEN` — nama kanoniknya `XENDIT_WEBHOOK_TOKEN` (dipakai kode dan `.env.example`).
 
 ---
 
@@ -702,29 +818,37 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
 | 2026-10-10 | **Stok dikurangi saat pesanan DIBUAT (reservasi), bukan saat pembayaran sukses.** Prisma tidak bisa membandingkan dua kolom di `where` (aturan "tanpa raw SQL"), jadi satu-satunya cara atomik yang tersedia adalah `stock: { decrement }` dengan syarat `stock >= qty` | PH-04 tidak lagi mengurangi stok saat pembayaran sukses — cukup mengubah status. Selaras PRD 5.1 (stok tereservasi sejak order dibuat) | `updateMany({ where: { id, stock: { gte: qty } }, data: { stock: { decrement: qty } } })` + cek `count === 0` di dalam `$transaction` | `src/lib/orders/mutations.ts`; T05, T17, T18 |
 | 2026-10-10 | **Penanda nomor HP terverifikasi disimpan di Redis, bukan cookie.** Guest tidak boleh bisa memalsukan "sudah OTP" | Checkout guest butuh bukti verifikasi tanpa memaksa login | `phone-verified:{phone}` (TTL 1 jam) di-set saat `POST /api/otp/verify` sukses; `POST /api/orders/create` menolak guest tanpa penanda (`403 PHONE_NOT_VERIFIED`) | `src/lib/auth/otp.ts`; T03, T04 |
 | 2026-10-10 | **Produk yang pernah dipesan tidak bisa dihapus.** FK `OrderItem.variantId` memakai `onDelete: Restrict`; penghapusan produk memakai cascade ke varian sehingga tertahan | Admin melihat galat yang jelas, bukan pesan "Data terkait tidak ditemukan" yang menyesatkan | Handler `DELETE /api/admin/products/[id]` menangkap `P2003` khusus → `409 PRODUCT_IN_USE` "Produk tidak bisa dihapus karena sudah pernah dipesan" | `src/app/api/admin/products/[id]/route.ts`; T21 |
-| 2026-10-10 | **Ditemukan saat verifikasi (bukan cacat kode): seeder penanda OTP di skrip uji menulis `1` (angka), sedangkan aplikasi menulis `"1"` (string JSON).** Upstash SDK men-deserialisasi JSON, jadi bentuk keduanya berbeda | Uji `T04` sempat `403` padahal penanda ada | Skrip uji diperbaiki memakai bentuk yang sama dengan aplikasi (`["SET", key, JSON.stringify("1"), "EX", 600]`). Kode aplikasi tidak diubah | Skrip verifikasi (sementara, dihapus) |
+| 2026-10-10 | **KOREKSI (lihat bagian 6.8): kesimpulan lama di baris ini salah dan justru menutupi bug.** Dulu dicatat "seeder menulis `1` (angka), aplikasi menulis `"1"` (string JSON)". Kenyataannya `redis.set(key, "1")` lewat SDK menulis byte `1` mentah, dan `get` men-JSON-parse-nya kembali menjadi **number 1**, sehingga `value === "1"` selalu `false` — setiap guest ditolak `403 PHONE_NOT_VERIFIED`. Seeder uji yang menulis `JSON.stringify("1")` justru menyimpan string `"1"` dan hanya bentuk itu yang lolos, sehingga jalur aplikasi asli tidak pernah teruji | Uji `T04` lolos secara palsu; bug baru ketahuan dari laporan pengguna | Kode diperbaiki: penanda diganti string non-JSON `"verified"` dan `isPhoneVerified` membandingkan `String(value) === "verified"`; `markPhoneVerified` tidak lagi menelan galat | `src/lib/auth/otp.ts`; bagian 6.8 |
+| 2026-10-10 | **Jalur Xendit PH-04 dipilih: Invoice API v2 (hosted page).** PAY-01 Draft menyebut tiga metode per-channel (QRIS/VA/e-wallet) lewat satu endpoint | Rancangan spesifikasi bertabrakan dengan implementasi | Invoice API dipilih (KISS); pemilihan per-channel ditunda dan dicatat di pertanyaan terbuka PAY-01. Spesifikasi PAY-01/PAY-02 direvisi (v1.3) | `docs/03` PAY-01/PAY-02 |
+| 2026-10-10 | **Masa bayar = masa reservasi stok = `XENDIT_INVOICE_DURATION` (default 900 detik).** User: "bisa 30 menit 40 menit tanpa harus buka code lagi?" | SDD 4.4 (10 menit) dan PAY-01 (24 jam) bertabrakan; dua nilai terpisah berisiko oversell | Satu nilai dari env; `stockReservedUntil` diselaraskan ke `expiry_date` invoice saat pembayaran dibuat. Ubah `.env.local` + restart, tanpa ubah kode | `src/lib/payments/config.ts`, `src/lib/orders/mutations.ts` |
+| 2026-10-10 | **Webhook PAID tidak mengurangi stok.** Selaras keputusan PH-03 (stok dipotong saat pesanan dibuat) | SDD 4.4/4.5 dan PAY-02 Draft masih menulis "deduct stock saat payment success" | Kode tidak mengurangi stok; SDD 4.4/4.5/6.3 direvisi. Webhook EXPIRED membatalkan pesanan + mengembalikan stok lewat `cancelOrderAndReleaseStock` | `src/lib/payments/mutations.ts`, `src/lib/orders/reservations.ts` |
+| 2026-10-10 | **Idempotensi webhook memakai klaim baris `Payment` di database, bukan penanda Redis** (PAY-02 Draft menyebut Redis 24 jam) | Menambah state Redis untuk hal yang bisa diselesaikan transaksi database | `updateMany({ where: { externalId, status: "PENDING" }, ... })`; `count === 0` -> `ALREADY_PROCESSED`. Redis tidak dipakai di MOD-PAY | `src/lib/payments/mutations.ts` |
+| 2026-10-10 | **Nama token webhook kanonik: `XENDIT_WEBHOOK_TOKEN`.** `docs/04` masih menulis `XENDIT_CALLBACK_TOKEN` | Dua nama untuk hal yang sama membingungkan | Kode + `.env.example` memakai `XENDIT_WEBHOOK_TOKEN`; dokumen dibetulkan | `.env.example`, `src/lib/payments/config.ts` |
+| 2026-10-10 | **Otorisasi buat pembayaran untuk guest memakai nomor HP pesanan** (`Order.guestPhone`), bukan penanda OTP | Guest tidak punya sesi; model kepercayaan lacak publik (ORDER-04) sudah memakai nomor HP | `403` bila nomor tidak cocok / tidak dikirim. Bukti V20-V22 | `src/lib/payments/mutations.ts` |
+| 2026-10-10 | **`404 PAYMENT_NOT_FOUND` pada webhook membuat Xendit mengirim ulang.** Dibiarkan sesuai tabel kondisi gagal PAY-02 | Retry berulang untuk pembayaran tak dikenal | Dicatat di pertanyaan terbuka PAY-02; bisa diubah ke `200` bila mengganggu | `src/app/api/webhooks/xendit/route.ts` |
+| 2026-10-10 | **Revisi pasca-persetujuan PH-03: bug OTP guest + redesign urutan alamat.** User: "sebagai guest ... sudah melewati [OTP], dan somehow ingin membuat pesanan masih muncul 'Verifikasi nomor HP terlebih dahulu'"; lalu "memilih kecamatan ... data kota, provinsi, kode pos terisi otomatis, kecuali alamat lengkap ... posisi input juga disesuaikan" | (1) Guest tidak bisa checkout sama sekali walau OTP sukses; (2) alamat memaksa mengetik kota/provinsi/kode pos manual padahal ongkir sudah ditentukan `destinationId` | (1) Perbaiki penanda Redis (`"verified"`), `markPhoneVerified` melempar galat, dan form checkout mereset ke langkah OTP saat `403 PHONE_NOT_VERIFIED`; (2) `ShippingDestination` diperluas (provinsi/kota/kecamatan/kelurahan/kode pos dari RajaOngkir), picker dipecah jadi `DestinationPicker` + `CourierPicker`, urutan form: penerima → kecamatan → kota/provinsi/kode pos (otomatis, read-only) → alamat lengkap | `src/lib/auth/otp.ts`, `src/lib/shipping/client.ts`, `src/components/shipping/{types,DestinationPicker,CourierPicker}.tsx`, `src/components/checkout/CheckoutForm.tsx`, `src/components/cart/{CartSummary,CartView}.tsx`; bagian 6.8 |
+| 2026-10-10 | **MOD-CUST (alamat tersimpan, maks 5, PRD 5.8) akhirnya diberi rumah: PH-07 Customer Management.** Selama ini fitur ini tercatat "belum punya fase" di tiga tempat — `docs/03` ORDER-01 bagian 12, ORDER-02 bagian 12, dan pertanyaan terbuka ORDER-02 — sementara `docs/02` bagian 899 sudah menuliskan alur target "checkout (select saved address)" | Satu fitur wajib PRD tanpa fase; alamat terpaksa diketik ulang tiap checkout dan hanya tersimpan sebagai `shippingAddress` (JSON) per pesanan | Ditempatkan di **PH-07 terpisah**, bukan disisipkan ke PH-06 yang sudah memuat REPORT-01/CONFIG-01/SHIP-02/ORDER-05/06. Prasyaratnya hanya PH-03, jadi fase ini bisa dikerjakan kapan saja setelah PH-03 disetujui tanpa menunggu PH-04..PH-06. Rincian dan daftar task: bagian 12 | `docs/04` bagian 3 dan 12; `docs/03` ORDER-01/ORDER-02 bagian 12 |
+| 2026-10-10 | **Keputusan desain awal PH-07** (dasar rancangan, bisa ditinjau ulang saat spesifikasi ditulis): (a) alamat tersimpan hanya untuk **customer login**, guest tetap mengetik per pesanan; (b) batas maksimal 5 alamat ditegakkan di **server** (Zod + pengecekan jumlah baris), bukan hanya di UI; (c) menyimpan alamat **tidak** mengubah pesanan lama — `Order.shippingAddress` tetap snapshot JSON; (d) baris `Address` menyimpan `destinationId` kecamatan supaya ongkir dihitung ulang tanpa pencarian RajaOngkir lagi | (a) sesuai PRD 5.8 yang hanya mengatur customer; (b) mencegah spam/data fiktif sesuai tujuan PRD; (c) riwayat pesanan tidak ikut berubah saat alamat diedit/dihapus; (d) mengulang hasil kerja PH-02/PH-03 | Disetujui sebagai dasar TASK-48..52 | PRD 5.8, SDD 4.8, SDD 6.2 |
+| 2026-10-10 | **Halaman `/verify-phone` dihapus.** Sejak PH-03 verifikasi nomor HP guest dilakukan langsung di langkah OTP `/checkout` memakai komponen yang sama (`OtpVerificationForm`); halaman mandiri itu tidak lagi punya tautan masuk dan menjadi rute mati | Dua tempat verifikasi membingungkan, satu di antaranya tidak terjangkau | Halaman dihapus; `OtpVerificationForm` tetap satu-satunya sumber dan komentarnya diperbarui. Referensi lama di bagian 4.5/4.6, `README.md`, dan `docs/06_SETUP_KREDENSIAL.md` dirapikan | `src/app/(storefront)/verify-phone/`, `src/components/auth/OtpVerificationForm.tsx`, `README.md`, `docs/06_SETUP_KREDENSIAL.md` |
 
 ---
 
 ## 11. Catatan lanjutan sesi
 
-- **Terakhir dikerjakan:** PH-03 TASK-25 sampai TASK-38 — implementasi dan verifikasi end-to-end selesai (menunggu review)
-- **Kondisi pekerjaan:** PH-02 **sudah di-commit** (`68e5ce8` kode, `f167fa4` dokumentasi). Perubahan PH-03 **belum di-commit**: 14 berkas termodifikasi (`docs/03`, `docs/04`, `prisma/schema.prisma`, `(storefront)/cart/page.tsx`, `api/admin/products/[id]/route.ts`, `api/shipping/route.ts`, `components/auth/OtpVerificationForm.tsx`, `components/cart/CartItemRow.tsx`, `components/cart/CartSummary.tsx`, `components/layout/HeaderUserMenu.tsx`, `lib/auth/otp.ts`, `lib/auth/session.ts`, `lib/cart/queries.ts`, `lib/shipping/validation.ts`) + 20 berkas baru (migrasi `20261009231301_add_orders/`, `(storefront)/checkout/`, `(storefront)/orders/`, `(storefront)/track-order/`, `api/orders/`, `components/cart/CartView.tsx`, `components/checkout/`, `components/orders/`, `components/shipping/`, `lib/orders/`). HEAD `f167fa4`
+- **Terakhir dikerjakan:** PH-04 TASK-39 sampai TASK-46 — implementasi dan verifikasi end-to-end selesai (menunggu review). PH-03 sudah di-commit: `e1f5ab9` (kode) + `a0a7961` (docs). Ditambah revisi pasca-persetujuan PH-03 (perbaikan OTP guest + redesign urutan alamat) — lihat bagian 6.8; kode revisi belum di-commit
+- **Kondisi pekerjaan (PH-03, riwayat):** PH-02 **sudah di-commit** (`68e5ce8` kode, `f167fa4` dokumentasi). Perubahan PH-03 **belum di-commit**: 14 berkas termodifikasi (`docs/03`, `docs/04`, `prisma/schema.prisma`, `(storefront)/cart/page.tsx`, `api/admin/products/[id]/route.ts`, `api/shipping/route.ts`, `components/auth/OtpVerificationForm.tsx`, `components/cart/CartItemRow.tsx`, `components/cart/CartSummary.tsx`, `components/layout/HeaderUserMenu.tsx`, `lib/auth/otp.ts`, `lib/auth/session.ts`, `lib/cart/queries.ts`, `lib/shipping/validation.ts`) + 20 berkas baru (migrasi `20261009231301_add_orders/`, `(storefront)/checkout/`, `(storefront)/orders/`, `(storefront)/track-order/`, `api/orders/`, `components/cart/CartView.tsx`, `components/checkout/`, `components/orders/`, `components/shipping/`, `lib/orders/`). HEAD `f167fa4`
 - **Pemeriksaan terakhir (PH-03):** `pnpm lint` exit 0; `pnpm build` exit 0 (33 rute, termasuk `ƒ /api/orders/create`, `ƒ /api/orders/track`, `ƒ /checkout`, `ƒ /orders`, `◐ /orders/[id]`, `◐ /track-order`); 23 pemeriksaan HTTP terhadap server dev + database Supabase + Redis Upstash — ongkir terfilter, gerbang OTP guest, pembuatan pesanan guest/customer, lacak publik + batas percobaan per IP, anti-overselling dua permintaan bersamaan, pelepasan reservasi kedaluwarsa (idempoten), dan pesanan lintas pengguna (rincian: bagian 6.6). 0 galat tak tertangani di log dev. Data uji dibersihkan (`orders=0`, `orderItems=0`, user `qa.ph03.*`=0, stok seed kaos 25 / sneakers 5, `totalStock` seluruh produk cocok). Pemeriksaan PH-02 sebelumnya: 40 PASS / 0 FAIL (bagian 5.5)
-- **Keputusan terakhir:** 2026-10-10 — **PH-03 siap direview**. User: "implementasi hingga phase 3 selesai" (sekaligus menyetujui PH-02). Cakupan PH-03 dipersempit sesuai bagian 6.2: pesanan dibuat tanpa baris `Payment` (PH-04), input voucher disembunyikan dan `discount` tetap 0 (PH-05), AC email dipindah ke PH-05. Reservasi stok 10 menit dilepas secara **malas** (tanpa penjadwal) dan stok **dikurangi saat pesanan dibuat** sehingga PH-04 tidak mengurangi lagi. Produk yang pernah dipesan tidak bisa dihapus (`409 PRODUCT_IN_USE`)
+- **Keputusan terakhir:** 2026-10-10 — **PH-03 Disetujui; PH-04 dikerjakan dan siap direview.** User: "oke next lanjut ke phase 4?". Keputusan PH-04 (bagian 7.2): Invoice API v2 (hosted page); masa bayar = reservasi stok = `XENDIT_INVOICE_DURATION` (default 900 detik, bisa diubah tanpa ubah kode); webhook PAID **tidak** mengurangi stok lagi; idempotensi lewat klaim baris `Payment` di database
 - **Langkah berikutnya (setelah instruksi user):**
-  1. Review dan approval PH-03; setelah disetujui, mulai PH-04 — Payment Integration (PAY-01, PAY-02)
-  2. Commit perubahan PH-03 — draf pesan disiapkan agent, `git commit` dijalankan user
-  3. (Prasyarat PH-04) `XENDIT_SECRET_KEY` dan `XENDIT_CALLBACK_TOKEN` belum ada di `.env.local`
-  4. (Opsional) Ubah `SHIPPING_ORIGIN_DISTRICT_ID=17590` kalau lokasi asal toko berbeda (lihat `docs/06` bagian 6)
-  5. (PH-01, selesai) `SEED_ADMIN_PASSWORD` sudah diisi; password dev lemah dan **wajib diganti** sebelum produksi; `pnpm db:seed` tidak menimpa akun yang sudah ada
-  6. (PH-01) Kalau menguji OTP dengan nomor selain `+6285813386371`, daftarkan nomor itu sebagai **Verified Caller ID** di Console Twilio lebih dulu
-- **Hal yang masih menghalangi:** Tidak ada yang menghalangi PH-03. Butir yang masih terbuka:
-  (a) unggah berkas Uploadthing dengan berkas nyata belum diuji (kunci API masih placeholder; gerbang
-  autentikasi sudah terverifikasi `403`/`200`) — diuji saat kunci nyata tersedia; (b) `XENDIT_SECRET_KEY`
-  dan `XENDIT_CALLBACK_TOKEN` belum ada, dibutuhkan PH-04; (c) `RESEND_API_KEY` belum ada, dibutuhkan
-  PH-05. Pengiriman OTP sudah **Lulus**, kredensial ongkir sudah lengkap (`SHIPPING_ORIGIN_DISTRICT_ID=17590`)
-  dan mode API terbukti
+  1. Review dan approval PH-04; setelah disetujui, mulai PH-05 — Core Features (Voucher, Email, Invoice PDF)
+  2. Commit perubahan PH-04 — draf pesan disiapkan agent, `git commit` dijalankan user
+  3. (PH-05) `RESEND_API_KEY` sudah ada di `.env.local`; alamat pengirim (`EMAIL_FROM`) belum diputuskan
+  4. (Opsional) Ubah `XENDIT_INVOICE_DURATION` (mis. 1800 = 30 menit) bila masa bayar perlu lebih longgar
+  5. (Opsional) Ubah `SHIPPING_ORIGIN_DISTRICT_ID=17590` kalau lokasi asal toko berbeda (lihat `docs/06` bagian 6)
+  6. (PH-01) `SEED_ADMIN_PASSWORD` dev lemah dan **wajib diganti** sebelum produksi
+- **Hal yang masih menghalangi:** Tidak ada yang menghalangi PH-04. Butir yang masih terbuka:
+  (a) verifikasi webhook dari Xendit asli (tunnel publik / tombol "Test webhook" dashboard) belum dijalankan — verifikasi 7.6 memanggil endpoint webhook langsung ke server dev; (b) unggah berkas Uploadthing
+  dengan berkas nyata belum diuji (kunci masih placeholder); (c) alamat pengirim email (`EMAIL_FROM`) belum diputuskan untuk PH-05. Pengiriman OTP, kredensial ongkir, dan kredensial Xendit Test Mode sudah lengkap.
 - **Catatan teknis yang berguna untuk sesi berikutnya:**
   - Next.js 16 mengganti `middleware.ts` menjadi `proxy.ts`, dan ekspor hasil destrukturisasi (`export const { auth: proxy } = ...`) **tidak** dapat dianalisis Next.js — harus `const { auth } = NextAuth(cfg); export default auth;`
   - Dengan `cacheComponents: true`, data URL (`params`, `searchParams`) wajib diakses di dalam `<Suspense>`
@@ -773,22 +897,73 @@ penanganan kegagalan (SDD section 9) dan masih diuji lewat tujuan tak dikenal.
   - **Pelepasan reservasi malas (lazy):** klaim baris memakai `updateMany` bersyarat (`status: "WAITING_PAYMENT"`, `stockReservedUntil: { lt: now }`) → `count === 0` berarti sudah dilepas pihak lain, jadi idempoten. Dipanggil di awal `createOrder` dan di setiap pembacaan pesanan (riwayat, detail, lacak). Tanpa penjadwal: Vercel Cron paket Hobby hanya harian, tidak cocok untuk batas 10 menit
   - **`totalStock` produk dihitung ulang dari jumlah stok varian** setiap kali stok berubah (saat pesanan dibuat dan saat reservasi dilepas) agar katalog tidak basi
   - **Ongkir pada pesanan selalu dihitung ulang di server** dari berat item terpilih; klien hanya mengirim `courierCode` + `service` yang harus cocok dengan opsi hasil hitung server (`INVALID_SHIPPING_METHOD` bila tidak ada). `destinationId` wajib **hanya** kalau API ongkir aktif — tanpa API key tarif flat yang dipakai
-  - **Penanda OTP di Redis disimpan sebagai string JSON.** `redis.set(key, "1")` menulis `"1"` (dengan tanda kutip); menulis lewat REST mentah harus memakai `JSON.stringify("1")`, bukan `1`, karena SDK men-deserialisasi JSON saat membaca sehingga `1` kembali sebagai angka dan `value === "1"` gagal
+  - **SDK Upstash men-JSON-parse nilai saat `get`.** `redis.set(key, "1")` menyimpan byte `1` mentah dan `get` mengembalikannya sebagai **number 1**, bukan string — jadi perbandingan `value === "1"` gagal. Penanda nomor HP terverifikasi kini memakai string non-JSON `"verified"` yang dikembalikan apa adanya. Pelajaran: jangan pakai string numerik sebagai penanda Redis, dan **uji lewat jalur aplikasi**, bukan lewat penulisan REST mentah (REST mentah `JSON.stringify("1")` menyimpan `"1"` dan lolos, sehingga menutupi bug). Terbukti: `{"numeric":1,"numericType":"number","numericEq":false,"word":"verified","wordEq":true}` (bagian 6.8)
   - **`OrderItem.variantId` memakai `onDelete: Restrict`** supaya riwayat pesanan tetap utuh. Menghapus produk yang pernah dipesan menghasilkan `P2003`; handler `DELETE /api/admin/products/[id]` menangkapnya khusus → `409 PRODUCT_IN_USE` (bukan `400 INVALID_REFERENCE` yang menyesatkan)
   - **`searchParams` di `/checkout` diakses langsung dengan `export const instant = false`** di berkas halaman (pola sama seperti halaman admin). Tanpa penanda itu, data URL wajib berada di dalam `<Suspense>`
   - **Nomor pesanan sebagai kunci lacak publik** dipadukan dengan nomor HP (`guestPhone` untuk pesanan guest, `User.phone` untuk pesanan customer). Salah satu tidak cocok → `404` generik; percobaan dibatasi 10 per 10 menit per IP (`track:limit:{ip}` di Redis, IP dari `x-forwarded-for`)
+  - **Xendit Invoice API v2 (PH-04):** `POST /v2/invoices` dengan `external_id`, `amount`, `description`, `currency: "IDR"`, dan `invoice_duration` (detik). Respons memuat `id`, `invoice_url`, `expiry_date`. Base URL tetap di kode (`https://api.xendit.co`, sama untuk Test & Live; mode ditentukan prefix kunci `xnd_development_`/`xnd_production_`). Kunci API diuji dengan permission `Money-in products = Write` + `Balance = Read` saja
+  - **Basic Auth Xendit:** username = secret key, password kosong. Header: `Authorization: Basic base64(key + ":")`. Webhook diverifikasi lewat header `x-callback-token` (bukan signature HMAC)
+  - **Idempotensi webhook:** klaim baris dengan `updateMany({ where: { externalId, status: "PENDING" }, data: { status: "PAID", paidAt } })`; `count === 0` → cek status baris → `ALREADY_PROCESSED`. Tidak butuh penanda Redis; transaksi database sudah cukup
+  - **Masa bayar = reservasi stok:** `XENDIT_INVOICE_DURATION` (detik) dipakai untuk `invoice_duration` Xendit dan sebagai `stockReservedUntil` awal; saat invoice dibuat, `stockReservedUntil` diselaraskan ke `expiry_date` respons. Mengubah `.env.local` + restart cukup untuk mengubah 15/30/40 menit tanpa menyentuh kode
+  - **Webhook EXPIRED membatalkan pesanan segera** lewat `cancelOrderAndReleaseStock(orderId)` (klaim `updateMany` `status: WAITING_PAYMENT` → `CANCELED` + kembalikan stok), terpisah dari pelepasan malas berbasis waktu
+  - **Otorisasi buat pembayaran:** customer dicocokkan dengan `Order.userId`; guest dicocokkan dengan `Order.guestPhone` (nomor HP dinormalisasi oleh `phoneSchema`). Jumlah selalu `Order.total`, tidak pernah dari klien
+  - **`NEXT_PUBLIC_APP_URL`** dipakai untuk `success_redirect_url`/`failure_redirect_url` invoice (`/orders/{id}` untuk customer, `/track-order` untuk guest). Bila kosong, redirect tidak dikirim
+  - **Cookie jar di skrip uji Node:** `res.headers.getSetCookie()` (Node 19.7+). Simpan pasangan `name=value` saja; nilai kosong berarti hapus cookie
 
 ---
 
-**Status:** Implementation Plan v1.0 — **PH-03 siap direview** (2026-10-10). PH-01 dan PH-02
-disetujui; pengiriman OTP **Lulus** end-to-end; soft 404 slug produk diterima apa adanya (opsi 1).
-Perubahan PH-03 belum di-commit. Cakupan PH-03: pesanan dibuat tanpa baris `Payment` (PH-04),
-tanpa voucher (PH-05), dan tanpa email (PH-05). Stok dikurangi saat pesanan dibuat (reservasi 10
-menit) lalu dilepas secara malas tanpa penjadwal; checkbox pemilihan item sudah dikerjakan di
-`/cart`. Kredensial ongkir lengkap (`SHIPPING_ORIGIN_DISTRICT_ID=17590`), ongkir memakai tarif
-asli RajaOngkir (9 opsi kurir).
+## 12. Rincian Fase: PH-07 — Customer Management (MOD-CUST)
+
+> Bagian ini ditempatkan setelah bagian 11, bukan di antara bagian 9 dan 10, agar nomor **bagian 10 ("Perubahan scope dan hambatan") tidak bergeser**. Nomor itu sudah dirujuk oleh `AGENTS.md`, `docs/05`, dan beberapa bagian di `docs/04` sendiri.
+
+### 12.1. Tujuan dan batas
+
+- **Tujuan:** Customer bisa menyimpan alamat (maksimal 5) dan memilihnya saat checkout tanpa mengetik ulang
+- **Termasuk:** CUST-01 (Alamat Tersimpan — tambah/ubah/hapus + batas 5 alamat), integrasi pemilihan alamat di `/checkout`
+- **Tidak termasuk:** Alamat guest (tetap diisi per pesanan, `Order.guestAddress`), buku alamat toko/pengirim, perubahan bentuk `Order.shippingAddress`
+- **Referensi:** PRD 5.8 (Customer Address), PRD 4.8 (Customer Management), SDD 4.8 (MOD-CUST), SDD 6.2 (`shippingAddress`)
+- **Prasyarat:** PH-03 disetujui — checkout, `DestinationPicker`, dan `Order.shippingAddress` sudah ada. **Tidak bergantung pada PH-04, PH-05, atau PH-06**
+- **Langkah demo:** Login → tambah alamat → checkout → pilih alamat tersimpan → isian alamat terisi otomatis → pesanan dibuat → ubah alamat tersimpan → pesanan lama tidak berubah
+- **Estimasi:** 1-2 hari
+
+*Spesifikasi CUST-01 belum ada di `docs/03`; menulisnya adalah langkah pertama fase ini (TASK-47).*
+
+### 12.2. Daftar task (rencana)
+
+| ID | Pekerjaan / hasil | Fitur | Bergantung pada | Status | Bukti |
+| --- | --- | --- | --- | --- | --- |
+| TASK-47 | Tulis spesifikasi CUST-01 di `docs/03` (aturan, AC-*, validasi, batas fitur, pertanyaan terbuka) | CUST-01 | - | Belum dimulai | - |
+| TASK-48 | Skema Prisma `Address` (relasi N→1 `User`, label, nama penerima, no. HP, `destinationId`, provinsi/kota/kecamatan/kelurahan/kode pos, alamat lengkap, penanda alamat utama) + migrasi + `db:generate` | CUST-01 | TASK-47 | Belum dimulai | - |
+| TASK-49 | Lib `src/lib/customers/`: Zod schema, batas maksimal 5 alamat ditegakkan di server, query/mutasi milik sendiri, penjaga alamat utama tunggal | CUST-01 | TASK-48 | Belum dimulai | - |
+| TASK-50 | API `/api/customer/addresses` (`GET`/`POST`/`PATCH`/`DELETE`) + Zod sebelum query + penangkap galat | CUST-01 | TASK-49 | Belum dimulai | - |
+| TASK-51 | Halaman `/profile`: daftar, tambah, ubah, hapus alamat; penanda alamat utama | CUST-01 | TASK-50 | Belum dimulai | - |
+| TASK-52 | Integrasi `/checkout`: pilih alamat tersimpan → isian terisi otomatis lewat `DestinationPicker`; guest tetap mengetik manual | CUST-01 | TASK-51 | Belum dimulai | - |
+| TASK-53 | Navigasi: menu akun menautkan ke `/profile` (Alamat Saya) | CUST-01 | TASK-51 | Belum dimulai | - |
+| TASK-54 | Lint + build | Semua | TASK-53 | Belum dimulai | - |
+| TASK-55 | Verifikasi exit criteria + laporan review (berhenti, tunggu approval) | Semua | TASK-54 | Belum dimulai | - |
+
+*Penomoran TASK bersifat global dan berurutan. PH-04 berhenti di TASK-46, jadi PH-07 memakai TASK-47 sampai TASK-55. Bila PH-05 atau PH-06 ternyata dikerjakan lebih dulu, ambil blok nomor berikutnya dan geser penomoran fase ini.*
+
+### 12.3. Exit criteria (rencana)
+
+- [ ] Customer bisa menyimpan **maksimal 5 alamat**; percobaan ke-6 ditolak **di server** (kode galat ditetapkan di spesifikasi TASK-47)
+- [ ] Customer bisa memilih alamat tersimpan di `/checkout` dan seluruh isian alamat terisi otomatis, termasuk `destinationId` untuk ongkir
+- [ ] Customer bisa mengubah dan menghapus alamat miliknya sendiri
+- [ ] Alamat customer lain tidak bisa dibaca, diubah, maupun dihapus (OWASP A01)
+- [ ] Menambah/mengubah/menghapus alamat **tidak mengubah pesanan lama** — `Order.shippingAddress` tetap snapshot
+- [ ] Guest tetap bisa checkout tanpa menyimpan alamat
+- [ ] `pnpm lint` exit 0 dan `pnpm build` exit 0
+
+---
+
+**Status:** Implementation Plan v1.0 — **PH-04 siap direview** (2026-10-10). PH-01, PH-02, PH-03
+disetujui. PH-04 memakai Xendit Invoice API v2 (hosted page); masa bayar = reservasi stok
+(`XENDIT_INVOICE_DURATION`, default 900 detik, bisa diubah tanpa ubah kode); webhook PAID tidak
+mengurangi stok lagi (sudah dipotong saat pesanan dibuat); webhook EXPIRED membatalkan pesanan dan
+mengembalikan stok. 29 pemeriksaan lulus (bagian 7.6). Revisi pasca-persetujuan PH-03 (perbaikan OTP
+guest + redesign urutan alamat) selesai dan terverifikasi — bagian 6.8; menunggu commit.
 
 **Next steps:**
-1. Review dan approval PH-03 (Checkout: ORDER-01, ORDER-02, ORDER-03, ORDER-04)
-2. Commit perubahan PH-03 — draf pesan disiapkan agent, `git commit` dijalankan user
-3. Setelah disetujui, mulai PH-04 — Payment Integration (butuh `XENDIT_SECRET_KEY` dan `XENDIT_CALLBACK_TOKEN`)
+1. Review dan approval PH-04 (Payment: PAY-01, PAY-02)
+2. Commit perubahan PH-04 — draf pesan disiapkan agent, `git commit` dijalankan user
+3. Setelah disetujui, mulai PH-05 — Core Features (Voucher, Email, Invoice PDF; butuh `EMAIL_FROM`)

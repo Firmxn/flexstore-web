@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { LogoutButton } from "@/components/auth/LogoutButton";
+import { HeaderAccountMenu } from "./HeaderAccountMenu";
 import { getCurrentUser } from "@/lib/auth/session";
+
+// Gaya nav link dipakai bersama oleh kedua cabang (tamu dan login) supaya
+// tidak duplikasi string className.
+const navLinkClass =
+  "rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground";
 
 // Server Component terpisah supaya Header tetap statis dan bagian yang membaca
 // session bisa di-stream di dalam Suspense boundary.
@@ -16,22 +21,13 @@ export async function HeaderUserMenu() {
   if (!user) {
     return (
       <nav className="flex items-center gap-1 text-sm font-medium">
-        <Link
-          href="/products"
-          className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
+        <Link href="/products" className={navLinkClass}>
           Produk
         </Link>
-        <Link
-          href="/track-order"
-          className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
+        <Link href="/track-order" className={navLinkClass}>
           Lacak
         </Link>
-        <Link
-          href="/login"
-          className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
+        <Link href="/login" className={navLinkClass}>
           Masuk
         </Link>
         <Link
@@ -46,30 +42,15 @@ export async function HeaderUserMenu() {
 
   return (
     <nav className="flex items-center gap-1 text-sm font-medium">
-      <Link
-        href="/products"
-        className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-      >
+      <Link href="/products" className={navLinkClass}>
         Produk
       </Link>
-      <Link
-        href="/orders"
-        className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-      >
-        Pesanan
-      </Link>
-      {user.role === "STORE_ADMIN" ? (
-        <Link
-          href="/admin/products"
-          className="rounded-md px-3 py-2 text-muted-foreground hover:bg-accent hover:text-foreground"
-        >
-          Admin
-        </Link>
-      ) : null}
-      <span className="hidden px-2 text-muted-foreground sm:inline">
-        {user.name}
-      </span>
-      <LogoutButton />
+
+      {/* Aksi akun (Pesanan, Panel admin, Keluar) hanya ada di menu akun,
+          supaya tidak ada link ganda di navbar. */}
+      <span aria-hidden className="mx-1 h-5 w-px bg-border" />
+
+      <HeaderAccountMenu name={user.name ?? "Akun"} role={user.role} />
     </nav>
   );
 }

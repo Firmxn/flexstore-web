@@ -33,9 +33,22 @@ async function rajaFetch(
 export type ShippingDestination = {
   id: string;
   label: string;
+  provinceName: string;
+  cityName: string;
+  districtName: string;
+  subdistrictName: string;
+  zipCode: string;
 };
 
-type DestinationRow = { id?: number | string; label?: string };
+type DestinationRow = {
+  id?: number | string;
+  label?: string;
+  province_name?: string;
+  city_name?: string;
+  district_name?: string;
+  subdistrict_name?: string;
+  zip_code?: string;
+};
 
 export async function searchDestinations(
   apiKey: string,
@@ -50,7 +63,15 @@ export async function searchDestinations(
 
   return (payload.data ?? [])
     .filter((row) => row.id != null && typeof row.label === "string")
-    .map((row) => ({ id: String(row.id), label: row.label as string }));
+    .map((row) => ({
+      id: String(row.id),
+      label: row.label as string,
+      provinceName: row.province_name ?? "",
+      cityName: row.city_name ?? "",
+      districtName: row.district_name ?? "",
+      subdistrictName: row.subdistrict_name ?? "",
+      zipCode: row.zip_code ?? "",
+    }));
 }
 
 export type RajaCostOption = {

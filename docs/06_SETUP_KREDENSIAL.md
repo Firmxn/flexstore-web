@@ -297,7 +297,43 @@ ini diisi — yang hilang hanya ongkir asli.
 
 ---
 
-## 7. Seed dan Verifikasi
+## 7. Xendit — Pembayaran
+
+Dipakai fitur PAY-01/PAY-02 (PH-04). Alur: tombol "Bayar Sekarang" → `POST /api/payments/create` →
+Xendit Invoice API v2 membuat invoice (hosted page) → pembeli membayar → Xendit memanggil
+`POST /api/webhooks/xendit`.
+
+| Variabel | Wajib? | Isi |
+| --- | --- | --- |
+| `XENDIT_SECRET_KEY` | ya | Secret key dari Xendit Dashboard → Settings → Developers → API Keys |
+| `XENDIT_WEBHOOK_TOKEN` | ya | Webhook Verification Token dari Xendit Dashboard → Settings → Webhooks |
+| `XENDIT_INVOICE_DURATION` | opsional | Masa bayar invoice **dan** batas reservasi stok, dalam detik (default `900` = 15 menit) |
+
+### Langkah setup
+
+1. Masuk Xendit Dashboard, aktifkan **Test Mode** (kiri atas). Test Mode gratis dan tidak butuh verifikasi bisnis.
+2. **Settings → Developers → API Keys → Generate Secret Key.** Beri permission seminimal mungkin:
+   `Money-in products = Write`, `Balance = Read`, sisanya `None`. Kunci berawalan `xnd_development_`
+   dan **hanya tampil sekali** — salin saat itu juga ke `XENDIT_SECRET_KEY`.
+3. **Settings → Webhooks → View Webhook Verification Token.** Salin ke `XENDIT_WEBHOOK_TOKEN`.
+4. Isi URL webhook: `https://<host-publik>/api/webhooks/xendit`. Saat dev, pakai tunnel
+   (ngrok/cloudflared) karena Xendit hanya menerima HTTPS publik. Alternatif: tombol
+   **Test webhook** di dashboard untuk mengirim payload contoh.
+5. Muat ulang environment (Next.js 16 dev memuat ulang otomatis saat `.env.local` berubah).
+
+### Catatan
+
+- Base URL `https://api.xendit.co` sama untuk Test dan Live; mode ditentukan prefix kunci.
+- Autentikasi Basic: username = secret key, password kosong (`Authorization: Basic base64(key + ":")`).
+- Webhook diverifikasi lewat header `x-callback-token` (perbandingan waktu-tetap), bukan signature HMAC.
+- Idempotensi memakai klaim baris `Payment` di database, bukan Redis.
+- **Stok tidak dikurangi lagi saat pembayaran sukses** — stok sudah dipotong saat pesanan dibuat (PH-03).
+  Webhook EXPIRED membatalkan pesanan dan mengembalikan stok.
+- Ubah `XENDIT_INVOICE_DURATION` untuk mengatur 15/30/40 menit tanpa mengubah kode (900/1800/2400).
+
+---
+
+## 8. Seed dan Verifikasi
 
 Setelah semua kredensial terisi:
 
@@ -335,13 +371,15 @@ baru, ubah dulu password akun itu (atau hapus akunnya) sebelum menjalankan seed 
 | Yang diperiksa | Cara | Hasil yang diharapkan |
 | --- | --- | --- |
 | Database tersambung | `pnpm db:migrate --name init` | Migrasi sukses, tabel dibuat |
-| Redis tersambung | Buka `/verify-phone`, kirim OTP | Tidak ada error 500, kode masuk |
+| Redis tersambung | Buka `/checkout` (guest, keranjang terisi), kirim OTP | Tidak ada error 500, kode masuk |
 | Twilio terkirim | Cek HP tujuan | Kode OTP 6 digit diterima |
 | Login admin | Buka `/login`, masuk dengan akun seed | Diarahkan ke `/admin/products` |
 | Proteksi admin | Buka `/admin/products` tanpa login | Dialihkan ke `/login` |
 | Uploadthing | `/admin/products/new`, unggah gambar | Gambar muncul di pratinjau |
 | Ongkir mode API | `POST /api/shipping` dengan `destinationId` (isi dulu bagian 6) | `"source":"api"`, daftar kurir asli |
 | Ongkir fallback | Kosongkan `RAJAONGKIR_API_KEY` lalu hitung ongkir | `"source":"fallback"`, tarif flat Rp10.000 |
+| Xendit siap | Isi `XENDIT_SECRET_KEY` + `XENDIT_WEBHOOK_TOKEN` (bagian 7), lalu klik "Bayar Sekarang" di detail pesanan | Dialihkan ke halaman invoice Xendit |
+| Webhook Xendit | Kirim payload `PAID` ke `/api/webhooks/xendit` dengan header `x-callback-token` | `200`, status pesanan jadi PROCESSING |
 | Storefront | Buka `/` lalu `/products` | Produk seed tampil |
 
 ### Kalau ada masalah
@@ -366,3 +404,6 @@ baru, ubah dulu password akun itu (atau hapus akunnya) sebelum menjalankan seed 
 | `POST /api/shipping` menjawab `"source":"fallback"` padahal key sudah diisi | `SHIPPING_ORIGIN_DISTRICT_ID` belum diisi, atau dev server belum di-restart setelah `.env.local` diubah |
 | `/api/shipping/cities` menjawab `configured:false` | `RAJAONGKIR_API_KEY` masih kosong di `.env.local` |
 | Log memuat `RajaOngkir menjawab 404` atau `422` | Tujuan tidak dikenal, atau ID bukan tingkat yang benar. Perhitungan butuh ID hasil `/api/shipping/cities` (tingkat kecamatan), bukan ID district dari kaskade |
+| `502 PAYMENT_PROVIDER_ERROR` | `XENDIT_SECRET_KEY` salah/kosong, atau kunci Test dipakai dengan cara yang tidak sesuai. Detailnya hanya ada di log server |
+| Webhook menjawab `401 INVALID_CALLBACK_TOKEN` | `XENDIT_WEBHOOK_TOKEN` tidak sama dengan token di dashboard, atau header `x-callback-token` tidak terkirim |
+| Webhook menjawab `503 WEBHOOK_NOT_CONFIGURED` | `XENDIT_WEBHOOK_TOKEN` masih kosong di `.env.local` |

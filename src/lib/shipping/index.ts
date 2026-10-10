@@ -15,7 +15,13 @@ export const FLAT_RATE_IDR = 10_000;
 const DEFAULT_COURIERS = "jne:sicepat:jnt";
 
 const COST_CACHE_TTL_SECONDS = 10 * 60; // SDD section 9: cache 5-10 menit
-const SEARCH_CACHE_TTL_SECONDS = 5 * 60;
+// Data destinasi (provinsi/kota/kecamatan/kelurahan) praktis statis, jadi
+// dicache lama supaya pencarian berulang tidak menghabiskan kuota RajaOngkir.
+const SEARCH_CACHE_TTL_SECONDS = 24 * 60 * 60;
+// Kalau provider gagal (mis. kuota habis), tandai singkat supaya request
+// berikutnya tidak ikut menunggu API yang lambat.
+const SEARCH_ERROR_CACHE_TTL_SECONDS = 60;
+const SEARCH_ERROR_KEY = "ship:search:error";
 
 export type ShippingSettings = {
   apiKey: string;
@@ -61,8 +67,10 @@ const flatRateOption = (): ShippingOption => ({
 const costCacheKey = (origin: string, destination: string, weightGram: number) =>
   `ship:cost:${origin}:${destination}:${weightGram}`;
 
+// Versi v2: ShippingDestination bertambah field (kota/provinsi/kode pos), jadi
+// entri cache lama tidak dipakai lagi.
 const searchCacheKey = (search: string) =>
-  `ship:search:${search.trim().toLowerCase()}`;
+  `ship:search:v2:${search.trim().toLowerCase()}`;
 
 // Redis gagal tidak boleh mematikan fitur (SDD section 9: degrade gracefully),
 // jadi cache dibungkus try/catch dan proses lanjut tanpa cache.
@@ -148,12 +156,20 @@ export async function searchShippingDestinations(
     return { configured: true, cities: cached };
   }
 
+  // Kalau provider baru saja gagal (mis. kuota RajaOngkir habis), jangan
+  // menghajar API yang lambat lagi untuk sementara waktu.
+  const providerDown = await cacheGet<boolean>(SEARCH_ERROR_KEY);
+  if (providerDown) {
+    return { configured: true, cities: [] };
+  }
+
   try {
     const cities = await searchDestinations(settings.apiKey, search);
     await cacheSet(cacheKey, cities, SEARCH_CACHE_TTL_SECONDS);
     return { configured: true, cities };
   } catch (error) {
     console.error("[shipping] pencarian tujuan gagal", error);
+    await cacheSet(SEARCH_ERROR_KEY, true, SEARCH_ERROR_CACHE_TTL_SECONDS);
     return { configured: true, cities: [] };
   }
 }

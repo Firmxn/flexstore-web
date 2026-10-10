@@ -26,6 +26,8 @@ type TrackedOrder = {
     street?: string;
     city?: string;
     province?: string;
+    district?: string;
+    subdistrict?: string;
     postalCode?: string;
   } | null;
   items: {
@@ -150,7 +152,12 @@ export function TrackOrderForm() {
           {order.shippingAddress ? (
             <p className="text-xs text-muted-foreground">
               Kirim ke {order.shippingAddress.name} -{" "}
-              {[order.shippingAddress.street, order.shippingAddress.city]
+              {[
+                order.shippingAddress.street,
+                order.shippingAddress.subdistrict,
+                order.shippingAddress.district,
+                order.shippingAddress.city,
+              ]
                 .filter(Boolean)
                 .join(", ")}
             </p>

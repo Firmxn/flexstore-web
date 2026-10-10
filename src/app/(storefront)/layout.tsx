@@ -4,7 +4,7 @@ import { CartSync } from "@/components/cart/CartSync";
 
 export default function StorefrontLayout({ children }: LayoutProps<"/">) {
   return (
-    <div className="flex min-h-full flex-col">
+    <div className="flex flex-1 flex-col">
       <CartSync />
       <Header />
       <main className="flex-1">{children}</main>

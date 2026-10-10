@@ -17,7 +17,7 @@ type OtpVerificationFormProps = {
 };
 
 // AUTH-01: verifikasi nomor HP guest lewat OTP.
-// Dipakai di /verify-phone (demo PH-01) dan alur checkout (PH-03).
+// Dipakai di langkah verifikasi alur checkout (PH-03).
 export function OtpVerificationForm({ onVerified }: OtpVerificationFormProps = {}) {
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");

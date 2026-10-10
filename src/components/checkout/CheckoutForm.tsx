@@ -1,18 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Alert } from "@/components/ui/alert";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { OtpVerificationForm } from "@/components/auth/OtpVerificationForm";
-import {
-  ShippingPicker,
-  type ShippingDestination,
-  type ShippingOption,
-} from "@/components/shipping/ShippingPicker";
-import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { CourierPicker } from "@/components/shipping/CourierPicker";
+import { DestinationPicker } from "@/components/shipping/DestinationPicker";
+import type {
+  ShippingDestination,
+  ShippingOption,
+} from "@/components/shipping/types";
+import { ApiError, apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { formatRupiah } from "@/lib/utils/format";
 
 export type CheckoutItem = {
@@ -35,8 +37,10 @@ type CheckoutFormProps = {
 type CreatedOrder = { id: string; orderNumber: string; total: number };
 
 // ORDER-01/ORDER-02: form pembuatan pesanan. Guest wajib melewati OTP dulu;
-// customer memakai data akun. Ongkir dipilih lewat ShippingPicker dan dihitung
-// ulang oleh server saat pesanan dibuat.
+// customer memakai data akun. Titik tujuan dipilih lebih dulu supaya
+// provinsi/kota/kecamatan/kelurahan/kode pos terisi otomatis. Tarif kurir
+// dihitung otomatis dan tampil di kolom ringkasan; ongkir dihitung ulang oleh
+// server saat submit.
 export function CheckoutForm({
   mode,
   items,
@@ -50,16 +54,25 @@ export function CheckoutForm({
   const [name, setName] = useState(defaults.name);
   const [email, setEmail] = useState(defaults.email);
   const [phone, setPhone] = useState(defaults.phone);
-  const [street, setStreet] = useState("");
+  const [destination, setDestination] = useState<ShippingDestination | null>(null);
   const [city, setCity] = useState("");
   const [province, setProvince] = useState("");
+  const [district, setDistrict] = useState("");
+  const [subdistrict, setSubdistrict] = useState("");
   const [postalCode, setPostalCode] = useState("");
+  const [street, setStreet] = useState("");
   const [note, setNote] = useState("");
-  const [destination, setDestination] = useState<ShippingDestination | null>(null);
   const [shipping, setShipping] = useState<ShippingOption | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [created, setCreated] = useState<CreatedOrder | null>(null);
+  const router = useRouter();
+
+  // Identitas varian stabil supaya efek CourierPicker tidak berjalan ulang tiap
+  // render.
+  const variantIds = useMemo(
+    () => items.map((item) => item.variantId),
+    [items],
+  );
 
   if (mode === "guest" && !verifiedPhone) {
     return (
@@ -81,42 +94,46 @@ export function CheckoutForm({
     );
   }
 
-  if (created) {
-    return (
-      <div className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
-        <Alert variant="success">
-          Pesanan {created.orderNumber} berhasil dibuat.
-        </Alert>
-        <p className="text-sm text-muted-foreground">
-          Total {formatRupiah(created.total)}. Reservasi stok berlaku 10 menit;
-          pesanan dibatalkan otomatis bila belum dibayar.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {mode === "user" ? (
-            <Link href={`/orders/${created.id}`} className={buttonVariants()}>
-              Lihat pesanan
-            </Link>
-          ) : (
-            <Link href="/track-order" className={buttonVariants()}>
-              Lacak pesanan
-            </Link>
-          )}
-          <Link
-            href="/products"
-            className={buttonVariants({ variant: "outline" })}
-          >
-            Belanja lagi
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Field wilayah terisi otomatis dari titik tujuan dan jadi read-only. Selama
+  // titik belum dipilih (dan API ongkir aktif) field dinonaktifkan; saat API
+  // ongkir tidak aktif field diisi manual.
+  const autoCity = Boolean(destination?.cityName);
+  const autoProvince = Boolean(destination?.provinceName);
+  const autoDistrict = Boolean(destination?.districtName);
+  const autoSubdistrict = Boolean(destination?.subdistrictName);
+  const autoPostal = Boolean(destination?.zipCode);
+  const regionLocked = shippingConfigured && !destination;
 
   const total = subtotal + (shipping?.cost ?? 0);
+
+  function handleDestination(value: ShippingDestination | null) {
+    setDestination(value);
+    // Tarif lama tidak relevan saat tujuan berubah; CourierPicker mengisi ulang.
+    setShipping(null);
+    if (!value) {
+      // Titik direset: kosongkan field wilayah supaya tidak ada sisa data lama.
+      setProvince("");
+      setCity("");
+      setDistrict("");
+      setSubdistrict("");
+      setPostalCode("");
+      return;
+    }
+    if (value.provinceName) setProvince(value.provinceName);
+    if (value.cityName) setCity(value.cityName);
+    if (value.districtName) setDistrict(value.districtName);
+    if (value.subdistrictName) setSubdistrict(value.subdistrictName);
+    if (value.zipCode) setPostalCode(value.zipCode);
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    if (shippingConfigured && !destination) {
+      setError("Pilih titik tujuan pengiriman terlebih dahulu");
+      return;
+    }
 
     if (!shipping) {
       setError("Pilih metode pengiriman terlebih dahulu");
@@ -130,7 +147,7 @@ export function CheckoutForm({
         {
           method: "POST",
           body: JSON.stringify({
-            variantIds: items.map((item) => item.variantId),
+            variantIds,
             destinationId: destination?.id,
             courierCode: shipping.code,
             service: shipping.service,
@@ -140,6 +157,8 @@ export function CheckoutForm({
               street,
               city,
               province,
+              district: district || undefined,
+              subdistrict: subdistrict || undefined,
               postalCode,
               note: note || undefined,
             },
@@ -148,8 +167,15 @@ export function CheckoutForm({
           }),
         },
       );
-      setCreated(result.order);
+      // Pesanan tersimpan sebagai WAITING_PAYMENT. Lanjut ke halaman pesanan
+      // yang sama untuk guest dan customer (ada tombol bayar + batas waktu).
+      router.push(`/orders/${result.order.id}`);
     } catch (caught) {
+      // Penanda OTP hilang/kedaluwarsa di server: kembalikan ke langkah
+      // verifikasi supaya guest bisa memverifikasi ulang.
+      if (caught instanceof ApiError && caught.code === "PHONE_NOT_VERIFIED") {
+        setVerifiedPhone(null);
+      }
       setError(toErrorMessage(caught));
     } finally {
       setSubmitting(false);
@@ -160,8 +186,15 @@ export function CheckoutForm({
     <form onSubmit={handleSubmit} className="grid gap-6 lg:grid-cols-[1fr_360px]">
       <div className="flex flex-col gap-6">
         {mode === "guest" ? (
-          <Alert>
-            Nomor HP terverifikasi: <strong>{verifiedPhone}</strong>
+          <Alert className="flex flex-col gap-1">
+            <span>
+              Nomor HP terverifikasi: <strong>{verifiedPhone}</strong>
+            </span>
+            <span className="text-muted-foreground">
+              Setelah pesanan dibuat, simpan nomor pesanan dan nomor HP-nya.
+              Tidak menambahkan notifikasi email, jadi keduanya diperlukan untuk melacak
+              pesanan.
+            </span>
           </Alert>
         ) : null}
 
@@ -188,32 +221,70 @@ export function CheckoutForm({
                 onChange={(event) => setPhone(event.target.value)}
               />
             </div>
-            <div className="flex flex-col gap-2 sm:col-span-2">
-              <Label htmlFor="checkout-street">Alamat lengkap</Label>
-              <Input
-                id="checkout-street"
-                required
-                placeholder="Jalan, nomor rumah, RT/RW"
-                value={street}
-                onChange={(event) => setStreet(event.target.value)}
-              />
+
+            {shippingConfigured ? (
+              <div className="sm:col-span-2">
+                <DestinationPicker
+                  configured={shippingConfigured}
+                  selected={destination}
+                  onSelect={handleDestination}
+                />
+              </div>
+            ) : null}
+
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:col-span-2">
+              <h3 className="text-sm font-medium">Wilayah tujuan</h3>
+              {shippingConfigured ? (
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  otomatis dari titik tujuan
+                </span>
+              ) : null}
             </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="checkout-city">Kota / kabupaten</Label>
-              <Input
-                id="checkout-city"
-                required
-                value={city}
-                onChange={(event) => setCity(event.target.value)}
-              />
-            </div>
+
             <div className="flex flex-col gap-2">
               <Label htmlFor="checkout-province">Provinsi</Label>
               <Input
                 id="checkout-province"
                 required
+                disabled={regionLocked}
+                readOnly={autoProvince}
+                className={autoProvince ? "bg-muted" : undefined}
                 value={province}
                 onChange={(event) => setProvince(event.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="checkout-city">Kota/Kabupaten</Label>
+              <Input
+                id="checkout-city"
+                required
+                disabled={regionLocked}
+                readOnly={autoCity}
+                className={autoCity ? "bg-muted" : undefined}
+                value={city}
+                onChange={(event) => setCity(event.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="checkout-district">Kecamatan</Label>
+              <Input
+                id="checkout-district"
+                disabled={regionLocked}
+                readOnly={autoDistrict}
+                className={autoDistrict ? "bg-muted" : undefined}
+                value={district}
+                onChange={(event) => setDistrict(event.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="checkout-subdistrict">Kelurahan/Desa</Label>
+              <Input
+                id="checkout-subdistrict"
+                disabled={regionLocked}
+                readOnly={autoSubdistrict}
+                className={autoSubdistrict ? "bg-muted" : undefined}
+                value={subdistrict}
+                onChange={(event) => setSubdistrict(event.target.value)}
               />
             </div>
             <div className="flex flex-col gap-2">
@@ -221,15 +292,30 @@ export function CheckoutForm({
               <Input
                 id="checkout-postal"
                 required
+                disabled={regionLocked}
+                readOnly={autoPostal}
+                className={autoPostal ? "bg-muted" : undefined}
                 inputMode="numeric"
                 value={postalCode}
                 onChange={(event) => setPostalCode(event.target.value)}
               />
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 sm:col-span-2">
+              <Label htmlFor="checkout-street">Alamat lengkap</Label>
+              <Textarea
+                id="checkout-street"
+                required
+                rows={3}
+                placeholder="Jalan, nomor rumah, RT/RW"
+                value={street}
+                onChange={(event) => setStreet(event.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-2 sm:col-span-2">
               <Label htmlFor="checkout-note">Catatan (opsional)</Label>
-              <Input
+              <Textarea
                 id="checkout-note"
+                rows={2}
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
               />
@@ -251,19 +337,6 @@ export function CheckoutForm({
             ) : null}
           </div>
         </section>
-
-        <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
-          <h2 className="font-semibold">Metode Pengiriman</h2>
-          <ShippingPicker
-            variantIds={items.map((item) => item.variantId)}
-            configured={shippingConfigured}
-            calculateLabel="Hitung Ongkos Kirim"
-            onSelect={(option, value) => {
-              setShipping(option);
-              setDestination(value);
-            }}
-          />
-        </section>
       </div>
 
       <aside className="flex h-fit flex-col gap-4 rounded-xl border border-border bg-background p-4">
@@ -283,6 +356,17 @@ export function CheckoutForm({
             </li>
           ))}
         </ul>
+
+        <div className="flex flex-col gap-2 border-t border-border pt-4">
+          <h3 className="text-sm font-semibold">Metode Pengiriman</h3>
+          <CourierPicker
+            key={destination?.id ?? "flat"}
+            variantIds={variantIds}
+            destinationId={destination?.id}
+            configured={shippingConfigured}
+            onSelect={setShipping}
+          />
+        </div>
 
         <dl className="flex flex-col gap-2 border-t border-border pt-4 text-sm">
           <div className="flex items-center justify-between">

@@ -18,7 +18,7 @@ export function Header() {
             <CartBadge />
           </Suspense>
           <Suspense
-            fallback={<div className="h-9 w-40 animate-pulse rounded-md bg-muted" />}
+            fallback={<div className="h-9 w-64 animate-pulse rounded-md bg-muted" />}
           >
             <HeaderUserMenu />
           </Suspense>

@@ -38,6 +38,16 @@ export const shippingAddressSchema = z.object({
     .trim()
     .min(1, "Provinsi wajib diisi")
     .max(100, "Provinsi maksimal 100 karakter"),
+  district: z
+    .string({ invalid_type_error: "Kecamatan tidak valid" })
+    .trim()
+    .max(100, "Kecamatan maksimal 100 karakter")
+    .optional(),
+  subdistrict: z
+    .string({ invalid_type_error: "Kelurahan tidak valid" })
+    .trim()
+    .max(100, "Kelurahan maksimal 100 karakter")
+    .optional(),
   postalCode: z
     .string({
       required_error: "Kode pos wajib diisi",

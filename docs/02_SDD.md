@@ -48,7 +48,7 @@
   "@upstash/redis": "^1.0.0",
   "uploadthing": "^7.0.0",
   "resend": "^4.0.0",
-  "xendit-node": "^3.0.0",
+  "twilio": "^5.0.0",
   "@react-pdf/renderer": "^4.0.0"
 }
 ```
@@ -90,25 +90,24 @@
 
 **Alur Guest Checkout:**
 1. Client → Server Component → Prisma → PostgreSQL (fetch products)
-2. Client → `/api/cart/validate` → Prisma (stock check)
-3. Client → `/api/otp/send` → Twilio
-4. Client → `/api/otp/verify` → Redis
-5. Client → `/api/orders/create` → Redis (lock) → Prisma (order Waiting Payment)
-6. API → Xendit (create payment)
-7. Xendit → Webhook `/api/webhooks/xendit` → Prisma (update payment)
-8. Webhook → Redis (release lock) → Prisma (update order)
-9. Webhook → Resend (email)
+2. Client → `/api/cart` → Prisma (stock check)
+3. Client → `/api/otp/send` → Twilio Verify
+4. Client → `/api/otp/verify` → Redis (penanda nomor terverifikasi)
+5. Client → `/api/orders/create` → Prisma (stok dipotong atomik + Order WAITING_PAYMENT, reservasi stok)
+6. Client → `/api/payments/create` → Xendit Invoice API (invoice_url, hosted page)
+7. Xendit → Webhook `/api/webhooks/xendit` → Prisma (update Payment + Order)
+8. Webhook EXPIRED → Prisma (Order CANCELED + stok dikembalikan)
 
 **Aturan bisnis ditegakkan:**
 - Stock validation: Server-side API (client UX only)
-- Payment verify: Webhook signature check
+- Payment verify: verifikasi header `x-callback-token`
 - Voucher calc: Server-side API
 - Role auth: NextAuth middleware
-- Idempotency: Redis check webhook ID
+- Idempotency: klaim baris `Payment` di database (`updateMany` bersyarat)
 
 **Batas kepercayaan:**
 - Input: Zod validation API Routes
-- Webhook: Xendit signature verify
+- Webhook: verifikasi `x-callback-token`
 - Auth: NextAuth token verify
 - Authorization: Role check middleware
 
@@ -191,10 +190,10 @@ graph TB
 | Komponen backend | `/api/orders/create`, `/api/orders/[id]`, `/api/admin/orders` |
 | Data yang dikelola | Order, OrderItem, order status |
 | Antarmuka | `createOrder()`, `updateOrderStatus()`, `reserveStock()`, `releaseStock()` |
-| Ketergantungan | MOD-CART, MOD-PROD (via Redis lock), MOD-PAY, MOD-SHIP, MOD-VOUCH |
+| Ketergantungan | MOD-CART, MOD-PROD (stok atomik via Prisma), MOD-PAY, MOD-SHIP, MOD-VOUCH |
 | Lokasi kode | `/src/app/(storefront)/checkout/`, `/src/app/admin/orders/`, `/src/lib/orders/` |
 
-**Stock Reservation:** Redis lock (`lock:stock:{variantId}`, 10 min expiry). Payment success → deduct stock. Payment fail → release lock.
+**Reservasi stok (PH-03):** stok dipotong atomik saat pesanan DIBUAT (`updateMany` dengan syarat `stock >= qty` di dalam `$transaction`, tanpa raw SQL). Reservasi dilepas secara malas (lazy) saat melewati `stockReservedUntil`, atau segera saat webhook Xendit EXPIRED. Batas reservasi = masa bayar invoice (`XENDIT_INVOICE_DURATION`). Pembayaran sukses TIDAK mengurangi stok lagi.
 
 ### 4.5. MOD-PAY — Payment
 
@@ -203,14 +202,14 @@ graph TB
 | Tanggung jawab | Xendit integration, payment tracking, webhook, idempotency, refund |
 | Di luar tanggung jawab | Order creation, stock mgmt |
 | Fitur yang dilayani | PRD 3.1.D: Payment, PRD 5.2: Payment Rules, PRD 3.1.G: Refund |
-| Komponen UI | Payment method selection, instructions, status polling, refund proof upload |
-| Komponen backend | `/api/payments/create`, `/api/webhooks/xendit`, `/api/admin/payments/refund` |
-| Data yang dikelola | Payment, payment status, Refund, refund proof |
-| Antarmuka | `createPayment()`, `verifyWebhook()`, `processRefund()`, `uploadRefundProof()` |
-| Ketergantungan | Xendit, MOD-ORDER, Redis (idempotency), Uploadthing |
+| Komponen UI | Tombol "Bayar Sekarang", halaman invoice Xendit (hosted page), status pembayaran |
+| Komponen backend | `/api/payments/create`, `/api/webhooks/xendit` (refund di PH-06) |
+| Data yang dikelola | Payment, status pembayaran (Refund di PH-06) |
+| Antarmuka | `createPaymentForOrder()`, `applyPaidPayment()`, `applyExpiredPayment()` |
+| Ketergantungan | Xendit Invoice API v2, MOD-ORDER, Prisma |
 | Lokasi kode | `/src/lib/payments/`, `/src/app/api/payments/`, `/src/app/api/webhooks/xendit/` |
 
-**Webhook Idempotency:** Check `webhook:{payload.id}` in Redis before process (24h expiry).
+**Idempotensi webhook (PH-04):** klaim baris `Payment` dengan `updateMany` bersyarat (`status: PENDING`); `count === 0` berarti sudah diproses. Redis tidak dipakai di MOD-PAY.
 
 ### 4.6. MOD-VOUCH — Voucher & Promotion
 
@@ -239,7 +238,7 @@ graph TB
 | Komponen backend | `/api/shipping/calculate`, `/api/shipping/track`, fallback flat rate |
 | Data yang dikelola | Shipping (order_id, provider, service, cost, tracking) |
 | Antarmuka | `calculateShippingCost()`, `getShippingOptions()`, `trackShipment()` |
-| Ketergantungan | RajaOngkir/Biteship API, MOD-ORDER, Redis (cache 5-10 min) |
+| Ketergantungan | RajaOngkir API, MOD-ORDER, Redis (cache 5-10 min) |
 | Lokasi kode | `/src/lib/shipping/`, `/src/app/api/shipping/` |
 
 **Error handling:** Timeout 10s, fallback flat rate, cache result Redis.
@@ -463,11 +462,11 @@ flexstore/
 │   │   ├── orders/                # Order domain logic
 │   │   │   ├── queries.ts
 │   │   │   ├── mutations.ts
-│   │   │   ├── stock.ts           # Stock reservation (Redis lock)
+│   │   │   ├── stock.ts           # Reservasi stok (Prisma updateMany atomik)
 │   │   │   └── validation.ts
 │   │   ├── payments/              # Payment integration
 │   │   │   ├── xendit.ts          # Xendit SDK wrapper
-│   │   │   ├── webhook.ts         # Webhook verification
+│   │   │   ├── client.ts          # Klien Xendit Invoice API v2
 │   │   │   └── validation.ts
 │   │   ├── vouchers/              # Voucher logic
 │   │   │   ├── queries.ts
@@ -613,11 +612,12 @@ erDiagram
 **Payment:**
 - id: UUID, PK
 - orderId: FK, unique
-- externalId: String (Xendit)
-- method: Enum (QRIS, VIRTUAL_ACCOUNT, E_WALLET)
-- status: Enum (WAITING, PAID, FAILED, CANCELED, EXPIRED)
+- provider: String (default "XENDIT")
+- externalId: String, unique (= nomor pesanan, dikirim sebagai `external_id`)
+- invoiceId, invoiceUrl: nullable
 - amount: Decimal
-- paidAt: DateTime, nullable
+- status: Enum (PENDING, PAID, EXPIRED, FAILED)
+- paidAt, expiresAt: DateTime, nullable
 
 **Voucher:**
 - id: UUID, PK
@@ -639,8 +639,8 @@ erDiagram
 - Product.slug, ProductVariant.sku, Order.orderNumber, User.email, User.phone, Voucher.code: unique, indexed
 
 **Operasi atomik:**
-- Stock reservation: Redis lock → Prisma transaction
-- Payment webhook: Prisma transaction (Payment, Order, stock)
+- Reservasi stok: `updateMany` bersyarat (`stock >= qty`) di dalam `$transaction` (tanpa raw SQL)
+- Webhook pembayaran: `$transaction` (klaim `Payment` + `Order`); stok tidak disentuh saat PAID
 - Voucher application: Prisma transaction (check usage, create VoucherUsage)
 
 **Migrasi:** Prisma migrate, seed.ts untuk dev data.
@@ -671,17 +671,24 @@ erDiagram
 
 **POST /api/orders/create**
 - Auth: Optional (guest or customer session)
-- Request: `{ cartItems, shippingAddress, voucherCodes?, guestPhone?, guestEmail? }`
-- Response Success (200): `{ orderId, orderNumber, paymentUrl }`
-- Response Fail (400): `{ error: "INSUFFICIENT_STOCK", variantId }`
-- Response Fail (401): `{ error: "UNAUTHORIZED" }` (if customer route but no session)
+- Request: `{ variantIds, destinationId, courierCode, service, address, guestPhone? }`
+- Response Success (201): `{ order: { id, orderNumber, status, subtotal, shippingCost, total } }`
+- Response Fail (400): `{ error: "INSUFFICIENT_STOCK" }`
+- Response Fail (403): `{ error: "PHONE_NOT_VERIFIED" }` (guest tanpa OTP)
+
+**POST /api/payments/create**
+- Auth: Optional (customer session atau nomor HP guest)
+- Request: `{ orderId, phone? }`
+- Response Success (200): `{ payment: { invoiceUrl, status, expiresAt } }`
+- Response Fail (403): `{ error: "FORBIDDEN" }`
+- Response Fail (409): `{ error: "ORDER_NOT_PAYABLE" }`
 
 **POST /api/webhooks/xendit**
-- Auth: Xendit signature verification
-- Request: Xendit payload + signature header
-- Response (200): `{ status: "success" }`
-- Response (400): `{ error: "INVALID_SIGNATURE" }`
-- Idempotency: Check Redis `webhook:{payload.id}` before process
+- Auth: verifikasi header `x-callback-token` (perbandingan waktu-tetap)
+- Request: payload Xendit (`id`, `external_id`, `status`, ...)
+- Response (200): `{ received: true, result: "APPLIED" | "ALREADY_PROCESSED" | "IGNORED" }`
+- Response (401): `{ error: "INVALID_CALLBACK_TOKEN" }`
+- Idempotency: klaim baris `Payment` (`updateMany` bersyarat, `status: PENDING`)
 
 **GET /api/admin/products**
 - Auth: Store Admin or Site Admin
@@ -706,14 +713,14 @@ erDiagram
 
 | Layanan | Fitur | Kontrak | Config | Saat gagal | Status |
 | --- | --- | --- | --- | --- | --- |
-| Xendit | Payment | Xendit API v3 | XENDIT_SECRET_KEY | Return error to user | Direncanakan |
-| Twilio | OTP SMS/WA | Twilio API | TWILIO_ACCOUNT_SID, AUTH_TOKEN | Retry 1x, show error | Direncanakan |
-| Resend | Email | Resend API | RESEND_API_KEY | Log error, continue (non-blocking) | Direncanakan |
-| RajaOngkir | Shipping | RajaOngkir API | RAJAONGKIR_API_KEY | Fallback flat rate Rp10k | Direncanakan |
-| Biteship | Shipping | Biteship API | BITESHIP_API_KEY | Fallback flat rate Rp10k | Direncanakan |
-| Uploadthing | File storage | Uploadthing SDK | UPLOADTHING_SECRET, APP_ID | Show upload error | Direncanakan |
-| Supabase | PostgreSQL | Connection string | DATABASE_URL | Crash (critical) | Direncanakan |
-| Upstash | Redis | Upstash SDK | UPSTASH_REDIS_REST_URL, TOKEN | Degrade gracefully (no cache) | Direncanakan |
+| Xendit | Payment | Xendit Invoice API v2 | XENDIT_SECRET_KEY, XENDIT_WEBHOOK_TOKEN | Return error to user | Terimplementasi (PH-04) |
+| Twilio | OTP SMS | Twilio Verify API | TWILIO_ACCOUNT_SID, AUTH_TOKEN, VERIFY_SERVICE_SID | Retry 1x, show error | Terimplementasi (PH-01) |
+| Resend | Email | Resend API | RESEND_API_KEY | Log error, continue (non-blocking) | Direncanakan (PH-05) |
+| RajaOngkir | Shipping | RajaOngkir Komerce v1 | RAJAONGKIR_API_KEY, SHIPPING_ORIGIN_DISTRICT_ID | Fallback flat rate Rp10k | Terimplementasi (PH-02) |
+| Biteship | Shipping | (tidak dipakai) | - | - | Dibatalkan — memakai RajaOngkir |
+| Uploadthing | File storage | Uploadthing SDK | UPLOADTHING_TOKEN | Show upload error | Terimplementasi (PH-01) |
+| Supabase | PostgreSQL | Connection string | DATABASE_URL, DIRECT_URL | Crash (critical) | Terimplementasi |
+| Upstash | Redis | Upstash SDK | UPSTASH_REDIS_REST_URL, TOKEN | Degrade gracefully (no cache) | Terimplementasi |
 
 **Timeout:**
 - Xendit: 30s
@@ -734,7 +741,7 @@ erDiagram
 | --- | --- | --- | --- |
 | PRD 6.1: Security | See **Security (OWASP Top 10)** section below | PCI DSS: payment data tidak disimpan | Manual review, security audit |
 | PRD 6.2: Performance | Prisma query optimization, Redis cache shipping (5 min), image optimization (Uploadthing) | Halaman produk < 2s | Lighthouse, manual test |
-| PRD 6.3: Reliability | Redis stock lock (10 min), webhook idempotency (24h), Prisma transactions | Prevent overselling | Unit test, E2E test checkout flow |
+| PRD 6.3: Reliability | Reservasi stok atomik (Prisma transaction), webhook idempotency (klaim baris `Payment`), pelepasan reservasi malas | Prevent overselling | Unit test, E2E test checkout flow |
 | PRD 6.4: Usability | Guest checkout (no signup), clear error messages, responsive UI | Mobile-friendly | Manual test, Playwright E2E |
 
 ### Security (OWASP Top 10 2021)
@@ -750,7 +757,7 @@ erDiagram
 | **A05:2021 — Security Misconfiguration** | Secure defaults | CORS restricted (Vercel default), CSP headers (Next.js config), security headers (`X-Frame-Options`, `X-Content-Type-Options`), no directory listing, no debug info in production |
 | **A06:2021 — Vulnerable Components** | Keep dependencies updated | `pnpm audit` di CI/CD, pin exact versions (`package.json`), auto-update Dependabot (GitHub), use latest stable versions (Next.js 16.3+, React 19.2, Prisma 5, NextAuth v5 beta terbaru) |
 | **A07:2021 — Auth Failures** | Strong authentication | NextAuth v5 (industry-standard), bcrypt password (min 8 chars), OTP verification (Twilio), session timeout (30 days idle), rate limiting login attempts (future: implement after MVP), no password in URL/logs |
-| **A08:2021 — Software & Data Integrity** | Verify external data | Xendit webhook signature verification (HMAC), Twilio webhook verification, validate all external API responses (Zod schemas), SRI for CDN scripts (Next.js auto-handles), no `eval()` or `dangerouslySetInnerHTML` without sanitization |
+| **A08:2021 — Software & Data Integrity** | Verify external data | Xendit webhook verification via `x-callback-token` (perbandingan waktu-tetap), validate all external API responses (Zod schemas), SRI for CDN scripts (Next.js auto-handles), no `eval()` or `dangerouslySetInnerHTML` without sanitization |
 | **A09:2021 — Security Logging Failures** | Audit trail | Log failed login attempts, log payment webhook events (to DB for audit), log stock reservation/release, log refund requests, **NO log secrets/passwords/tokens**, Vercel auto-capture errors |
 | **A10:2021 — SSRF** | Validate external URLs | Shipping API: whitelist RajaOngkir/Biteship domains, Payment: whitelist Xendit domain, Uploadthing: signed URLs only, no user-provided URLs di server-side fetch |
 
@@ -793,20 +800,23 @@ erDiagram
 
 **Variabel konfigurasi (.env.local):**
 ```bash
-# Database
+# Database (Supabase — pooler untuk aplikasi, direct untuk migrasi)
 DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
+
+# Auth (NextAuth v5)
+AUTH_SECRET="..."
+AUTH_URL="http://localhost:3000"
+AUTH_TRUST_HOST="true"
 
 # Redis
 UPSTASH_REDIS_REST_URL="https://..."
 UPSTASH_REDIS_REST_TOKEN="..."
 
-# Auth
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="..."
-
-# Payment
+# Payment (Xendit Invoice API v2)
 XENDIT_SECRET_KEY="..."
 XENDIT_WEBHOOK_TOKEN="..."
+XENDIT_INVOICE_DURATION="900"
 
 # OTP (Twilio Verify — docs/06_SETUP_KREDENSIAL.md bagian 4)
 TWILIO_ACCOUNT_SID="..."
@@ -814,16 +824,25 @@ TWILIO_AUTH_TOKEN="..."
 TWILIO_VERIFY_SERVICE_SID="..."
 TWILIO_VERIFY_CHANNEL="sms"
 
-# Email
+# Email (PH-05)
 RESEND_API_KEY="..."
 
-# Shipping
+# Shipping (RajaOngkir Komerce v1)
 RAJAONGKIR_API_KEY="..."
-BITESHIP_API_KEY="..."
+SHIPPING_ORIGIN_DISTRICT_ID="17590"
+SHIPPING_WEIGHT_PER_ITEM_GRAM="1000"
+SHIPPING_COURIERS="jne:sicepat:jnt"
 
 # File upload
-UPLOADTHING_SECRET="..."
-UPLOADTHING_APP_ID="..."
+UPLOADTHING_TOKEN="..."
+
+# App
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+
+# Seed
+SEED_ADMIN_EMAIL="..."
+SEED_ADMIN_NAME="..."
+SEED_ADMIN_PASSWORD="..."
 ```
 
 **Setup steps:**
@@ -878,10 +897,10 @@ pnpm db:deploy
 **Verifikasi manual (E2E scenarios):**
 1. **Guest checkout:** Browse product → add to cart → checkout (OTP verify) → payment (sandbox) → order created
 2. **Customer checkout:** Register → login → add to cart → checkout (select saved address) → payment → order created
-3. **Stock reservation:** Create order → wait 10 min (no payment) → stock lock released
+3. **Reservasi stok:** Buat pesanan → lewati `XENDIT_INVOICE_DURATION` (atau kirim webhook EXPIRED) → stok dikembalikan
 4. **Voucher stacking:** Apply 2 compatible vouchers → discount calculated correctly (bertahap)
 5. **Admin order mgmt:** Store Admin login → view orders → approve cancellation → upload refund proof
-6. **Webhook idempotency:** Send duplicate Xendit webhook → only processed once
+6. **Webhook idempotency:** Kirim webhook Xendit yang sama dua kali → diproses sekali
 
 **Test data:**
 - Admin: email dari `SEED_ADMIN_EMAIL` (default `admin@flexstore.local`); password dari `SEED_ADMIN_PASSWORD`, atau password acak yang dicetak `pnpm db:seed` bila variabel itu kosong
@@ -896,7 +915,7 @@ pnpm db:deploy
 | --- | --- | --- | --- | --- |
 | TECH-01 | Vercel serverless | Optimized for Next.js, auto-scaling, affordable MVP | All modules | Ditetapkan |
 | TECH-02 | Supabase over Vercel Postgres | Unlimited compute, avoid surprise billing | Database | Ditetapkan |
-| TECH-03 | Redis for stock locks | Fast, atomic operations, auto-expiry | MOD-ORDER, MOD-PROD | Ditetapkan |
+| TECH-03 | Prisma atomic update for stock (no Redis lock) | `updateMany` bersyarat atomik; Redis tidak perlu untuk reservasi stok | MOD-ORDER, MOD-PROD | Ditetapkan |
 | TECH-04 | NextAuth v5 (beta) | Dukungan App Router; v5 belum rilis stabil, tag `latest` npm masih v4 | MOD-AUTH | Ditetapkan |
 | TECH-05 | Uploadthing over S3 direct | Next.js native, simpler setup | MOD-PROD, MOD-CONFIG | Ditetapkan |
 | TECH-06 | Resend over SendGrid | Modern API, React Email support, affordable | MOD-NOTIF | Ditetapkan |

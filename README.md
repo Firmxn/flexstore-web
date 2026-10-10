@@ -100,7 +100,7 @@ Unit test dan E2E test belum ada di repo ini. Verifikasi PH-01 dijalankan manual
 
 ## Alur demo singkat
 
-1. Guest OTP: buka `/verify-phone`, isi nomor, klik Kirim OTP, lalu masukkan kode.
+1. Guest OTP: tambahkan produk ke keranjang, buka `/checkout`, isi nomor HP, klik Kirim OTP, lalu masukkan kode.
 2. Customer: buka `/register`, daftar, lalu login di `/login`.
 3. Admin: login di `/login` memakai `SEED_ADMIN_EMAIL` dan password hasil seed, lalu buka
    `/admin/products` untuk tambah, ubah, dan hapus produk.
@@ -112,7 +112,7 @@ Unit test dan E2E test belum ada di repo ini. Verifikasi PH-01 dijalankan manual
 ```
 src/
   app/                 Next.js App Router
-    (storefront)/      Halaman customer: katalog, detail produk, login, register, verify-phone
+    (storefront)/      Halaman customer: katalog, detail produk, login, register, keranjang, checkout
     admin/             Panel admin
     api/               API Routes (auth, otp, admin, uploadthing)
   components/          Komponen React (ui, auth, products, admin, layout)

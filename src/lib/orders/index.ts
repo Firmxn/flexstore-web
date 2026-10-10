@@ -1,3 +1,4 @@
+export * from "./guest-access";
 export * from "./mutations";
 export * from "./number";
 export * from "./queries";

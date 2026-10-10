@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { siteDescription } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
     default: "FlexStore",
     template: "%s | FlexStore",
   },
-  description: "Toko online terpercaya dengan pengiriman ke seluruh Indonesia",
+  description: siteDescription,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

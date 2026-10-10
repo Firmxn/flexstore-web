@@ -1,14 +1,15 @@
 import { Prisma, type OrderStatus } from "@prisma/client";
 import { getCartRawItems, getGuestCart, setGuestCart, type CartIdentity } from "@/lib/cart";
 import { prisma } from "@/lib/db/prisma";
+import { getInvoiceDurationSeconds } from "@/lib/payments/config";
 import { calculateShippingQuote, getShippingSettings } from "@/lib/shipping";
 import { generateOrderNumber } from "./number";
 import { releaseExpiredReservations } from "./reservations";
 import type { ShippingAddress } from "./validation";
 
-// Reservasi stok berlaku 10 menit (SDD 4.4). Batas ini berasal dari SDD,
-// sementara PAY-01 memberi masa bayar 24 jam; selisihnya diselesaikan di PH-04.
-export const STOCK_RESERVATION_MINUTES = 10;
+// Reservasi stok memakai masa bayar invoice Xendit (PH-04) supaya stok tidak
+// dilepas saat pembeli masih bisa membayar. Nilainya dari env
+// `XENDIT_INVOICE_DURATION` (lihat src/lib/payments/config.ts).
 
 export type CreateOrderErrorCode =
   | "CART_EMPTY"
@@ -216,7 +217,7 @@ export async function createOrder(
   const total = subtotal + shippingCost;
   const orderNumber = await pickOrderNumber();
   const stockReservedUntil = new Date(
-    Date.now() + STOCK_RESERVATION_MINUTES * 60 * 1000,
+    Date.now() + getInvoiceDurationSeconds() * 1000,
   );
 
   try {

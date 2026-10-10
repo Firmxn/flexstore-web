@@ -7,13 +7,13 @@ import { CartSummary } from "./CartSummary";
 
 type CartViewProps = {
   items: CartLine[];
-  shippingConfigured: boolean;
 };
 
 // Pemilihan item untuk checkout. State hanya hidup di komponen ini (tidak
 // disimpan ke server) dan default kosong: pengguna yang menentukan item mana
-// yang di-checkout (catatan review PH-02, docs/04 bagian 6.1).
-export function CartView({ items, shippingConfigured }: CartViewProps) {
+// yang di-checkout (catatan review PH-02, docs/04 bagian 6.1). Ongkir dihitung
+// di /checkout, bukan di sini.
+export function CartView({ items }: CartViewProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const selectedLines = useMemo(
@@ -39,7 +39,7 @@ export function CartView({ items, shippingConfigured }: CartViewProps) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
       <ul className="rounded-xl border border-border bg-background">
         {items.map((item) => (
           <CartItemRow
@@ -64,7 +64,6 @@ export function CartView({ items, shippingConfigured }: CartViewProps) {
         subtotal={subtotal}
         itemCount={itemCount}
         variantIds={selectedLines.map((item) => item.variantId)}
-        shippingConfigured={shippingConfigured}
       />
     </div>
   );

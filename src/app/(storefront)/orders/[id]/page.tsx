@@ -1,9 +1,18 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { GuestOrderNotice } from "@/components/orders/GuestOrderNotice";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
-import { requireCustomerPage } from "@/lib/auth/session";
-import { getOrderDetail } from "@/lib/orders";
+import { PaymentDeadline } from "@/components/orders/PaymentDeadline";
+import { PaymentStatusWatcher } from "@/components/payments/PaymentStatusWatcher";
+import { PayNowButton } from "@/components/payments/PayNowButton";
+import { getCurrentUser } from "@/lib/auth/session";
+import {
+  getGuestAccessPhone,
+  getGuestOrderDetail,
+  getOrderDetail,
+} from "@/lib/orders";
+import { reconcilePaymentForOrder } from "@/lib/payments";
 import { formatDateTime, formatRupiah } from "@/lib/utils/format";
 
 export const metadata = { title: "Detail Pesanan" };
@@ -16,6 +25,8 @@ type AddressJson = {
   street?: string;
   city?: string;
   province?: string;
+  district?: string;
+  subdistrict?: string;
   postalCode?: string;
   note?: string;
 };
@@ -27,13 +38,33 @@ export default async function OrderDetailPage({
 }) {
   await connection();
 
-  const user = await requireCustomerPage();
   const { id } = await params;
 
-  // getOrderDetail mengembalikan null untuk pesanan milik orang lain atau ID
-  // yang bukan UUID, sehingga keduanya jadi 404 (AC-ORDER-02-04).
-  const order = await getOrderDetail(user.id, id);
+  // Satu halaman untuk guest dan customer. Customer lewat sesi; guest lewat
+  // cookie bertanda-tangan tanpa login. Query mengembalikan null untuk pesanan
+  // milik orang lain atau ID bukan UUID, sehingga keduanya jadi 404
+  // (AC-ORDER-02-04).
+  const user = await getCurrentUser();
+  const guestPhone = user ? null : await getGuestAccessPhone();
+
+  const loadOrder = () =>
+    user
+      ? getOrderDetail(user.id, id)
+      : guestPhone
+        ? getGuestOrderDetail(id, guestPhone)
+        : Promise.resolve(null);
+
+  let order = await loadOrder();
   if (!order) notFound();
+
+  // Jaring pengaman webhook: kalau pembayaran sudah dimulai tapi webhook belum
+  // sampai, tanyakan status terkini ke Xendit lalu muat ulang pesanan.
+  if (order.status === "WAITING_PAYMENT" && order.payment) {
+    const reconciled = await reconcilePaymentForOrder(order.id);
+    if (reconciled.ok && reconciled.changed) {
+      order = (await loadOrder()) ?? order;
+    }
+  }
 
   const address = (order.shippingAddress ?? {}) as AddressJson;
 
@@ -50,6 +81,13 @@ export default async function OrderDetailPage({
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
+
+      {!user ? (
+        <GuestOrderNotice
+          orderNumber={order.orderNumber}
+          phone={order.guestPhone ?? null}
+        />
+      ) : null}
 
       <section className="rounded-xl border border-border bg-background p-4">
         <h2 className="mb-3 font-semibold">Item</h2>
@@ -78,7 +116,13 @@ export default async function OrderDetailPage({
           <p className="text-muted-foreground">{address.phone}</p>
           <p className="text-muted-foreground">{address.street}</p>
           <p className="text-muted-foreground">
-            {[address.city, address.province, address.postalCode]
+            {[
+              address.subdistrict,
+              address.district,
+              address.city,
+              address.province,
+              address.postalCode,
+            ]
               .filter(Boolean)
               .join(", ")}
           </p>
@@ -110,14 +154,30 @@ export default async function OrderDetailPage({
               <dd>{formatRupiah(Number(order.total))}</dd>
             </div>
           </dl>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Pembayaran menyusul di PH-04. Reservasi stok berlaku 10 menit.
-          </p>
+          {order.status === "WAITING_PAYMENT" ? (
+            <div className="mt-4 flex flex-col gap-3">
+              {order.stockReservedUntil ? (
+                <PaymentDeadline
+                  deadline={order.stockReservedUntil.toISOString()}
+                />
+              ) : null}
+              <PayNowButton
+                orderId={order.id}
+                phone={
+                  order.userId ? undefined : (order.guestPhone ?? undefined)
+                }
+              />
+              <PaymentStatusWatcher />
+            </div>
+          ) : null}
         </section>
       </div>
 
-      <Link href="/orders" className="text-sm text-muted-foreground hover:underline">
-        Kembali ke daftar pesanan
+      <Link
+        href={user ? "/orders" : "/track-order"}
+        className="text-sm text-muted-foreground hover:underline"
+      >
+        {user ? "Kembali ke daftar pesanan" : "Lacak pesanan lain"}
       </Link>
     </div>
   );

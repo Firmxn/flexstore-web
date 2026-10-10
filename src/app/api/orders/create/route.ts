@@ -1,6 +1,10 @@
 import { isPhoneVerified } from "@/lib/auth/otp";
 import { getCartIdentity } from "@/lib/cart";
-import { createOrder, type CreateOrderErrorCode } from "@/lib/orders";
+import {
+  attachGuestAccessCookie,
+  createOrder,
+  type CreateOrderErrorCode,
+} from "@/lib/orders";
 import { orderCreateSchema } from "@/lib/orders/validation";
 import { isShippingApiConfigured } from "@/lib/shipping";
 import {
@@ -78,6 +82,12 @@ export async function POST(request: Request) {
       );
     }
 
-    return apiSuccess({ order: result.order }, 201);
+    const response = apiSuccess({ order: result.order }, 201);
+    // Guest: terbitkan tiket akses halaman pesanan (bukan sesi login) supaya
+    // setelah checkout bisa langsung ke halaman pembayaran yang sama.
+    if (isGuest && parsed.data.guestPhone) {
+      attachGuestAccessCookie(response, parsed.data.guestPhone);
+    }
+    return response;
   });
 }

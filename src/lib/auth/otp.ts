@@ -16,20 +16,23 @@ const verifiedKey = (phone: string) => `phone-verified:${phone}`;
 // Berlaku 1 jam: cukup untuk mengisi form checkout setelah verifikasi.
 const PHONE_VERIFIED_TTL_SECONDS = 60 * 60;
 
+// Nilai penanda sengaja bukan angka. SDK Upstash men-JSON-parse nilai saat
+// `get`, sehingga penanda "1" dibaca balik sebagai number 1 dan perbandingan
+// string gagal (semua guest ditolak walau OTP benar). String non-JSON seperti
+// "verified" dikembalikan apa adanya.
+const PHONE_VERIFIED_MARKER = "verified";
+
 export async function markPhoneVerified(phone: string): Promise<void> {
-  try {
-    await redis.set(verifiedKey(phone), "1", {
-      ex: PHONE_VERIFIED_TTL_SECONDS,
-    });
-  } catch (error) {
-    // Verifikasi tetap dianggap sukses; kegagalan penanda hanya ke log.
-    console.error("[otp] gagal menandai nomor terverifikasi", { phone, error });
-  }
+  // Kegagalan tulis dibiarkan naik ke pemanggil supaya verifikasi tidak
+  // dilaporkan sukses saat penandanya tidak benar-benar tersimpan.
+  await redis.set(verifiedKey(phone), PHONE_VERIFIED_MARKER, {
+    ex: PHONE_VERIFIED_TTL_SECONDS,
+  });
 }
 
 export async function isPhoneVerified(phone: string): Promise<boolean> {
-  const value = await redis.get<string>(verifiedKey(phone));
-  return value === "1";
+  const value = await redis.get<string | number>(verifiedKey(phone));
+  return String(value) === PHONE_VERIFIED_MARKER;
 }
 
 export type SendOtpResult =

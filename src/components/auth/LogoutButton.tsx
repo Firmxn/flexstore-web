@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
-export function LogoutButton({ className }: { className?: string }) {
+type LogoutButtonProps = {
+  className?: string;
+  // Ikon opsional di depan label, untuk penempatan di menu yang seragam.
+  icon?: ReactNode;
+};
+
+export function LogoutButton({ className, icon }: LogoutButtonProps) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
 
@@ -24,6 +30,7 @@ export function LogoutButton({ className }: { className?: string }) {
       disabled={submitting}
       onClick={handleLogout}
     >
+      {icon}
       {submitting ? "Keluar..." : "Keluar"}
     </Button>
   );

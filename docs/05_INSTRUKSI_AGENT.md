@@ -10,7 +10,7 @@
 | Bahasa komunikasi | Bahasa Indonesia |
 | Gaya laporan | Ringkas, jelas, sertakan bukti (hasil verifikasi aktual) dan cara mencoba (langkah demo), no fluff |
 | Pemilik keputusan produk / reviewer | Development Team / Product Owner |
-| Versi / tanggal instruksi | v1.1 / 2026-10-10 |
+| Versi / tanggal instruksi | v1.2 / 2026-10-10 |
 
 ## 2. Acuan dan tanggung jawab dokumen
 
@@ -40,6 +40,8 @@
 - **Info hilang yang ubah perilaku produk/akses/data: catat pertanyaan + dampak + usulan** — Lanjutkan task lain yang tidak bergantung jawaban
 - **Usulan fitur di luar scope: catat backlog, jangan implement** — Contoh: user minta "add to cart", jangan implement "wishlist" tanpa instruksi
 - **Jangan ubah pekerjaan user yang tidak berkaitan task** — Fokus scope task aktif
+- **Pertanyaan sederhana / brainstorming: jawab saja, jangan eksekusi** — Kalau user bertanya hal sederhana atau meminta brainstorming/diskusi, cukup jawab pertanyaannya. Jangan mengubah kode, dokumentasi, atau menjalankan task teknis tanpa instruksi eksplisit. Eksekusi hanya jika user menyuruh mengerjakan
+- **Jangan finalkan dokumentasi sebelum kode direview** — Kode yang belum direview masih bisa berubah. Batasi update dokumentasi pada task yang sesuai kode yang sedang diimplementasikan (fase aktif); jangan ubah/finalkan seluruh dokumentasi (PRD/SDD/Spesifikasi) sebelum hasil review disetujui, supaya tidak perlu diperbaiki berulang saat ada revisi
 
 ## 4. Prinsip coding
 
@@ -146,7 +148,8 @@
 ## 10. Pembaruan dokumen dan pergantian sesi
 
 - **Update Implementation Plan:** Status task (section 4.2), bukti (section 4.5), hambatan, catatan lanjutan (section 11)
-- **Keputusan ubah kebutuhan: update PRD/Spesifikasi** — Keputusan ubah rancangan: update SDD
+- **Bedakan update rutin vs finalisasi** — Update Implementation Plan (status task, bukti, hambatan) untuk task yang sedang diimplementasikan boleh dilakukan kapan saja. Finalisasi/perubahan menyeluruh dokumentasi (PRD/SDD/Spesifikasi) ditunda sampai kode disetujui
+- **Keputusan ubah kebutuhan: update PRD/Spesifikasi** — Keputusan ubah rancangan: update SDD. Dilakukan setelah keputusan final, bukan untuk mengikuti kode yang belum direview
 - **Jaga aturan bersama satu sumber acuan** — Update rujukan terdampak (contoh: BR-01 di PRD diubah → update referensi di Spesifikasi)
 - **Catat:** Pekerjaan terakhir, kondisi kode (commit/branch), hasil pemeriksaan, keputusan gate, langkah berikutnya diizinkan
 - **Pesan commit wajib mengikuti Conventional Commits** — Format dan contoh di section 12
@@ -263,7 +266,7 @@ BREAKING CHANGE: guest orders without a verified phone are now rejected
 
 ---
 
-**Status:** Instruksi Agent v1.1 — menambahkan Konvensi pesan commit (Conventional Commits v1.0.0).
+**Status:** Instruksi Agent v1.2 — menambahkan aturan komunikasi (jawab pertanyaan sederhana/brainstorming tanpa eksekusi) dan aturan tidak memfinalkan dokumentasi sebelum kode direview.
 
 **Reminder:**
 - Fase aktif: PH-01 **Disetujui**; PH-02 belum dimulai (Implementation Plan section 1)

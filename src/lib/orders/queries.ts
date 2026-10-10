@@ -27,7 +27,18 @@ export async function getOrderDetail(userId: string, orderId: string) {
   await releaseExpiredReservations();
   return prisma.order.findFirst({
     where: { id: orderId, userId },
-    include: { items: true },
+    include: { items: true, payment: true },
+  });
+}
+
+// Dipakai halaman detail guest. Akses tanpa login, tapi hanya untuk pesanan
+// guest yang nomor HP-nya cocok dengan cookie bertanda-tangan (OWASP A01).
+export async function getGuestOrderDetail(orderId: string, phone: string) {
+  if (!isUuid(orderId)) return null;
+  await releaseExpiredReservations();
+  return prisma.order.findFirst({
+    where: { id: orderId, userId: null, guestPhone: phone },
+    include: { items: true, payment: true },
   });
 }
 

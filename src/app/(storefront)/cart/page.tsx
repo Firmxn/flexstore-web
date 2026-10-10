@@ -2,7 +2,6 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { CartView } from "@/components/cart/CartView";
 import { getCart, getCartIdentity } from "@/lib/cart";
-import { isShippingApiConfigured } from "@/lib/shipping";
 
 export const metadata = { title: "Keranjang" };
 
@@ -30,7 +29,7 @@ export default async function CartPage() {
         <div className="flex flex-col items-start gap-4 rounded-xl border border-dashed border-border p-8">
           <p className="text-sm text-muted-foreground">
             Keranjang masih kosong. Pilih produk dulu, lalu kembalikan ke sini
-            untuk menghitung ongkos kirim.
+            untuk checkout.
           </p>
           <Link
             href="/products"
@@ -45,10 +44,7 @@ export default async function CartPage() {
             Centang item yang ingin di-checkout. Item yang tidak dicentang
             tetap tersimpan di keranjang.
           </p>
-          <CartView
-            items={cart.items}
-            shippingConfigured={isShippingApiConfigured()}
-          />
+          <CartView items={cart.items} />
         </>
       )}
     </div>
