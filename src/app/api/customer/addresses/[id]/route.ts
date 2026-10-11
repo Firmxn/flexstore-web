@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireCustomer } from "@/lib/auth/guard";
 import {
@@ -39,6 +40,8 @@ export async function PATCH(request: Request, context: Context) {
     const result = await updateAddress(guard.user.id, id, parsed.data);
     if (!result.ok) return notFound(result.message);
 
+    revalidatePath("/profile/addresses", "page");
+
     return apiSuccess({ id: result.id });
   });
 }
@@ -56,6 +59,8 @@ export async function DELETE(_request: Request, context: Context) {
 
     const result = await deleteAddress(guard.user.id, id);
     if (!result.ok) return notFound(result.message);
+
+    revalidatePath("/profile/addresses", "page");
 
     return apiSuccess({ id: result.id });
   });

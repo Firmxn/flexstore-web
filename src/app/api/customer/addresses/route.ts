@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { requireCustomer } from "@/lib/auth/guard";
 import {
   createAddress,
@@ -40,6 +41,11 @@ export async function POST(request: Request) {
     if (!result.ok) {
       return apiError(result.code, result.message, result.code === "LIMIT_REACHED" ? 409 : 404);
     }
+
+    // Hapus cache segmen halaman alamat supaya `router.refresh()` di UI
+    // mengambil data baru (partialPrefetching/cacheComponents menyimpan
+    // payload RSC lama).
+    revalidatePath("/profile/addresses", "page");
 
     return apiSuccess({ id: result.id }, 201);
   });
