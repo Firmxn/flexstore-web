@@ -4,6 +4,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { Alert } from "@/components/ui/alert";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { homeForRole } from "@/lib/auth/session";
+import { getBrandSetting } from "@/lib/brand";
 import { getCart, getCartAccess } from "@/lib/cart";
 import { getPickupSettings } from "@/lib/config";
 import { getAddresses, toSavedAddress, type SavedAddress } from "@/lib/customers";
@@ -77,8 +78,11 @@ export default async function CheckoutPage({
     0,
   );
 
-  const pickup = await getPickupSettings();
-  const platform = await getPlatformSettings();
+  const [pickup, platform, brand] = await Promise.all([
+    getPickupSettings(),
+    getPlatformSettings(),
+    getBrandSetting(),
+  ]);
 
   return (
     <PageContainer>
@@ -108,7 +112,7 @@ export default async function CheckoutPage({
         pickup={{
           enabled: pickup.enabled,
           info: pickup.info,
-          storeName: pickup.storeName,
+          brandName: brand.brandName,
           storeAddress: pickup.storeAddress,
           storePhone: pickup.storePhone,
         }}

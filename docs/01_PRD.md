@@ -79,7 +79,7 @@ Sistem memiliki **4 role** (single-store MVP):
 - **Voucher Management:** CRUD voucher/promosi, stacking rules, usage limits
 - **Shipping Management:** Melihat shipping status (tracking dihandle oleh provider API)
 - **Reporting:** Sales report, product performance, stock report, order/refund reports
-- **Store Configuration:** Store info (nama toko, alamat, kontak, kebijakan), cancellation templates — identitas brand (logo, banner, warna) diatur **Site Admin**, lihat bagian 2.4
+- **Store Configuration:** Store info (alamat, kontak, kebijakan) — nama tampilan toko memakai brand (bagian 2.4), cancellation templates — identitas brand (logo, banner, warna) diatur **Site Admin**, lihat bagian 2.4
 
 **Karakteristik:**
 - Full admin access ke `/admin/*` routes
@@ -231,7 +231,7 @@ Sistem memiliki **4 role** (single-store MVP):
 
 #### J. Store Customization
 - ✅ **Store information display:**
-  - Nama toko
+  - Nama (dikelola sebagai brand di bagian 2.4, Site Admin — Store Admin tidak punya field nama terpisah)
   - Alamat
   - Nomor telepon
   - Email

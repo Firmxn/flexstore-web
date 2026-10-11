@@ -441,9 +441,10 @@ model Refund {
 }
 
 // Pengaturan toko (MOD-CONFIG, PH-06 / PRD 4.12). Baris tunggal dengan id tetap.
+// Tanpa "storeName": 1 deployment = 1 brand = 1 store — identitas memakai
+// BrandSetting.brandName (SITE-05). Label pickup di checkout memakai brandName.
 model StoreSetting {
   id              String   @id @default("default")
-  storeName       String   @default("FlexStore")
   storeEmail      String?
   storePhone      String?
   storeAddress    String?

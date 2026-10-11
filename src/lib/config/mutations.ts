@@ -7,7 +7,6 @@ import type { CancellationReasonInput, StoreSettingsInput } from "./validation";
 
 function toSettingsData(input: StoreSettingsInput) {
   return {
-    storeName: input.storeName,
     storeEmail: input.storeEmail ?? null,
     storePhone: input.storePhone ?? null,
     storeAddress: input.storeAddress ?? null,
@@ -32,7 +31,6 @@ export async function updateStoreSettings(
   });
 
   return {
-    storeName: row.storeName,
     storeEmail: row.storeEmail,
     storePhone: row.storePhone,
     storeAddress: row.storeAddress,

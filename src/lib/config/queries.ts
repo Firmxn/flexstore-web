@@ -7,7 +7,6 @@ import { prisma } from "@/lib/db/prisma";
 export const STORE_SETTINGS_ID = "default";
 
 export type StoreSettings = {
-  storeName: string;
   storeEmail: string | null;
   storePhone: string | null;
   storeAddress: string | null;
@@ -22,7 +21,6 @@ export type StoreSettings = {
 };
 
 export const DEFAULT_STORE_SETTINGS: StoreSettings = {
-  storeName: "FlexStore",
   storeEmail: null,
   storePhone: null,
   storeAddress: null,
@@ -43,7 +41,6 @@ export async function getStoreSettings(): Promise<StoreSettings> {
   if (!row) return DEFAULT_STORE_SETTINGS;
 
   return {
-    storeName: row.storeName,
     storeEmail: row.storeEmail,
     storePhone: row.storePhone,
     storeAddress: row.storeAddress,
@@ -64,7 +61,6 @@ export async function getPickupSettings() {
   return {
     enabled: settings.pickupEnabled,
     info: settings.pickupInfo,
-    storeName: settings.storeName,
     storeAddress: settings.storeAddress,
     storePhone: settings.storePhone,
   };
