@@ -15,7 +15,28 @@ export async function getOrdersForUser(userId: string) {
   return prisma.order.findMany({
     where: { userId },
     orderBy: { createdAt: "desc" },
-    include: { items: true },
+    // Item membawa snapshot nama+SKU, tapi thumbnail butuh gambar produk
+    // terkini. Cukup 1 gambar pertama per produk untuk daftar pesanan.
+    include: {
+      items: {
+        include: {
+          variant: {
+            include: {
+              product: {
+                select: {
+                  images: {
+                    where: { role: "GALLERY" as const },
+                    orderBy: { sortOrder: "asc" as const },
+                    take: 1,
+                    select: { url: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 }
 
@@ -27,7 +48,11 @@ export async function getOrderDetail(userId: string, orderId: string) {
   await releaseExpiredReservations();
   return prisma.order.findFirst({
     where: { id: orderId, userId },
-    include: { items: true, payment: true },
+    include: {
+      items: true,
+      payment: true,
+      refunds: { orderBy: { createdAt: "desc" } },
+    },
   });
 }
 
@@ -38,7 +63,11 @@ export async function getGuestOrderDetail(orderId: string, phone: string) {
   await releaseExpiredReservations();
   return prisma.order.findFirst({
     where: { id: orderId, userId: null, guestPhone: phone },
-    include: { items: true, payment: true },
+    include: {
+      items: true,
+      payment: true,
+      refunds: { orderBy: { createdAt: "desc" } },
+    },
   });
 }
 

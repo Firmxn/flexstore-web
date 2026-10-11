@@ -44,15 +44,32 @@ export async function POST(request: Request) {
 
     const variants = await prisma.productVariant.findMany({
       where: { id: { in: selected } },
-      select: { id: true, price: true },
+      select: {
+        id: true,
+        price: true,
+        productId: true,
+        product: { select: { categoryId: true } },
+      },
     });
-    const priceMap = new Map(variants.map((variant) => [variant.id, Number(variant.price)]));
-    const subtotal = selected.reduce(
-      (total, id) => total + (priceMap.get(id) ?? 0) * (quantityMap.get(id) ?? 0),
-      0,
-    );
+    const variantMap = new Map(variants.map((variant) => [variant.id, variant]));
+
+    // Cakupan voucher butuh productId + categoryId per baris (PRD 5.4).
+    const items = selected.flatMap((id) => {
+      const variant = variantMap.get(id);
+      if (!variant) return [];
+      const quantity = quantityMap.get(id) ?? 0;
+      return [
+        {
+          productId: variant.productId,
+          categoryId: variant.product.categoryId,
+          lineTotal: Number(variant.price) * quantity,
+        },
+      ];
+    });
+    const subtotal = items.reduce((total, item) => total + item.lineTotal, 0);
 
     const resolved = await resolveVouchers(parsed.data.codes, {
+      items,
       subtotal,
       shippingCost: parsed.data.shippingCost,
       phone: parsed.data.phone ?? null,
@@ -69,6 +86,7 @@ export async function POST(request: Request) {
 
     const discount = calculateDiscount(
       resolved.vouchers,
+      items,
       subtotal,
       parsed.data.shippingCost,
     );

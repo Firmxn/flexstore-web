@@ -1,5 +1,8 @@
+import { buildCancellationEmail } from "@/emails/cancellation";
 import { buildOrderConfirmationEmail } from "@/emails/order-confirmation";
+import { buildOrderShippedEmail } from "@/emails/order-shipped";
 import { buildPaymentSuccessEmail } from "@/emails/payment-success";
+import { buildRefundCompletedEmail } from "@/emails/refund-completed";
 import { prisma } from "@/lib/db/prisma";
 import { isEmailConfigured } from "./config";
 import { sendEmail } from "./email";
@@ -94,5 +97,125 @@ export async function sendPaymentSuccessEmail(orderId: string): Promise<void> {
     }
   } catch (error) {
     console.error("[notifications] gagal mengirim email pembayaran", error);
+  }
+}
+
+// Tautan pelacakan berbeda per jenis pembeli: customer memakai halaman
+// session-scoped, guest memakai form lacak publik (nomor pesanan + nomor HP).
+function trackingUrlFor(order: { id: string; userId: string | null }): string {
+  return order.userId
+    ? `${appUrl()}/orders/${order.id}/tracking`
+    : `${appUrl()}/track-order`;
+}
+
+export async function sendOrderShippedEmail(orderId: string): Promise<void> {
+  try {
+    if (!isEmailConfigured()) return;
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { email: true } } },
+    });
+    if (!order) return;
+
+    const to = resolveRecipient(order);
+    if (!to) return;
+
+    const { subject, html } = buildOrderShippedEmail(
+      {
+        orderNumber: order.orderNumber,
+        trackingNumber: order.trackingNumber,
+        courier: order.shippingCourier,
+        service: order.shippingService,
+      },
+      trackingUrlFor(order),
+    );
+
+    const result = await sendEmail({ to, subject, html });
+    if (!result.ok) {
+      console.error(
+        `[notifications] email pengiriman ${order.orderNumber} gagal: ${result.reason}`,
+      );
+    }
+  } catch (error) {
+    console.error("[notifications] gagal mengirim email pengiriman", error);
+  }
+}
+
+export async function sendCancellationEmail(
+  orderId: string,
+  decision: "approved" | "rejected",
+): Promise<void> {
+  try {
+    if (!isEmailConfigured()) return;
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: { user: { select: { email: true } } },
+    });
+    if (!order) return;
+
+    const to = resolveRecipient(order);
+    if (!to) return;
+
+    const { subject, html } = buildCancellationEmail(
+      {
+        orderNumber: order.orderNumber,
+        decision,
+        reason:
+          decision === "approved"
+            ? order.cancelReason
+            : order.cancelRejectionReason,
+      },
+      `${appUrl()}/orders/${order.id}`,
+    );
+
+    const result = await sendEmail({ to, subject, html });
+    if (!result.ok) {
+      console.error(
+        `[notifications] email pembatalan ${order.orderNumber} gagal: ${result.reason}`,
+      );
+    }
+  } catch (error) {
+    console.error("[notifications] gagal mengirim email pembatalan", error);
+  }
+}
+
+export async function sendRefundCompletedEmail(orderId: string): Promise<void> {
+  try {
+    if (!isEmailConfigured()) return;
+
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        user: { select: { email: true } },
+        refunds: { orderBy: { createdAt: "desc" }, take: 1 },
+      },
+    });
+    if (!order) return;
+
+    const to = resolveRecipient(order);
+    if (!to) return;
+
+    const refund = order.refunds[0];
+    if (!refund) return;
+
+    const { subject, html } = buildRefundCompletedEmail(
+      {
+        orderNumber: order.orderNumber,
+        amount: refund.amount,
+        note: refund.note,
+      },
+      `${appUrl()}/orders/${order.id}`,
+    );
+
+    const result = await sendEmail({ to, subject, html });
+    if (!result.ok) {
+      console.error(
+        `[notifications] email refund ${order.orderNumber} gagal: ${result.reason}`,
+      );
+    }
+  } catch (error) {
+    console.error("[notifications] gagal mengirim email refund", error);
   }
 }

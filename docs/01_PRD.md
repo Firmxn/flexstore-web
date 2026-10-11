@@ -1,9 +1,11 @@
 # Product Requirements Document (PRD)
 # FlexStore — E-Commerce Platform
 
-**Versi:** 1.0 (Finalized)  
+**Versi:** 1.1 (Finalized)  
 **Tanggal:** 8 Oktober 2026  
 **Status:** Finalized — Siap untuk SDD
+
+**Revisi 1.1 (10 Oktober 2026):** model role = 4 (Guest, Customer, Store Admin, Site Admin): bagian 2.4 Site Admin ditambah; baris "3 role utama" (bagian 2) dan "no Site Admin role" (bagian 2.3) dicabut karena bertentangan dengan bagian 1, 3.1.K, 4.1, 4.12, dan kriteria sukses #10. Keputusan tercatat di `docs/04` bagian 10.
 
 ---
 
@@ -29,7 +31,7 @@ FlexStore adalah **platform e-commerce single-store yang bersifat generic dan cu
 
 ## 2. Pengguna dan Role
 
-Sistem memiliki **3 role utama** (single-store MVP):
+Sistem memiliki **4 role** (single-store MVP):
 
 ### 2.1 Guest / Visitor
 **Akses:**
@@ -76,7 +78,20 @@ Sistem memiliki **3 role utama** (single-store MVP):
 - Tidak ada multi-store management (single-store MVP)
 - **NO** payment gateway selection (Xendit fixed)
 - **NO** shipping provider selection (RajaOngkir/Biteship fixed)
-- **NO** platform-level config (single-store MVP, no Site Admin role)
+- **NO** platform-level config di area Store Admin — konfigurasi platform dikelola **Site Admin** (bagian 2.4)
+
+### 2.4 Site Admin
+
+**Tanggung jawab (konfigurasi platform):**
+- **Platform Settings:** Pengaturan level sistem
+- **Payment Gateway Configuration:** Konfigurasi Xendit
+- **Shipping Provider Configuration:** Konfigurasi RajaOngkir/Biteship
+- **User Management:** Mengelola akun Store Admin (buat, nonaktifkan, reset password)
+
+**Karakteristik:**
+- Akses ke area konfigurasi platform, **terpisah** dari area operasional toko (`/admin/*` milik Store Admin)
+- Tidak mengelola operasional toko (produk, pesanan, voucher, laporan) — itu tanggung jawab Store Admin (bagian 2.3)
+- Tidak ada multi-store management (single-store MVP)
 
 **Catatan:** Walaupun satu deployment = satu store, pemisahan role ini tetap ada untuk:
 - Separation of concern antara konfigurasi sistem vs operasional toko

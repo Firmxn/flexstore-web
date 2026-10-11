@@ -64,6 +64,22 @@ export const voucherSchema = z
       .max(50)
       .optional()
       .default([]),
+    // Cakupan produk/kategori (PRD 5.4 butir 1-3). Kosong = berlaku untuk semua.
+    eligibleProductIds: z
+      .array(z.string().uuid("Produk tidak valid"))
+      .max(200, "Terlalu banyak produk dipilih")
+      .optional()
+      .default([]),
+    excludedProductIds: z
+      .array(z.string().uuid("Produk tidak valid"))
+      .max(200, "Terlalu banyak produk dipilih")
+      .optional()
+      .default([]),
+    categoryIds: z
+      .array(z.string().uuid("Kategori tidak valid"))
+      .max(100, "Terlalu banyak kategori dipilih")
+      .optional()
+      .default([]),
   })
   .superRefine((value, ctx) => {
     if (value.type === "PERCENTAGE" && value.discountPercentage == null) {

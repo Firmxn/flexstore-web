@@ -34,6 +34,7 @@ export type ProductFormValues = {
   brandId: string;
   status: string;
   images: string[];
+  sizeChartUrl: string;
   variants: VariantRow[];
 };
 
@@ -66,6 +67,7 @@ export function ProductForm({
       brandId: "",
       status: "DRAFT",
       images: [],
+      sizeChartUrl: "",
       variants: [{ ...EMPTY_VARIANT }],
     },
   );
@@ -111,6 +113,7 @@ export function ProductForm({
       brandId: values.brandId,
       status: values.status,
       images: values.images.map((url, index) => ({ url, sortOrder: index })),
+      sizeChartUrl: values.sizeChartUrl,
       variants: values.variants.map((variant) => ({
         sku: variant.sku,
         name: variant.name,
@@ -252,6 +255,29 @@ export function ProductForm({
               typeof action === "function" ? action(previous.images) : action,
           }));
         }} />
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-semibold">Bagan Ukuran</h2>
+          <p className="text-sm text-muted-foreground">
+            Opsional. Satu gambar bagan ukuran yang tampil di halaman produk.
+          </p>
+        </div>
+        <ImageUploader
+          max={1}
+          urls={values.sizeChartUrl ? [values.sizeChartUrl] : []}
+          setUrls={(action) => {
+            setValues((previous) => {
+              const current = previous.sizeChartUrl
+                ? [previous.sizeChartUrl]
+                : [];
+              const next =
+                typeof action === "function" ? action(current) : action;
+              return { ...previous, sizeChartUrl: next[0] ?? "" };
+            });
+          }}
+        />
       </section>
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">

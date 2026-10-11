@@ -20,6 +20,8 @@ export type VoucherOption = {
   isActive: boolean;
 };
 
+export type ScopeOption = { id: string; name: string };
+
 export type VoucherFormValues = {
   id?: string;
   code: string;
@@ -34,6 +36,9 @@ export type VoucherFormValues = {
   validUntil: string;
   isActive: boolean;
   compatibleVoucherIds: string[];
+  eligibleProductIds: string[];
+  excludedProductIds: string[];
+  categoryIds: string[];
 };
 
 export const EMPTY_VOUCHER: VoucherFormValues = {
@@ -49,6 +54,9 @@ export const EMPTY_VOUCHER: VoucherFormValues = {
   validUntil: "",
   isActive: true,
   compatibleVoucherIds: [],
+  eligibleProductIds: [],
+  excludedProductIds: [],
+  categoryIds: [],
 };
 
 // Batas tanggal: mulai di awal hari, berakhir di akhir hari supaya tanggal
@@ -60,9 +68,13 @@ const toNumber = (value: string) => (value.trim() === "" ? undefined : Number(va
 
 export function VoucherForm({
   options,
+  products,
+  categories,
   initial,
 }: {
   options: VoucherOption[];
+  products: ScopeOption[];
+  categories: ScopeOption[];
   initial?: VoucherFormValues;
 }) {
   const router = useRouter();
@@ -89,6 +101,21 @@ export function VoucherForm({
     }));
   }
 
+  function toggleScope(
+    field: "eligibleProductIds" | "excludedProductIds" | "categoryIds",
+    id: string,
+  ) {
+    setValues((previous) => {
+      const current = previous[field];
+      return {
+        ...previous,
+        [field]: current.includes(id)
+          ? current.filter((item) => item !== id)
+          : [...current, id],
+      };
+    });
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -108,6 +135,9 @@ export function VoucherForm({
       validUntil: endOfDay(values.validUntil),
       isActive: values.isActive,
       compatibleVoucherIds: values.compatibleVoucherIds,
+      eligibleProductIds: values.eligibleProductIds,
+      excludedProductIds: values.excludedProductIds,
+      categoryIds: values.categoryIds,
     });
 
     if (!parsed.success) {
@@ -288,6 +318,82 @@ export function VoucherForm({
           />
           Voucher aktif
         </label>
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-semibold">Cakupan Produk</h2>
+          <p className="text-sm text-muted-foreground">
+            Kosongkan semua untuk membuat voucher berlaku bagi seluruh produk.
+            Bila diisi, voucher hanya berlaku untuk produk/kategori yang dipilih
+            (produk yang dikecualikan selalu di luar cakupan).
+          </p>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="flex flex-col gap-2">
+            <Label>Kategori yang dicakup</Label>
+            {categories.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Belum ada kategori.</p>
+            ) : (
+              <div className="flex max-h-56 flex-col gap-2 overflow-y-auto rounded-md border border-border p-3">
+                {categories.map((category) => (
+                  <label key={category.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-input"
+                      checked={values.categoryIds.includes(category.id)}
+                      onChange={() => toggleScope("categoryIds", category.id)}
+                    />
+                    {category.name}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Produk eligible</Label>
+            {products.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Belum ada produk.</p>
+            ) : (
+              <div className="flex max-h-56 flex-col gap-2 overflow-y-auto rounded-md border border-border p-3">
+                {products.map((product) => (
+                  <label key={product.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-input"
+                      checked={values.eligibleProductIds.includes(product.id)}
+                      onChange={() => toggleScope("eligibleProductIds", product.id)}
+                    />
+                    {product.name}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Produk dikecualikan</Label>
+            {products.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Belum ada produk.</p>
+            ) : (
+              <div className="flex max-h-56 flex-col gap-2 overflow-y-auto rounded-md border border-border p-3">
+                {products.map((product) => (
+                  <label key={product.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-input"
+                      checked={values.excludedProductIds.includes(product.id)}
+                      onChange={() => toggleScope("excludedProductIds", product.id)}
+                    />
+                    {product.name}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </section>
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">

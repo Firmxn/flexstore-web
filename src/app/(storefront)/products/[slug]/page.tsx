@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { Badge } from "@/components/ui/badge";
 import { AddToCartForm } from "@/components/cart/AddToCartForm";
 import { getPublishedProductBySlug } from "@/lib/products";
@@ -50,8 +51,12 @@ export default async function ProductDetailPage({ params }: DetailProps) {
 
   if (!product) notFound();
 
+  // Bagan ukuran punya peran sendiri dan dipisahkan dari galeri (PRD 3.1.A).
+  const gallery = product.images.filter((image) => image.role !== "SIZE_CHART");
+  const sizeChart = product.images.find((image) => image.role === "SIZE_CHART");
+
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10">
+    <PageContainer>
       <nav className="text-sm text-muted-foreground">
         <Link href="/" className="hover:text-foreground">
           Beranda
@@ -66,11 +71,11 @@ export default async function ProductDetailPage({ params }: DetailProps) {
 
       <div className="grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-3">
-          {product.images.length > 0 ? (
+          {gallery.length > 0 ? (
             <>
               <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-muted">
                 <Image
-                  src={product.images[0].url}
+                  src={gallery[0].url}
                   alt={product.name}
                   fill
                   sizes="(max-width: 1024px) 100vw, 50vw"
@@ -78,9 +83,9 @@ export default async function ProductDetailPage({ params }: DetailProps) {
                   priority
                 />
               </div>
-              {product.images.length > 1 ? (
+              {gallery.length > 1 ? (
                 <div className="grid grid-cols-4 gap-3">
-                  {product.images.slice(1).map((image) => (
+                  {gallery.slice(1).map((image) => (
                     <div
                       key={image.id}
                       className="relative aspect-square overflow-hidden rounded-lg border border-border bg-muted"
@@ -142,6 +147,21 @@ export default async function ProductDetailPage({ params }: DetailProps) {
           />
         </div>
       </div>
-    </div>
+
+      {sizeChart ? (
+        <section className="flex flex-col gap-3 rounded-xl border border-border bg-background p-4">
+          <h2 className="font-semibold">Bagan Ukuran</h2>
+          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border bg-muted sm:aspect-[16/9]">
+            <Image
+              src={sizeChart.url}
+              alt={`Bagan ukuran ${product.name}`}
+              fill
+              sizes="(max-width: 1024px) 100vw, 1024px"
+              className="object-contain"
+            />
+          </div>
+        </section>
+      ) : null}
+    </PageContainer>
   );
 }

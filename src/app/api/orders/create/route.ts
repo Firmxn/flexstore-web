@@ -41,9 +41,11 @@ export async function POST(request: Request) {
     if (!identity) return apiError("CART_EMPTY", "Keranjang kosong", 400);
 
     const isGuest = identity.kind === "guest";
+    const isPickup = parsed.data.fulfillment === "PICKUP";
 
-    // Tujuan wajib hanya kalau API ongkir aktif; tanpa API key tarif flat dipakai.
-    if (isShippingApiConfigured() && !parsed.data.destinationId) {
+    // Tujuan wajib hanya kalau API ongkir aktif dan pesanan dikirim; pickup
+    // tidak memakai ongkir (SHIP-03).
+    if (!isPickup && isShippingApiConfigured() && !parsed.data.destinationId) {
       return apiError("VALIDATION_ERROR", "Tujuan wajib dipilih", 400, "destinationId");
     }
 
@@ -72,10 +74,11 @@ export async function POST(request: Request) {
     const result = await createOrder({
       identity,
       variantIds: parsed.data.variantIds,
+      fulfillment: parsed.data.fulfillment,
       address: parsed.data.address,
       destinationId: parsed.data.destinationId ?? "",
-      courierCode: parsed.data.courierCode,
-      service: parsed.data.service,
+      courierCode: parsed.data.courierCode ?? "",
+      service: parsed.data.service ?? "",
       voucherCodes: parsed.data.voucherCodes,
       guestPhone: isGuest ? (parsed.data.guestPhone ?? null) : null,
       guestEmail: parsed.data.guestEmail ?? null,

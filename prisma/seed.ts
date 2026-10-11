@@ -196,6 +196,7 @@ async function seedCatalog() {
     }
 
     const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
+    const minPrice = Math.min(...product.variants.map((v) => v.price));
     const images = {
       create: product.imageSeeds.map((seed, index) => ({
         url: imageUrl(seed, index),
@@ -222,6 +223,7 @@ async function seedCatalog() {
           description: product.description,
           status: product.status,
           totalStock,
+          minPrice,
           categoryId,
           brandId,
           images: { deleteMany: {}, ...images },
@@ -239,6 +241,7 @@ async function seedCatalog() {
         description: product.description,
         status: product.status,
         totalStock,
+        minPrice,
         categoryId,
         brandId,
         images,

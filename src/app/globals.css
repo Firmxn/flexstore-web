@@ -58,6 +58,13 @@
 }
 
 @layer base {
+  html {
+    /* Pesan ruang scrollbar selalu, supaya lebar konten sama di semua halaman.
+       Tanpa ini, halaman yang isinya pendek (tanpa scrollbar) tampak ~15px
+       lebih lebar/bergeser daripada halaman yang punya scrollbar. */
+    scrollbar-gutter: stable;
+  }
+
   * {
     border-color: var(--border);
   }

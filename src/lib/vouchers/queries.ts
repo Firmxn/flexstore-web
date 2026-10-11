@@ -31,6 +31,8 @@ export async function getVoucherById(id: string) {
     include: {
       compatibilitiesAsA: { select: { voucherBId: true, isAllowed: true } },
       compatibilitiesAsB: { select: { voucherAId: true, isAllowed: true } },
+      products: { select: { productId: true, kind: true } },
+      categories: { select: { categoryId: true } },
       _count: { select: { usages: true } },
     },
   });
@@ -43,4 +45,21 @@ export async function getVoucherOptions(excludeId?: string) {
     select: { id: true, code: true, type: true, isActive: true },
     orderBy: { code: "asc" },
   });
+}
+
+// Pilihan cakupan voucher (produk + kategori) untuk form admin (PRD 5.4).
+export async function getVoucherScopeOptions() {
+  const [products, categories] = await Promise.all([
+    prisma.product.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+      take: 500,
+    }),
+    prisma.category.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+
+  return { products, categories };
 }

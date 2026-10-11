@@ -89,9 +89,6 @@ export function AddToCartForm({ variants }: { variants: VariantOption[] }) {
                     />
                     <span className="flex flex-col">
                       <span className="text-sm font-medium">{variant.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        SKU {variant.sku}
-                      </span>
                     </span>
                   </span>
                   <span className="flex flex-col items-end">

@@ -15,7 +15,6 @@ export function RegisterForm() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    phone: "",
     password: "",
     confirmPassword: "",
   });
@@ -39,7 +38,6 @@ export function RegisterForm() {
     const parsed = registerSchema.safeParse({
       name: form.name,
       email: form.email,
-      phone: form.phone,
       password: form.password,
     });
 
@@ -56,7 +54,6 @@ export function RegisterForm() {
         body: JSON.stringify({
           name: parsed.data.name,
           email: parsed.data.email,
-          phone: parsed.data.phone ?? "",
           password: parsed.data.password,
         }),
       });
@@ -111,18 +108,6 @@ export function RegisterForm() {
           autoComplete="email"
           value={form.email}
           onChange={update("email")}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="phone">Nomor HP (opsional)</Label>
-        <Input
-          id="phone"
-          inputMode="tel"
-          placeholder="08123456789"
-          autoComplete="tel"
-          value={form.phone}
-          onChange={update("phone")}
         />
       </div>
 

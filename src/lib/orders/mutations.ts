@@ -44,6 +44,7 @@ export type CreateOrderResult =
 export type CreateOrderInput = {
   identity: CartIdentity;
   variantIds: string[];
+  fulfillment: "DELIVERY" | "PICKUP";
   address: ShippingAddress;
   destinationId: string;
   courierCode: string;
@@ -71,6 +72,7 @@ type OrderLine = {
   price: number;
   weightGram: number;
   productId: string;
+  categoryId: string;
   productName: string;
   variantName: string;
   sku: string;
@@ -102,7 +104,9 @@ async function loadOrderLines(
 
   const variants = await prisma.productVariant.findMany({
     where: { id: { in: variantIds } },
-    include: { product: { select: { id: true, name: true, status: true } } },
+    include: {
+      product: { select: { id: true, name: true, status: true, categoryId: true } },
+    },
   });
   const variantMap = new Map(variants.map((variant) => [variant.id, variant]));
 
@@ -142,6 +146,7 @@ async function loadOrderLines(
       price: Number(variant.price),
       weightGram: variant.weightGram,
       productId: variant.product.id,
+      categoryId: variant.product.categoryId,
       productName: variant.product.name,
       variantName: variant.name,
       sku: variant.sku,
@@ -204,39 +209,60 @@ export async function createOrder(
   if (!loaded.ok) return loaded;
   const { lines } = loaded;
 
-  const settings = getShippingSettings();
-  const fallbackGram = settings.weightPerItemGram;
-  const weightGram = lines.reduce(
-    (total, line) =>
-      total + line.quantity * (line.weightGram > 0 ? line.weightGram : fallbackGram),
-    0,
-  );
+  // Pickup (SHIP-03): tanpa ongkir, tanpa kurir. Ongkir DELIVERY dihitung ulang
+  // di server; biaya dari klien tidak pernah dipercaya.
+  const isPickup = input.fulfillment === "PICKUP";
+  let shippingCost = 0;
+  let courier: string | null = null;
+  let service: string | null = null;
+  let etd: string | null = null;
 
-  // Ongkir dihitung ulang di server; biaya dari klien tidak pernah dipercaya.
-  const quote = await calculateShippingQuote(input.destinationId, weightGram);
-  const option = quote.options.find(
-    (candidate) =>
-      candidate.code === input.courierCode && candidate.service === input.service,
-  );
-  if (!option) {
-    return {
-      ok: false,
-      code: "INVALID_SHIPPING_METHOD",
-      message: "Metode pengiriman tidak valid",
-      field: "service",
-    };
+  if (!isPickup) {
+    const settings = getShippingSettings();
+    const fallbackGram = settings.weightPerItemGram;
+    const weightGram = lines.reduce(
+      (total, line) =>
+        total + line.quantity * (line.weightGram > 0 ? line.weightGram : fallbackGram),
+      0,
+    );
+
+    const quote = await calculateShippingQuote(input.destinationId, weightGram);
+    const option = quote.options.find(
+      (candidate) =>
+        candidate.code === input.courierCode && candidate.service === input.service,
+    );
+    if (!option) {
+      return {
+        ok: false,
+        code: "INVALID_SHIPPING_METHOD",
+        message: "Metode pengiriman tidak valid",
+        field: "service",
+      };
+    }
+
+    shippingCost = option.cost;
+    courier = option.courier;
+    service = option.service;
+    etd = option.etd ?? null;
   }
 
   const subtotal = lines.reduce(
     (total, line) => total + line.price * line.quantity,
     0,
   );
-  const shippingCost = option.cost;
+
+  // Cakupan voucher (PRD 5.4) butuh productId + categoryId per baris.
+  const voucherItems = lines.map((line) => ({
+    productId: line.productId,
+    categoryId: line.categoryId,
+    lineTotal: line.price * line.quantity,
+  }));
 
   // Voucher dihitung ulang di server dari keranjang dan ongkir final; kode dari
   // klien hanya sebagai masukan (PRD 5.3, AC-ORDER-01-03).
   const buyerPhone = await resolveBuyerPhone(input.identity, input.guestPhone);
   const resolved = await resolveVouchers(input.voucherCodes, {
+    items: voucherItems,
     subtotal,
     shippingCost,
     phone: buyerPhone,
@@ -250,7 +276,12 @@ export async function createOrder(
     };
   }
 
-  const discount = calculateDiscount(resolved.vouchers, subtotal, shippingCost);
+  const discount = calculateDiscount(
+    resolved.vouchers,
+    voucherItems,
+    subtotal,
+    shippingCost,
+  );
   const total = subtotal + shippingCost - discount.totalDiscount;
   const orderNumber = await pickOrderNumber();
   const stockReservedUntil = new Date(
@@ -298,10 +329,11 @@ export async function createOrder(
           shippingCost,
           discount: discount.totalDiscount,
           total,
+          fulfillment: input.fulfillment,
           shippingAddress: input.address as Prisma.InputJsonValue,
-          shippingCourier: option.courier,
-          shippingService: option.service,
-          shippingEtd: option.etd,
+          shippingCourier: courier,
+          shippingService: service,
+          shippingEtd: etd,
           stockReservedUntil,
           items: {
             create: lines.map((line) => ({

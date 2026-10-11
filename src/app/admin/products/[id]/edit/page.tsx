@@ -48,7 +48,12 @@ export default async function EditProductPage({
           categoryId: product.categoryId,
           brandId: product.brandId ?? "",
           status: product.status,
-          images: product.images.map((image) => image.url),
+          images: product.images
+            .filter((image) => image.role !== "SIZE_CHART")
+            .map((image) => image.url),
+          sizeChartUrl:
+            product.images.find((image) => image.role === "SIZE_CHART")?.url ??
+            "",
           variants: product.variants.map((variant) => ({
             sku: variant.sku,
             name: variant.name,

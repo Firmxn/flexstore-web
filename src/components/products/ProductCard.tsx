@@ -1,20 +1,30 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { ProductWithRelations } from "@/lib/products/queries";
 import { formatRupiah } from "@/lib/utils/format";
+import { ProductCardActions } from "./ProductCardActions";
 
-export function ProductCard({ product }: { product: ProductWithRelations }) {
-  const cover = product.images[0]?.url;
+export function ProductCard({
+  product,
+  canShop,
+}: {
+  product: ProductWithRelations;
+  canShop: boolean;
+}) {
+  // Bagan ukuran bukan foto produk; jangan dipakai sebagai sampul (PRD 3.1.A).
+  const cover = product.images.find((image) => image.role !== "SIZE_CHART")?.url;
   const prices = product.variants.map((variant) => Number(variant.price));
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
+  const availableVariant =
+    product.variants.find((variant) => variant.stock > 0) ?? null;
+  const href = `/products/${product.slug}`;
 
   return (
-    <Card className="overflow-hidden transition-shadow hover:shadow-md">
-      <Link href={`/products/${product.slug}`} className="block">
-        <div className="relative aspect-square bg-muted">
+    <Card className="flex flex-col overflow-hidden transition-shadow hover:shadow-md">
+      <Link href={href} className="block p-3">
+        <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
           {cover ? (
             <Image
               src={cover}
@@ -29,28 +39,26 @@ export function ProductCard({ product }: { product: ProductWithRelations }) {
             </div>
           )}
         </div>
-
-        <div className="flex flex-col gap-2 p-4">
-          <p className="text-xs text-muted-foreground">{product.category.name}</p>
-          <h3 className="line-clamp-2 font-medium leading-snug">{product.name}</h3>
-          <p className="font-semibold">
-            {minPrice === maxPrice
-              ? formatRupiah(minPrice)
-              : `${formatRupiah(minPrice)} - ${formatRupiah(maxPrice)}`}
-          </p>
-
-          <div className="flex items-center gap-2">
-            {product.totalStock > 0 ? (
-              <Badge variant="secondary">Stok {product.totalStock}</Badge>
-            ) : (
-              <Badge variant="destructive">Stok habis</Badge>
-            )}
-            {product.brand ? (
-              <Badge variant="outline">{product.brand.name}</Badge>
-            ) : null}
-          </div>
-        </div>
       </Link>
+
+      <div className="flex flex-1 flex-col gap-2 px-3 pb-3">
+        <Link href={href} className="block">
+          <h3 className="line-clamp-2 text-sm font-semibold leading-snug">
+            {product.name}
+          </h3>
+        </Link>
+        <p className="text-sm text-muted-foreground">
+          {minPrice === maxPrice
+            ? formatRupiah(minPrice)
+            : `${formatRupiah(minPrice)} - ${formatRupiah(maxPrice)}`}
+        </p>
+
+        {canShop ? (
+          <div className="mt-auto pt-1">
+            <ProductCardActions variantId={availableVariant?.id ?? null} />
+          </div>
+        ) : null}
+      </div>
     </Card>
   );
 }

@@ -2,11 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { CancelOrderForm } from "@/components/orders/CancelOrderForm";
 import { GuestOrderNotice } from "@/components/orders/GuestOrderNotice";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { PaymentDeadline } from "@/components/orders/PaymentDeadline";
 import { PaymentStatusWatcher } from "@/components/payments/PaymentStatusWatcher";
 import { PayNowButton } from "@/components/payments/PayNowButton";
+import { Badge } from "@/components/ui/badge";
 import { getShopperUser } from "@/lib/auth/session";
 import {
   getGuestAccessPhone,
@@ -112,21 +114,27 @@ export default async function OrderDetailPage({
 
       <div className="grid gap-6 sm:grid-cols-2">
         <section className="rounded-xl border border-border bg-background p-4 text-sm">
-          <h2 className="mb-3 font-semibold">Alamat Pengiriman</h2>
+          <h2 className="mb-3 font-semibold">
+            {order.fulfillment === "PICKUP" ? "Ambil di Toko" : "Alamat Pengiriman"}
+          </h2>
           <p className="font-medium">{address.name}</p>
           <p className="text-muted-foreground">{address.phone}</p>
-          <p className="text-muted-foreground">{address.street}</p>
-          <p className="text-muted-foreground">
-            {[
-              address.subdistrict,
-              address.district,
-              address.city,
-              address.province,
-              address.postalCode,
-            ]
-              .filter(Boolean)
-              .join(", ")}
-          </p>
+          {order.fulfillment === "PICKUP" ? null : (
+            <>
+              <p className="text-muted-foreground">{address.street}</p>
+              <p className="text-muted-foreground">
+                {[
+                  address.subdistrict,
+                  address.district,
+                  address.city,
+                  address.province,
+                  address.postalCode,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+              </p>
+            </>
+          )}
           {address.note ? (
             <p className="mt-2 text-xs text-muted-foreground">
               Catatan: {address.note}
@@ -185,6 +193,80 @@ export default async function OrderDetailPage({
           ) : null}
         </section>
       </div>
+
+      {order.trackingNumber ? (
+        <section className="rounded-xl border border-border bg-background p-4 text-sm">
+          <h2 className="mb-3 font-semibold">Pengiriman</h2>
+          <p className="text-muted-foreground">
+            {[order.shippingCourier, order.shippingService]
+              .filter(Boolean)
+              .join(" ")}
+          </p>
+          <p className="font-medium">Nomor resi: {order.trackingNumber}</p>
+          {user ? (
+            <Link
+              href={`/orders/${order.id}/tracking`}
+              className="mt-3 inline-flex h-9 items-center rounded-md border border-input px-3 hover:bg-accent"
+            >
+              Lihat Status Pengiriman
+            </Link>
+          ) : null}
+        </section>
+      ) : null}
+
+      {order.status === "CANCEL_REQUESTED" ? (
+        <section className="rounded-xl border border-border bg-background p-4 text-sm">
+          <h2 className="mb-3 font-semibold">Pengajuan Pembatalan</h2>
+          <p className="text-muted-foreground">
+            Pengajuan pembatalan Anda sedang ditinjau Store Admin.
+          </p>
+          {order.cancelReason ? (
+            <p className="mt-1 text-xs text-muted-foreground">
+              Alasan: {order.cancelReason}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      {order.cancelRejectionReason ? (
+        <section className="rounded-xl border border-border bg-background p-4 text-sm">
+          <h2 className="mb-3 font-semibold">Pembatalan Ditolak</h2>
+          <p className="text-muted-foreground">{order.cancelRejectionReason}</p>
+        </section>
+      ) : null}
+
+      {order.refunds.length > 0 ? (
+        <section className="rounded-xl border border-border bg-background p-4 text-sm">
+          <h2 className="mb-3 font-semibold">Refund</h2>
+          <ul className="flex flex-col gap-2">
+            {order.refunds.map((refund) => (
+              <li key={refund.id} className="flex items-center justify-between">
+                <span>{formatRupiah(Number(refund.amount))}</span>
+                <Badge
+                  variant={refund.status === "COMPLETED" ? "success" : "secondary"}
+                >
+                  {refund.status === "COMPLETED"
+                    ? "Selesai"
+                    : refund.status === "FAILED"
+                      ? "Gagal"
+                      : "Menunggu Bukti"}
+                </Badge>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {order.status === "WAITING_PAYMENT" || order.status === "PROCESSING" ? (
+        <section className="rounded-xl border border-border bg-background p-4 text-sm">
+          <h2 className="mb-3 font-semibold">Pembatalan</h2>
+          <p className="mb-3 text-muted-foreground">
+            Pembatalan berlaku untuk seluruh pesanan dan hanya selama pesanan
+            belum dikirim. Store Admin akan meninjau pengajuan Anda.
+          </p>
+          <CancelOrderForm orderId={order.id} />
+        </section>
+      ) : null}
 
       <Link
         href={user ? "/orders" : "/track-order"}

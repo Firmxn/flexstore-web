@@ -4,7 +4,7 @@ import { siteDescription } from "@/lib/site";
 // menu akun, jadi diulang di sini hanya menimbulkan duplikasi.
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-muted/30">
+    <footer className="border-t border-border bg-muted/30 print:hidden">
       <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-1">
           <p className="font-semibold text-foreground">FlexStore</p>

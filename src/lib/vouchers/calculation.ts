@@ -14,15 +14,63 @@ export type DiscountResult = {
   breakdown: VoucherBreakdown[];
 };
 
+// Baris keranjang yang relevan untuk cakupan voucher (PRD 5.4 butir 1-3).
+export type VoucherCartItem = {
+  productId: string;
+  categoryId: string;
+  lineTotal: number;
+};
+
+// Voucher + cakupan yang dimuat dari relasi `voucher_products` /
+// `voucher_categories`.
+export type ScopedVoucher = Voucher & {
+  scopeProductIds: string[];
+  scopeExcludedProductIds: string[];
+  scopeCategoryIds: string[];
+};
+
 const round2 = (value: number) => Math.round(value * 100) / 100;
+
+// Dasar potongan voucher = total harga baris yang dicakup.
+// - Tanpa cakupan sama sekali: seluruh keranjang (perilaku PH-05).
+// - Ada cakupan: baris yang cocok produk eligible ATAU kategori, lalu produk
+//   yang dikecualikan dibuang.
+export function voucherEligibleTotal(
+  voucher: ScopedVoucher,
+  items: VoucherCartItem[],
+): number {
+  const hasScope =
+    voucher.scopeProductIds.length > 0 ||
+    voucher.scopeCategoryIds.length > 0 ||
+    voucher.scopeExcludedProductIds.length > 0;
+  if (!hasScope) {
+    return items.reduce((sum, item) => sum + item.lineTotal, 0);
+  }
+
+  const eligibleProducts = new Set(voucher.scopeProductIds);
+  const categories = new Set(voucher.scopeCategoryIds);
+  const excludedProducts = new Set(voucher.scopeExcludedProductIds);
+  const restrictByProductOrCategory =
+    voucher.scopeProductIds.length > 0 || voucher.scopeCategoryIds.length > 0;
+
+  return items.reduce((sum, item) => {
+    if (excludedProducts.has(item.productId)) return sum;
+    const matches =
+      eligibleProducts.has(item.productId) || categories.has(item.categoryId);
+    if (restrictByProductOrCategory && !matches) return sum;
+    return sum + item.lineTotal;
+  }, 0);
+}
 
 // Kalkulasi bertahap (PRD 5.3): nominal dulu, baru persentase, dihitung dari
 // harga sisa supaya potongan lebih kecil (seller-oriented). Voucher ongkir
 // dihitung terpisah dan tidak mempengaruhi potongan produk. Urutan antar
 // voucher sejenis memakai kode menaik supaya hasil konsisten walaupun pembeli
-// memasukkan kode dalam urutan berbeda (PRD 5.3 C).
+// memasukkan kode dalam urutan berbeda (PRD 5.3 C). Setiap voucher dibatasi
+// oleh total harga baris yang dicakupnya.
 export function calculateDiscount(
-  vouchers: Voucher[],
+  vouchers: ScopedVoucher[],
+  items: VoucherCartItem[],
   subtotal: number,
   shippingCost: number,
 ): DiscountResult {
@@ -40,7 +88,8 @@ export function calculateDiscount(
   let remaining = subtotal;
 
   for (const voucher of nominal) {
-    const amount = Math.min(Number(voucher.discountAmount ?? 0), remaining);
+    const base = Math.min(voucherEligibleTotal(voucher, items), remaining);
+    const amount = Math.min(Number(voucher.discountAmount ?? 0), base);
     if (amount <= 0) continue;
     remaining = round2(remaining - amount);
     breakdown.push({
@@ -52,7 +101,8 @@ export function calculateDiscount(
   }
 
   for (const voucher of percentage) {
-    const raw = (remaining * Number(voucher.discountPercentage ?? 0)) / 100;
+    const base = Math.min(voucherEligibleTotal(voucher, items), remaining);
+    const raw = (base * Number(voucher.discountPercentage ?? 0)) / 100;
     const capped =
       voucher.maxDiscount != null
         ? Math.min(raw, Number(voucher.maxDiscount))

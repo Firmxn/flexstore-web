@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Daftar" };
 
 export default function RegisterPage() {
   return (
-    <div className="mx-auto flex max-w-md flex-col px-4 py-16">
+    <div className="flex flex-col">
       <Card>
         <CardHeader>
           <CardTitle>Buat Akun FlexStore</CardTitle>

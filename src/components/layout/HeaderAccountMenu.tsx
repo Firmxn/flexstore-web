@@ -1,26 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { ChevronDown, LogOut, Package, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { initialsOf } from "@/lib/utils/initials";
+import { useDismiss } from "@/lib/hooks/useDismiss";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 
 type HeaderAccountMenuProps = {
   name: string;
   role: string;
 };
-
-// Inisial untuk avatar: maksimal 2 huruf pertama tiap kata.
-function initialsOf(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  return parts
-    .slice(0, 2)
-    .map((part) => part.charAt(0))
-    .join("")
-    .toUpperCase();
-}
 
 // Menu akun di navbar. Berbeda dengan nav link biasa: tombol ini membuka panel
 // yang berisi identitas pengguna dan aksi kelola akun. Ditulis sebagai client
@@ -31,28 +22,7 @@ export function HeaderAccountMenu({
   role,
 }: HeaderAccountMenuProps) {
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function handlePointerDown(event: PointerEvent) {
-      const target = event.target as Node | null;
-      if (!target || !rootRef.current?.contains(target)) setOpen(false);
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
+  const rootRef = useDismiss<HTMLDivElement>(open, () => setOpen(false));
 
   const menuItemClass =
     "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium";

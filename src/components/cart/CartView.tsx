@@ -48,7 +48,6 @@ export function CartView({ items }: CartViewProps) {
             productName={item.productName}
             productSlug={item.productSlug}
             variantName={item.variantName}
-            sku={item.sku}
             imageUrl={item.imageUrl}
             price={item.price}
             quantity={item.quantity}

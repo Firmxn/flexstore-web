@@ -6,6 +6,7 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
   PROCESSING: "bg-blue-100 text-blue-900",
   SHIPPED: "bg-indigo-100 text-indigo-900",
   COMPLETED: "bg-green-100 text-green-900",
+  CANCEL_REQUESTED: "bg-orange-100 text-orange-900",
   CANCELED: "bg-red-100 text-red-900",
 };
 

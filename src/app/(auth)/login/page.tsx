@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Masuk" };
 
 export default function LoginPage() {
   return (
-    <div className="mx-auto flex max-w-md flex-col px-4 py-16">
+    <div className="flex flex-col">
       <Card>
         <CardHeader>
           <CardTitle>Masuk ke FlexStore</CardTitle>

@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/admin/PageHeader";
 import { VoucherForm } from "@/components/admin/VoucherForm";
-import { getVoucherOptions } from "@/lib/vouchers";
+import { getVoucherOptions, getVoucherScopeOptions } from "@/lib/vouchers";
 
 // Data voucher lain dibaca di level halaman, di luar Suspense.
 // `instant = false` menandai rute ini sebagai blocking route (Next.js 16
@@ -8,13 +8,16 @@ import { getVoucherOptions } from "@/lib/vouchers";
 export const instant = false;
 
 export default async function NewVoucherPage() {
-  const options = await getVoucherOptions();
+  const [options, scope] = await Promise.all([
+    getVoucherOptions(),
+    getVoucherScopeOptions(),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Tambah Voucher"
-        description="Voucher berlaku sesuai periode, kuota, dan aturan kompatibilitas."
+        description="Voucher berlaku sesuai periode, kuota, cakupan produk, dan aturan kompatibilitas."
       />
 
       <VoucherForm
@@ -23,6 +26,8 @@ export default async function NewVoucherPage() {
           code: option.code,
           isActive: option.isActive,
         }))}
+        products={scope.products}
+        categories={scope.categories}
       />
     </div>
   );

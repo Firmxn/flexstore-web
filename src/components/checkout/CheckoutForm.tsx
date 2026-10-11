@@ -32,6 +32,13 @@ type CheckoutFormProps = {
   subtotal: number;
   shippingConfigured: boolean;
   defaults: { name: string; email: string; phone: string };
+  pickup: {
+    enabled: boolean;
+    info: string | null;
+    storeName: string;
+    storeAddress: string | null;
+    storePhone: string | null;
+  };
 };
 
 type CreatedOrder = { id: string; orderNumber: string; total: number };
@@ -58,7 +65,11 @@ export function CheckoutForm({
   subtotal,
   shippingConfigured,
   defaults,
+  pickup,
 }: CheckoutFormProps) {
+  const [fulfillment, setFulfillment] = useState<"DELIVERY" | "PICKUP">(
+    "DELIVERY",
+  );
   const [verifiedPhone, setVerifiedPhone] = useState<string | null>(
     mode === "user" ? "akun" : null,
   );
@@ -122,7 +133,8 @@ export function CheckoutForm({
   const autoPostal = Boolean(destination?.zipCode);
   const regionLocked = shippingConfigured && !destination;
 
-  const shippingCost = shipping?.cost ?? 0;
+  const isPickup = fulfillment === "PICKUP";
+  const shippingCost = isPickup ? 0 : (shipping?.cost ?? 0);
   const total = subtotal + shippingCost - voucherDiscount;
 
   // Voucher divalidasi server (subtotal dihitung ulang dari keranjang), jadi
@@ -185,6 +197,19 @@ export function CheckoutForm({
     }
   }
 
+  function handleFulfillment(value: "DELIVERY" | "PICKUP") {
+    setFulfillment(value);
+    if (value === "PICKUP") {
+      // Pickup tidak memakai ongkir; voucher ongkir dihitung tanpa tarif.
+      setShipping(null);
+      if (voucherCodes.length > 0) void validateVouchers(voucherCodes, 0);
+      return;
+    }
+    if (voucherCodes.length > 0) {
+      void validateVouchers(voucherCodes, shipping?.cost ?? 0);
+    }
+  }
+
   function handleDestination(value: ShippingDestination | null) {
     setDestination(value);
     // Tarif lama tidak relevan saat tujuan berubah; CourierPicker mengisi ulang.
@@ -209,14 +234,16 @@ export function CheckoutForm({
     event.preventDefault();
     setError(null);
 
-    if (shippingConfigured && !destination) {
-      setError("Pilih titik tujuan pengiriman terlebih dahulu");
-      return;
-    }
+    if (!isPickup) {
+      if (shippingConfigured && !destination) {
+        setError("Pilih titik tujuan pengiriman terlebih dahulu");
+        return;
+      }
 
-    if (!shipping) {
-      setError("Pilih metode pengiriman terlebih dahulu");
-      return;
+      if (!shipping) {
+        setError("Pilih metode pengiriman terlebih dahulu");
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -226,19 +253,20 @@ export function CheckoutForm({
         {
           method: "POST",
           body: JSON.stringify({
+            fulfillment,
             variantIds,
-            destinationId: destination?.id,
-            courierCode: shipping.code,
-            service: shipping.service,
+            destinationId: isPickup ? undefined : destination?.id,
+            courierCode: isPickup ? undefined : shipping?.code,
+            service: isPickup ? undefined : shipping?.service,
             address: {
               name,
               phone,
-              street,
-              city,
-              province,
-              district: district || undefined,
-              subdistrict: subdistrict || undefined,
-              postalCode,
+              street: isPickup ? undefined : street,
+              city: isPickup ? undefined : city,
+              province: isPickup ? undefined : province,
+              district: isPickup ? undefined : district || undefined,
+              subdistrict: isPickup ? undefined : subdistrict || undefined,
+              postalCode: isPickup ? undefined : postalCode,
               note: note || undefined,
             },
             guestPhone: mode === "guest" ? verifiedPhone : undefined,
@@ -279,7 +307,38 @@ export function CheckoutForm({
         ) : null}
 
         <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
-          <h2 className="font-semibold">Alamat Pengiriman</h2>
+          <h2 className="font-semibold">
+            {isPickup ? "Data Pengambil" : "Alamat Pengiriman"}
+          </h2>
+
+          {pickup.enabled ? (
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium">Metode pemenuhan</span>
+              <div className="flex flex-wrap gap-2">
+                <label className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+                  <input
+                    type="radio"
+                    name="fulfillment"
+                    className="h-4 w-4"
+                    checked={!isPickup}
+                    onChange={() => handleFulfillment("DELIVERY")}
+                  />
+                  Kirim ke alamat
+                </label>
+                <label className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm">
+                  <input
+                    type="radio"
+                    name="fulfillment"
+                    className="h-4 w-4"
+                    checked={isPickup}
+                    onChange={() => handleFulfillment("PICKUP")}
+                  />
+                  Ambil di toko
+                </label>
+              </div>
+            </div>
+          ) : null}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label htmlFor="checkout-name">Nama penerima</Label>
@@ -302,95 +361,112 @@ export function CheckoutForm({
               />
             </div>
 
-            {shippingConfigured ? (
-              <div className="sm:col-span-2">
-                <DestinationPicker
-                  configured={shippingConfigured}
-                  selected={destination}
-                  onSelect={handleDestination}
-                />
+            {!isPickup ? (
+              <>
+                {shippingConfigured ? (
+                  <div className="sm:col-span-2">
+                    <DestinationPicker
+                      configured={shippingConfigured}
+                      selected={destination}
+                      onSelect={handleDestination}
+                    />
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap items-center justify-between gap-2 sm:col-span-2">
+                  <h3 className="text-sm font-medium">Wilayah tujuan</h3>
+                  {shippingConfigured ? (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                      otomatis dari titik tujuan
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="checkout-province">Provinsi</Label>
+                  <Input
+                    id="checkout-province"
+                    required
+                    disabled={regionLocked}
+                    readOnly={autoProvince}
+                    className={autoProvince ? "bg-muted" : undefined}
+                    value={province}
+                    onChange={(event) => setProvince(event.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="checkout-city">Kota/Kabupaten</Label>
+                  <Input
+                    id="checkout-city"
+                    required
+                    disabled={regionLocked}
+                    readOnly={autoCity}
+                    className={autoCity ? "bg-muted" : undefined}
+                    value={city}
+                    onChange={(event) => setCity(event.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="checkout-district">Kecamatan</Label>
+                  <Input
+                    id="checkout-district"
+                    disabled={regionLocked}
+                    readOnly={autoDistrict}
+                    className={autoDistrict ? "bg-muted" : undefined}
+                    value={district}
+                    onChange={(event) => setDistrict(event.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="checkout-subdistrict">Kelurahan/Desa</Label>
+                  <Input
+                    id="checkout-subdistrict"
+                    disabled={regionLocked}
+                    readOnly={autoSubdistrict}
+                    className={autoSubdistrict ? "bg-muted" : undefined}
+                    value={subdistrict}
+                    onChange={(event) => setSubdistrict(event.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="checkout-postal">Kode pos</Label>
+                  <Input
+                    id="checkout-postal"
+                    required
+                    disabled={regionLocked}
+                    readOnly={autoPostal}
+                    className={autoPostal ? "bg-muted" : undefined}
+                    inputMode="numeric"
+                    value={postalCode}
+                    onChange={(event) => setPostalCode(event.target.value)}
+                  />
+                </div>
+                <div className="flex flex-col gap-2 sm:col-span-2">
+                  <Label htmlFor="checkout-street">Alamat lengkap</Label>
+                  <Textarea
+                    id="checkout-street"
+                    required
+                    rows={3}
+                    placeholder="Jalan, nomor rumah, RT/RW"
+                    value={street}
+                    onChange={(event) => setStreet(event.target.value)}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col gap-1 rounded-lg border border-border bg-muted/40 p-3 text-sm sm:col-span-2">
+                <p className="font-medium">Ambil di {pickup.storeName}</p>
+                {pickup.storeAddress ? (
+                  <p className="text-muted-foreground">{pickup.storeAddress}</p>
+                ) : null}
+                {pickup.storePhone ? (
+                  <p className="text-muted-foreground">{pickup.storePhone}</p>
+                ) : null}
+                {pickup.info ? (
+                  <p className="text-muted-foreground">{pickup.info}</p>
+                ) : null}
               </div>
-            ) : null}
-
-            <div className="flex flex-wrap items-center justify-between gap-2 sm:col-span-2">
-              <h3 className="text-sm font-medium">Wilayah tujuan</h3>
-              {shippingConfigured ? (
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                  otomatis dari titik tujuan
-                </span>
-              ) : null}
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="checkout-province">Provinsi</Label>
-              <Input
-                id="checkout-province"
-                required
-                disabled={regionLocked}
-                readOnly={autoProvince}
-                className={autoProvince ? "bg-muted" : undefined}
-                value={province}
-                onChange={(event) => setProvince(event.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="checkout-city">Kota/Kabupaten</Label>
-              <Input
-                id="checkout-city"
-                required
-                disabled={regionLocked}
-                readOnly={autoCity}
-                className={autoCity ? "bg-muted" : undefined}
-                value={city}
-                onChange={(event) => setCity(event.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="checkout-district">Kecamatan</Label>
-              <Input
-                id="checkout-district"
-                disabled={regionLocked}
-                readOnly={autoDistrict}
-                className={autoDistrict ? "bg-muted" : undefined}
-                value={district}
-                onChange={(event) => setDistrict(event.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="checkout-subdistrict">Kelurahan/Desa</Label>
-              <Input
-                id="checkout-subdistrict"
-                disabled={regionLocked}
-                readOnly={autoSubdistrict}
-                className={autoSubdistrict ? "bg-muted" : undefined}
-                value={subdistrict}
-                onChange={(event) => setSubdistrict(event.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="checkout-postal">Kode pos</Label>
-              <Input
-                id="checkout-postal"
-                required
-                disabled={regionLocked}
-                readOnly={autoPostal}
-                className={autoPostal ? "bg-muted" : undefined}
-                inputMode="numeric"
-                value={postalCode}
-                onChange={(event) => setPostalCode(event.target.value)}
-              />
-            </div>
-            <div className="flex flex-col gap-2 sm:col-span-2">
-              <Label htmlFor="checkout-street">Alamat lengkap</Label>
-              <Textarea
-                id="checkout-street"
-                required
-                rows={3}
-                placeholder="Jalan, nomor rumah, RT/RW"
-                value={street}
-                onChange={(event) => setStreet(event.target.value)}
-              />
-            </div>
+            )}
             <div className="flex flex-col gap-2 sm:col-span-2">
               <Label htmlFor="checkout-note">Catatan (opsional)</Label>
               <Textarea
@@ -439,13 +515,19 @@ export function CheckoutForm({
 
         <div className="flex flex-col gap-2 border-t border-border pt-4">
           <h3 className="text-sm font-semibold">Metode Pengiriman</h3>
-          <CourierPicker
-            key={destination?.id ?? "flat"}
-            variantIds={variantIds}
-            destinationId={destination?.id}
-            configured={shippingConfigured}
-            onSelect={handleShipping}
-          />
+          {isPickup ? (
+            <p className="text-sm text-muted-foreground">
+              Ambil di toko (tanpa ongkir)
+            </p>
+          ) : (
+            <CourierPicker
+              key={destination?.id ?? "flat"}
+              variantIds={variantIds}
+              destinationId={destination?.id}
+              configured={shippingConfigured}
+              onSelect={handleShipping}
+            />
+          )}
         </div>
 
         <div className="flex flex-col gap-2 border-t border-border pt-4">
@@ -523,7 +605,13 @@ export function CheckoutForm({
           </div>
           <div className="flex items-center justify-between">
             <dt className="text-muted-foreground">Ongkos kirim</dt>
-            <dd>{shipping ? formatRupiah(shipping.cost) : "-"}</dd>
+            <dd>
+              {isPickup
+                ? formatRupiah(0)
+                : shipping
+                  ? formatRupiah(shipping.cost)
+                  : "-"}
+            </dd>
           </div>
           {voucherDiscount > 0 ? (
             <div className="flex items-center justify-between text-success">

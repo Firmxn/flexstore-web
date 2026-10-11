@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { VoucherForm } from "@/components/admin/VoucherForm";
-import { getVoucherById, getVoucherOptions } from "@/lib/vouchers";
+import { getVoucherById, getVoucherOptions, getVoucherScopeOptions } from "@/lib/vouchers";
 
 const idSchema = z.string().uuid();
 
@@ -20,9 +20,10 @@ export default async function EditVoucherPage({
   const { id } = await params;
   if (!idSchema.safeParse(id).success) notFound();
 
-  const [voucher, options] = await Promise.all([
+  const [voucher, options, scope] = await Promise.all([
     getVoucherById(id),
     getVoucherOptions(id),
+    getVoucherScopeOptions(),
   ]);
 
   if (!voucher) notFound();
@@ -46,6 +47,8 @@ export default async function EditVoucherPage({
           code: option.code,
           isActive: option.isActive,
         }))}
+        products={scope.products}
+        categories={scope.categories}
         initial={{
           id: voucher.id,
           code: voucher.code,
@@ -60,6 +63,13 @@ export default async function EditVoucherPage({
           validUntil: toDateInput(voucher.validUntil),
           isActive: voucher.isActive,
           compatibleVoucherIds,
+          eligibleProductIds: voucher.products
+            .filter((row) => row.kind === "ELIGIBLE")
+            .map((row) => row.productId),
+          excludedProductIds: voucher.products
+            .filter((row) => row.kind === "EXCLUDED")
+            .map((row) => row.productId),
+          categoryIds: voucher.categories.map((row) => row.categoryId),
         }}
       />
     </div>

@@ -65,7 +65,13 @@ export async function getCart(identity: CartIdentity): Promise<CartSnapshot> {
     where: { id: { in: rawItems.map((item) => item.variantId) } },
     include: {
       product: {
-        include: { images: { orderBy: { sortOrder: "asc" }, take: 1 } },
+        include: {
+          images: {
+            where: { role: "GALLERY" },
+            orderBy: { sortOrder: "asc" },
+            take: 1,
+          },
+        },
       },
     },
   });

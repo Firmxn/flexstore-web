@@ -45,6 +45,7 @@
 | **Phase 6** | **MOD-SHIP** | SHIP-02 | Track Shipment | Belum dirinci | - |
 | | **MOD-ORDER** | ORDER-05 | Cancel Order Request | Belum dirinci | - |
 | | | ORDER-06 | Refund (Manual) | Belum dirinci | - |
+| | | ORDER-08 | Tracking Pesanan Customer | Belum dirinci (PH-06) | `docs/04` bagian 10 (keputusan 2026-10-10) |
 | | **MOD-REPORT** | REPORT-01 | Sales Report | Belum dirinci | - |
 | | **MOD-CONFIG** | CONFIG-01 | Store Settings | Belum dirinci | - |
 
@@ -1206,7 +1207,7 @@ Tidak ada.
 ### 12. Batas fitur
 
 - **Termasuk:** Daftar dan detail pesanan customer, pelepasan malas reservasi
-- **Tidak termasuk:** Riwayat untuk guest (pakai ORDER-04), pembatalan (PH-06), invoice (PH-05), pembayaran (PH-04)
+- **Tidak termasuk:** Riwayat untuk guest (pakai ORDER-04), pembatalan (ORDER-05, PH-06), lacak pesanan (ORDER-08, PH-06), invoice (PH-05), pembayaran (PH-04). Tombol "Lacak Pesanan" dan "Batalkan Pesanan" di daftar (sejak 2026-10-10) masih placeholder tanpa fungsi — pemiliknya ORDER-08 dan ORDER-05 (PH-06)
 - **Ketergantungan:** ORDER-01/ORDER-02 (data pesanan), MOD-AUTH (sesi)
 
 ### 13. Pertanyaan terbuka
@@ -1241,7 +1242,7 @@ Tidak ada.
 | Role | Tindakan | Cakupan | Respons |
 | --- | --- | --- | --- |
 | Guest | Lacak pesanan | Pesanan dengan nomor + HP yang cocok | - |
-| Customer login | Lacak pesanan | Sama seperti guest (disarankan pakai `/orders`) | - |
+| Customer login | Lacak pesanan | Sama seperti guest; jalur khusus customer — daftar pesanan dalam perjalanan tanpa input — direncanakan di ORDER-08 (PH-06), sementara pakai `/orders` | - |
 | Siapa pun dengan nomor pesanan tanpa HP yang cocok | Lacak pesanan | - | `404 NOT_FOUND` pesan generik |
 
 ### 4. Input dan validasi
@@ -1315,7 +1316,7 @@ Tidak ada.
 ### 12. Batas fitur
 
 - **Termasuk:** Lacak pesanan publik dengan nomor pesanan + HP, pembatasan percobaan
-- **Tidak termasuk:** Lacak posisi kurir (SHIP-02, PH-06), ubah data pesanan
+- **Tidak termasuk:** Lacak posisi kurir (SHIP-02, PH-06), ubah data pesanan, daftar tracking khusus customer tanpa input (ORDER-08, PH-06)
 - **Ketergantungan:** ORDER-01/ORDER-02 (data pesanan), Redis (pembatasan percobaan)
 
 ### 13. Pertanyaan terbuka

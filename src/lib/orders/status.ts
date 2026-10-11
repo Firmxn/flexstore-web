@@ -7,5 +7,6 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PROCESSING: "Diproses",
   SHIPPED: "Dikirim",
   COMPLETED: "Selesai",
+  CANCEL_REQUESTED: "Pengajuan Pembatalan",
   CANCELED: "Dibatalkan",
 };

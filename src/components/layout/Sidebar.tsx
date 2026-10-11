@@ -5,10 +5,14 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils/cn";
 
 const LINKS = [
+  { href: "/admin/orders", label: "Pesanan" },
   { href: "/admin/products", label: "Produk" },
   { href: "/admin/categories", label: "Kategori" },
   { href: "/admin/brands", label: "Brand" },
   { href: "/admin/vouchers", label: "Voucher" },
+  { href: "/admin/reports", label: "Laporan" },
+  { href: "/admin/cancellation-reasons", label: "Template Alasan" },
+  { href: "/admin/settings", label: "Pengaturan" },
 ];
 
 export function Sidebar() {

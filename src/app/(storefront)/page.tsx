@@ -1,16 +1,26 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { connection } from "next/server";
+import { PageContainer } from "@/components/layout/PageContainer";
 import { ProductGrid } from "@/components/products/ProductGrid";
+import { getCartAccess } from "@/lib/cart";
 import { getPublishedProducts } from "@/lib/products";
 
 async function FeaturedProducts() {
-  const { products } = await getPublishedProducts({
-    page: 1,
-    limit: 8,
-    search: undefined,
-  });
+  // Membaca cookie/sesi (getCartAccess) untuk menentukan tombol tampil, jadi
+  // request-time.
+  await connection();
 
-  return <ProductGrid products={products} />;
+  const [{ products }, access] = await Promise.all([
+    getPublishedProducts({
+      page: 1,
+      limit: 8,
+      search: undefined,
+    }),
+    getCartAccess(),
+  ]);
+
+  return <ProductGrid products={products} canShop={access.ok} />;
 }
 
 function ProductGridSkeleton() {
@@ -28,7 +38,7 @@ function ProductGridSkeleton() {
 
 export default function HomePage() {
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12">
+    <PageContainer>
       <section className="rounded-2xl border border-border bg-muted/30 px-6 py-14 text-center">
         <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           Selamat datang di FlexStore
@@ -59,6 +69,6 @@ export default function HomePage() {
           <FeaturedProducts />
         </Suspense>
       </section>
-    </div>
+    </PageContainer>
   );
 }

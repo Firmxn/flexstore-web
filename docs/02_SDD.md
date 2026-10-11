@@ -357,15 +357,16 @@ flexstore/
 │   │   │   │   ├── page.tsx       # Order history: `/orders`
 │   │   │   │   └── [id]/
 │   │   │   │       ├── page.tsx   # Order detail: `/orders/[id]`
-│   │   │   │       └── invoice/
-│   │   │   │           └── page.tsx # Invoice: `/orders/[id]/invoice`
+│   │   │   │       ├── invoice/
+│   │   │   │       │   └── page.tsx # Invoice: `/orders/[id]/invoice`
+│   │   │   │       └── tracking/
+│   │   │   │           └── page.tsx # Tracking detail customer (ORDER-08, PH-06): `/orders/[id]/tracking`
 │   │   │   ├── profile/
 │   │   │   │   ├── page.tsx       # Profile: `/profile`
 │   │   │   │   └── addresses/
 │   │   │   │       └── page.tsx   # Manage addresses: `/profile/addresses`
-│   │   │   └── track/
-│   │   │       └── [orderNumber]/
-│   │   │           └── page.tsx   # Public tracking: `/track/[orderNumber]`
+│   │   │   └── track-order/
+│   │   │       └── page.tsx       # Lacak pesanan: `/track-order` — guest isi form (ORDER-04); customer login lihat daftar pesanan dalam perjalanan (ORDER-08, PH-06)
 │   │   ├── admin/                 # Admin routes (protected by middleware)
 │   │   │   ├── page.tsx           # Admin dashboard: `/admin`
 │   │   │   ├── layout.tsx         # Admin layout (sidebar, auth check)

@@ -1,10 +1,15 @@
-import type { Voucher } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
 import { formatRupiah } from "@/lib/utils/format";
+import {
+  voucherEligibleTotal,
+  type ScopedVoucher,
+  type VoucherCartItem,
+} from "./calculation";
 
 export const MAX_VOUCHERS = 2;
 
 export type VoucherContext = {
+  items: VoucherCartItem[];
   subtotal: number;
   shippingCost: number;
   phone: string | null;
@@ -13,7 +18,7 @@ export type VoucherContext = {
 export type VoucherError = { code: string; reason: string };
 
 export type ResolveVouchersResult =
-  | { ok: true; vouchers: Voucher[] }
+  | { ok: true; vouchers: ScopedVoucher[] }
   | { ok: false; errors: VoucherError[] };
 
 export function normalizeVoucherCode(code: string): string {
@@ -55,11 +60,32 @@ export async function resolveVouchers(
   }
 
   const now = new Date();
-  const found = await prisma.voucher.findMany({ where: { code: { in: codes } } });
-  const byCode = new Map(found.map((voucher) => [voucher.code, voucher]));
+  const found = await prisma.voucher.findMany({
+    where: { code: { in: codes } },
+    include: {
+      products: { select: { productId: true, kind: true } },
+      categories: { select: { categoryId: true } },
+    },
+  });
+
+  const byCode = new Map<string, ScopedVoucher>(
+    found.map((voucher) => [
+      voucher.code,
+      {
+        ...voucher,
+        scopeProductIds: voucher.products
+          .filter((row) => row.kind === "ELIGIBLE")
+          .map((row) => row.productId),
+        scopeExcludedProductIds: voucher.products
+          .filter((row) => row.kind === "EXCLUDED")
+          .map((row) => row.productId),
+        scopeCategoryIds: voucher.categories.map((row) => row.categoryId),
+      },
+    ]),
+  );
 
   const errors: VoucherError[] = [];
-  const valid: Voucher[] = [];
+  const valid: ScopedVoucher[] = [];
 
   for (const code of codes) {
     const voucher = byCode.get(code);
@@ -79,7 +105,17 @@ export async function resolveVouchers(
       errors.push({ code, reason: "Voucher sudah kedaluwarsa" });
       continue;
     }
-    if (context.subtotal < Number(voucher.minTransaction)) {
+
+    // Cakupan produk/kategori: dasar potongan adalah baris yang dicakup.
+    const eligibleTotal = voucherEligibleTotal(voucher, context.items);
+    if (eligibleTotal <= 0) {
+      errors.push({
+        code,
+        reason: "Voucher tidak berlaku untuk produk di keranjang",
+      });
+      continue;
+    }
+    if (eligibleTotal < Number(voucher.minTransaction)) {
       errors.push({
         code,
         reason: `Minimal belanja ${formatRupiah(Number(voucher.minTransaction))}`,

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { getCart, getCartAccess } from "@/lib/cart";
+import { getPickupSettings } from "@/lib/config";
 import { prisma } from "@/lib/db/prisma";
 import { isShippingApiConfigured } from "@/lib/shipping";
 
@@ -67,6 +68,8 @@ export default async function CheckoutPage({
     0,
   );
 
+  const pickup = await getPickupSettings();
+
   return (
     <PageContainer>
       <h1 className="text-2xl font-bold tracking-tight">Checkout</h1>
@@ -76,6 +79,13 @@ export default async function CheckoutPage({
         subtotal={subtotal}
         shippingConfigured={isShippingApiConfigured()}
         defaults={defaults}
+        pickup={{
+          enabled: pickup.enabled,
+          info: pickup.info,
+          storeName: pickup.storeName,
+          storeAddress: pickup.storeAddress,
+          storePhone: pickup.storePhone,
+        }}
       />
     </PageContainer>
   );

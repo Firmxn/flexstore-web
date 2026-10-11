@@ -78,6 +78,24 @@ export async function cancelOrderAndReleaseStock(
   });
 }
 
+// Dipakai admin saat menyetujui pembatalan (ORDER-05): pesanan berstatus
+// CANCEL_REQUESTED dipindah ke CANCELED dan stoknya dikembalikan. Klaim baris
+// bersyarat membuat operasi ini idempoten.
+export async function cancelRequestedOrderAndReleaseStock(
+  orderId: string,
+): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    const claimed = await tx.order.updateMany({
+      where: { id: orderId, status: "CANCEL_REQUESTED" },
+      data: { status: "CANCELED", canceledAt: new Date() },
+    });
+    if (claimed.count === 0) return false;
+
+    await restoreStock(tx, orderId);
+    return true;
+  });
+}
+
 export async function releaseExpiredReservations(): Promise<number> {
   const now = new Date();
   const expired = await prisma.order.findMany({

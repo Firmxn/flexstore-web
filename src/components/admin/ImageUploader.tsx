@@ -9,18 +9,22 @@ import { useUploadThing } from "@/lib/uploadthing/client";
 type ImageUploaderProps = {
   urls: string[];
   setUrls: React.Dispatch<React.SetStateAction<string[]>>;
+  // Batas jumlah gambar. Default galeri produk; bagan ukuran memakai 1.
+  max?: number;
 };
 
-export function ImageUploader({ urls, setUrls }: ImageUploaderProps) {
+export function ImageUploader({
+  urls,
+  setUrls,
+  max = MAX_PRODUCT_IMAGES,
+}: ImageUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { startUpload, isUploading } = useUploadThing("productImage", {
     onClientUploadComplete: (files) => {
       const uploaded = files.map((file) => file.serverData.url);
-      setUrls((previous) =>
-        [...previous, ...uploaded].slice(0, MAX_PRODUCT_IMAGES),
-      );
+      setUrls((previous) => [...previous, ...uploaded].slice(0, max));
       setError(null);
       if (inputRef.current) inputRef.current.value = "";
     },
@@ -33,9 +37,9 @@ export function ImageUploader({ urls, setUrls }: ImageUploaderProps) {
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
 
-    const remaining = MAX_PRODUCT_IMAGES - urls.length;
+    const remaining = max - urls.length;
     if (remaining <= 0) {
-      setError(`Maksimal ${MAX_PRODUCT_IMAGES} gambar`);
+      setError(`Maksimal ${max} gambar`);
       return;
     }
 
@@ -85,21 +89,21 @@ export function ImageUploader({ urls, setUrls }: ImageUploaderProps) {
           ref={inputRef}
           type="file"
           accept="image/*"
-          multiple
+          multiple={max > 1}
           className="hidden"
           onChange={handleFiles}
-          disabled={isUploading || urls.length >= MAX_PRODUCT_IMAGES}
+          disabled={isUploading || urls.length >= max}
         />
         <Button
           type="button"
           variant="outline"
-          disabled={isUploading || urls.length >= MAX_PRODUCT_IMAGES}
+          disabled={isUploading || urls.length >= max}
           onClick={() => inputRef.current?.click()}
         >
           {isUploading ? "Mengunggah..." : "Unggah Gambar"}
         </Button>
         <p className="mt-2 text-xs text-muted-foreground">
-          Maksimal {MAX_PRODUCT_IMAGES} gambar, masing-masing 4MB.
+          Maksimal {max} gambar, masing-masing 4MB.
         </p>
       </div>
     </div>

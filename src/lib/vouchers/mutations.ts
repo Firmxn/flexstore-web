@@ -38,10 +38,53 @@ async function syncCompatibility(
   });
 }
 
+// Cakupan produk/kategori diganti utuh setiap simpan supaya form admin menjadi
+// satu-satunya sumber kebenaran. Produk yang masuk daftar eligible tidak
+// diulang di daftar excluded (eligible menang).
+async function syncScope(
+  tx: Prisma.TransactionClient,
+  voucherId: string,
+  input: VoucherInput,
+) {
+  await tx.voucherProduct.deleteMany({ where: { voucherId } });
+  await tx.voucherCategory.deleteMany({ where: { voucherId } });
+
+  const eligible = [...new Set(input.eligibleProductIds)];
+  const eligibleSet = new Set(eligible);
+  const excluded = [...new Set(input.excludedProductIds)].filter(
+    (productId) => !eligibleSet.has(productId),
+  );
+
+  const productRows = [
+    ...eligible.map((productId) => ({
+      voucherId,
+      productId,
+      kind: "ELIGIBLE" as const,
+    })),
+    ...excluded.map((productId) => ({
+      voucherId,
+      productId,
+      kind: "EXCLUDED" as const,
+    })),
+  ];
+  if (productRows.length > 0) {
+    await tx.voucherProduct.createMany({ data: productRows, skipDuplicates: true });
+  }
+
+  const categoryIds = [...new Set(input.categoryIds)];
+  if (categoryIds.length > 0) {
+    await tx.voucherCategory.createMany({
+      data: categoryIds.map((categoryId) => ({ voucherId, categoryId })),
+      skipDuplicates: true,
+    });
+  }
+}
+
 export async function createVoucher(input: VoucherInput) {
   return prisma.$transaction(async (tx) => {
     const voucher = await tx.voucher.create({ data: voucherData(input) });
     await syncCompatibility(tx, voucher.id, input.compatibleVoucherIds);
+    await syncScope(tx, voucher.id, input);
     return voucher;
   });
 }
@@ -57,6 +100,7 @@ export async function updateVoucher(id: string, input: VoucherInput) {
       where: { OR: [{ voucherAId: id }, { voucherBId: id }] },
     });
     await syncCompatibility(tx, id, input.compatibleVoucherIds);
+    await syncScope(tx, id, input);
     return voucher;
   });
 }

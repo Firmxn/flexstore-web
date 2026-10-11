@@ -89,6 +89,14 @@ export const productSchema = z.object({
     .array(productImageSchema, { required_error: "Minimal 1 gambar" })
     .min(1, "Minimal 1 gambar")
     .max(MAX_PRODUCT_IMAGES, `Maksimal ${MAX_PRODUCT_IMAGES} gambar`),
+  // Bagan ukuran (PRD 3.1.A/7.4): satu gambar opsional dengan peran khusus.
+  sizeChartUrl: z
+    .union([
+      z.string().trim().url("URL bagan ukuran tidak valid").max(500),
+      z.literal(""),
+    ])
+    .optional()
+    .transform((value) => (value ? value : undefined)),
   variants: z
     .array(productVariantSchema, { required_error: "Minimal 1 variant" })
     .min(1, "Minimal 1 variant"),
@@ -101,5 +109,42 @@ export const productListQuerySchema = z.object({
   search: z.string().trim().max(200).optional(),
 });
 
+// Urutan katalog storefront (PRD 3.1.A: filter by name, category, price range, sort).
+// `newest` adalah default; nilai lain dipakai untuk mengurutkan daftar produk.
+export const PRODUCT_SORT_OPTIONS = [
+  "newest",
+  "price-asc",
+  "price-desc",
+  "name-asc",
+] as const;
+
+export type ProductSort = (typeof PRODUCT_SORT_OPTIONS)[number];
+
+// Batas atas filter harga, selaras dengan batas harga varian (productVariantSchema).
+export const MAX_PRICE_FILTER = 100_000_000;
+
+// Filter katalog dibaca dari query string, jadi setiap field dibuat toleran:
+// nilai rusak jatuh ke default, bukan menggagalkan seluruh permintaan.
+export const catalogFilterSchema = z.object({
+  search: z.string().trim().max(200).optional().catch(undefined),
+  category: z.string().trim().max(200).optional().catch(undefined),
+  minPrice: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_FILTER)
+    .optional()
+    .catch(undefined),
+  maxPrice: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(MAX_PRICE_FILTER)
+    .optional()
+    .catch(undefined),
+  sort: z.enum(PRODUCT_SORT_OPTIONS).catch("newest"),
+});
+
 export type ProductInput = z.infer<typeof productSchema>;
 export type ProductListQuery = z.infer<typeof productListQuerySchema>;
+export type CatalogFilter = z.infer<typeof catalogFilterSchema>;

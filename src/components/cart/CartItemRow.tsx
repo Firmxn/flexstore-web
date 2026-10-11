@@ -13,7 +13,6 @@ type CartItemRowProps = {
   productName: string;
   productSlug: string;
   variantName: string;
-  sku: string;
   imageUrl: string | null;
   price: number;
   quantity: number;
@@ -28,7 +27,6 @@ export function CartItemRow({
   productName,
   productSlug,
   variantName,
-  sku,
   imageUrl,
   price,
   quantity,
@@ -75,96 +73,95 @@ export function CartItemRow({
   }
 
   return (
-    <li className="flex flex-col gap-3 border-b border-border p-4 last:border-b-0">
-      <div className="flex gap-4">
-        <input
-          type="checkbox"
-          className="mt-1 h-4 w-4 shrink-0"
-          checked={selected}
-          disabled={!available}
-          onChange={(event) => onSelectChange(event.target.checked)}
-          aria-label={`Pilih ${productName} ${variantName}`}
-        />
+    <li className="flex gap-4 border-b border-border p-4 last:border-b-0">
+      <input
+        type="checkbox"
+        className="mt-1 h-4 w-4 shrink-0"
+        checked={selected}
+        disabled={!available}
+        onChange={(event) => onSelectChange(event.target.checked)}
+        aria-label={`Pilih ${productName} ${variantName}`}
+      />
 
-        <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={productName}
-              fill
-              sizes="80px"
-              className="object-cover"
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-              Tanpa gambar
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div className="flex gap-4">
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={productName}
+                fill
+                sizes="80px"
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                Tanpa gambar
+              </div>
+            )}
+          </div>
+
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <Link
+              href={`/products/${productSlug}`}
+              className="truncate font-medium hover:underline"
+            >
+              {productName}
+            </Link>
+            <p className="text-xs text-muted-foreground">{variantName}</p>
+            {!available ? (
+              <p className="text-xs text-destructive">
+                Produk tidak tersedia. Hapus item ini untuk melanjutkan.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="flex flex-col items-end justify-between gap-2">
+            <p className="font-semibold">{formatRupiah(price)}</p>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pending || !available || quantity <= 1}
+                onClick={() => updateQuantity(quantity - 1)}
+                aria-label="Kurangi jumlah"
+              >
+                -
+              </Button>
+              <span className="w-8 text-center text-sm">{quantity}</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={pending || !available || quantity >= stock}
+                onClick={() => updateQuantity(quantity + 1)}
+                aria-label="Tambah jumlah"
+              >
+                +
+              </Button>
             </div>
-          )}
-        </div>
-
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <Link
-            href={`/products/${productSlug}`}
-            className="truncate font-medium hover:underline"
-          >
-            {productName}
-          </Link>
-          <p className="text-xs text-muted-foreground">
-            {variantName} - SKU {sku}
-          </p>
-          <p className="text-sm">{formatRupiah(price)}</p>
-          {!available ? (
-            <p className="text-xs text-destructive">
-              Produk tidak tersedia. Hapus item ini untuk melanjutkan.
-            </p>
-          ) : null}
-        </div>
-
-        <div className="flex flex-col items-end justify-between gap-2">
-          <p className="font-semibold">{formatRupiah(price * quantity)}</p>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={pending || !available || quantity <= 1}
-              onClick={() => updateQuantity(quantity - 1)}
-              aria-label="Kurangi jumlah"
-            >
-              -
-            </Button>
-            <span className="w-8 text-center text-sm">{quantity}</span>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={pending || !available || quantity >= stock}
-              onClick={() => updateQuantity(quantity + 1)}
-              aria-label="Tambah jumlah"
-            >
-              +
-            </Button>
           </div>
         </div>
-      </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs text-muted-foreground">
-          {available ? `Stok tersedia ${stock}` : "Stok tidak tersedia"}
-        </span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={pending}
-          onClick={remove}
-          className="text-destructive hover:text-destructive"
-        >
-          {pending ? "Memproses..." : "Hapus"}
-        </Button>
-      </div>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-muted-foreground">
+            {available ? `Stok tersedia ${stock}` : "Stok tidak tersedia"}
+          </span>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={pending}
+            onClick={remove}
+            className="text-destructive hover:text-destructive"
+          >
+            {pending ? "Memproses..." : "Hapus"}
+          </Button>
+        </div>
 
-      {error ? <p className="text-xs text-destructive">{error}</p> : null}
+        {error ? <p className="text-xs text-destructive">{error}</p> : null}
+      </div>
     </li>
   );
 }

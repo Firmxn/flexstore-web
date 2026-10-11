@@ -39,6 +39,31 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       return { url: file.ufsUrl, uploadedBy: metadata.userId };
     }),
+  // Bukti refund manual (ORDER-06/PRD 5.6): satu berkas gambar per refund.
+  refundProof: f({
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
+  })
+    .middleware(async () => {
+      const session = await auth();
+
+      if (!session?.user) {
+        throw new UploadThingError({
+          code: "FORBIDDEN",
+          message: "Anda harus masuk terlebih dahulu",
+        });
+      }
+      if (session.user.role !== "STORE_ADMIN") {
+        throw new UploadThingError({
+          code: "FORBIDDEN",
+          message: "Hanya Store Admin yang dapat mengunggah bukti",
+        });
+      }
+
+      return { userId: session.user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { url: file.ufsUrl, uploadedBy: metadata.userId };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;
