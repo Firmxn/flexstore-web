@@ -11,7 +11,7 @@
 | Versi PRD, SDD, dan spesifikasi | PRD v1.5, SDD v1.0, Spesifikasi Fitur v1.8 |
 | Reviewer / pemilik keputusan gate | Development Team / Product Owner |
 | Fase aktif | PH-08 — Site Admin (Platform Configuration) — **Disetujui** (2026-10-11; commit `f01a6d2`). PH-01..PH-07 **Disetujui** (bagian 4.7, 5.7, 6.7, 7.7, 8.5, 9.5, 12.5); revisi PH-03 pasca-persetujuan (perbaikan OTP guest + redesign urutan alamat) tercatat di bagian 6.8. **PH-09 — Brand Customization** (bagian 14) **Disetujui** (2026-10-11; commit `1da2b3a`): implementasi + verifikasi selesai 2026-10-11 (bukti 14.5, laporan 14.6). **PH-10 — Akun & Notifikasi** (bagian 15) **Siap direview** (2026-10-11): implementasi TASK-104..110 + verifikasi selesai (bukti 15.5, laporan 15.6); CUST-03 direvisi 2026-10-11 (ganti email wajib verifikasi ulang, TASK-110) dan enam keputusan lanjutan dicatat di bagian 15.2 butir 8 |
-| Task aktif / terakhir | PH-08 — TASK-80 sampai TASK-96 selesai; verifikasi otomatis lulus (bagian 13.5), uji klik-through menunggu pengguna. Spek `docs/03` v1.5 (SITE-00..SITE-04) ditulis lebih dulu atas permintaan pengguna. PH-09 — spek `docs/03` SITE-05 ditulis lebih dulu (2026-10-11, urutan "dokumen dulu, coding belakangan"); daftar task TASK-97..103 di bagian 14.3; **TASK-97..103 selesai** (implementasi 2026-10-11 + verifikasi otomatis + smoke HTTP 49 pemeriksaan lulus, bagian 14.5), uji klik-through menunggu pengguna. PH-10 — **TASK-104..108 + TASK-110 selesai** (implementasi 2026-10-11; uji klik-through browser lulus — bukti 15.5); TASK-109 selesai kecuali `pnpm build` (dev server hidup + pekerjaan sesi paralel belum landing) |
+| Task aktif / terakhir | PH-08 — TASK-80 sampai TASK-96 selesai; verifikasi otomatis lulus (bagian 13.5), uji klik-through menunggu pengguna. Spek `docs/03` v1.5 (SITE-00..SITE-04) ditulis lebih dulu atas permintaan pengguna. PH-09 — spek `docs/03` SITE-05 ditulis lebih dulu (2026-10-11, urutan "dokumen dulu, coding belakangan"); daftar task TASK-97..103 di bagian 14.3; **TASK-97..103 selesai** (implementasi 2026-10-11 + verifikasi otomatis + smoke HTTP 49 pemeriksaan lulus, bagian 14.5), uji klik-through menunggu pengguna. PH-10 — **TASK-104..108 + TASK-110 selesai** (implementasi 2026-10-11; uji klik-through browser lulus — bukti 15.5); TASK-109 selesai (`pnpm build` exit 0, dijalankan pengguna 2026-10-11 + diperbarui di 15.5/15.6) |
 | Instruksi mulai / lanjut terakhir | User: "mulai phase 1" (2026-10-09), "lanjutkan" (2026-10-09), "sudah bisa saya coba akses?" (2026-10-09), "perbaiki di PH-01" + "error.tsx tambahkan di PH-01" (2026-10-09), "opsi 1 gua setuju" (2026-10-10), "jalankan 1 dan 2 dulu" (2026-10-10), "jika ada masalah kredensial yang diperlukan, skip dulu, dan lanjutkan coding sampai selesai" (2026-10-10), "oke next lanjut ke phase 4?" (2026-10-10), "lanjutkan" (2026-10-10, memulai PH-05), "kerjakan phase 6" (2026-10-11), "next ph 7" (2026-10-11, menerima PH-06 sekaligus memulai PH-07), "minta dibalik: dokumen dulu, coding belakangan" (2026-10-11, menulis spek PH-07 di `docs/03`), "push ph 7" (2026-10-11, commit + push PH-07 `c20f525`), "next ph 8" (2026-10-11, memulai PH-08), "ini sudah tepat, pengaturan warna juga jangan hanya primary saja ... buat fitur palette warna dan bisa memasukkan kode warna. kustomisasi banner masuk akal? sebelumnya sudah ada rencana untuk banner itu" (2026-10-11, memulai PH-09 — konsep Site Admin direvisi jadi kustomisasi brand; tiga keputusan cakupan tercatat di bagian 14.2), "tambahkan dokumentasi untuk fix, gua mau halaman alat tersimpan hanya fokus untuk alamat, tidak include profil dan notifikasi. kemudian halaman profil akan berdiri sendiri nantinya, sedangkan notifikasi gua mau menambahkan pop up atau dialog yang muncul dari icon notifikasi di navbar" (2026-10-11, PH-10 — lima keputusan UI akun + notifikasi in-app tercatat di bagian 10, spek CUST-03 + NOTIF-02 ditulis), "apa yang lu kerjain? dimana kustomisasi brand nya?" lalu memilih "Bangun sekarang" (2026-10-11, implementasi PH-09 SITE-05 selesai + diverifikasi), "commit terpisah tiap phase, dan lakukan push llangsung ke github" (2026-10-11, commit `f01a6d2` + `1da2b3a` di-push), "ganti email wajib verifikasi ulang, rapikan 3 baris status usang. setelah selesai ada pertanyaan apalagi yang kurang jelas untuk phase 10" (2026-10-11, revisi CUST-03 + perapian status dokumen), "gua approve" + "tuntaskan" + "commit terpisah" + jawaban enam pertanyaan PH-10 (2026-10-11, PH-08/PH-09 disetujui; keputusan lanjutan PH-10 di bagian 15.2 butir 8), "perbaiki nomor 1. dulu" (2026-10-11, revisi pasca-persetujuan PH-01: input gambar varian ditambahkan ke form admin produk), "Ya, mulai PH-10 sekarang" (2026-10-11, implementasi + verifikasi PH-10 selesai; bukti 15.5, laporan 15.6, menunggu review) |
 | Hambatan saat ini | Tidak ada yang memblokir. Catatan: (a) email produksi butuh domain Resend terverifikasi (`EMAIL_FROM`); (b) webhook Xendit tidak sampai ke `localhost` (rekonsiliasi menutupi); (c) DB Supabase kadang `P1001` saat dev (retry) |
 
@@ -1455,7 +1455,7 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
 | TASK-107 | Lib `src/lib/customers/notifications.ts`: turunkan lima kejadian dari `Order`/`Payment`/`Refund` milik pemanggil, hitung unread dari `notif:last-seen:{userId}` (Redis), set penanda + `GET`/`POST /api/customer/notifications` (role check, Zod) | NOTIF-02 | - | Selesai |
 | TASK-108 | Komponen `NotificationBell` + dialog (bagian "Notifikasi" dan "Pengaturan") dipasang di `Header`; badge unread; pindahkan `NotificationPreferencesForm` dari `/profile` ke dialog | NOTIF-02, CUST-02 | TASK-107 | Selesai |
 | TASK-110 | Token verifikasi email di `src/lib/auth/tokens.ts` (`createEmailChangeToken`/`consumeEmailChangeToken`, satu tautan aktif per akun, TTL 24 jam, batas 3/jam) + halaman `/verify-email` + `POST /api/auth/verify-email` + email verifikasi via Resend (non-blocking, selalu dikirim) + penyegaran sesi diam-diam (`jwt` callback `trigger === "update"`) | CUST-03 | TASK-104 | Selesai |
-| TASK-109 | Verifikasi (`tsc`, `lint`, `build`, uji lib + smoke HTTP), bersihkan data uji, tulis bukti (15.5) dan laporan review (15.6) | Semua | TASK-104..108, TASK-110 | Selesai (kecuali `pnpm build`, lihat 15.5) |
+| TASK-109 | Verifikasi (`tsc`, `lint`, `build`, uji lib + smoke HTTP), bersihkan data uji, tulis bukti (15.5) dan laporan review (15.6) | Semua | TASK-104..108, TASK-110 | Selesai |
 
 ### 15.4. Exit criteria
 
@@ -1467,7 +1467,7 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
 - [x] Dialog menampilkan lima jenis kejadian pesanan (maksimal 20 entri terbaru, terbaru dulu) dan tautan ke `/orders/[id]` atau `/orders/[id]/tracking` (AC-NOTIF-02-02..06)
 - [x] Badge belum dibaca tampil lalu hilang setelah dialog dibuka (penanda Redis) (AC-NOTIF-02-07)
 - [x] Pengaturan di dialog menyimpan lima preferensi dan berlaku pada email berikutnya (aturan CUST-02 tidak berubah) (AC-NOTIF-02-09)
-- [x] `pnpm exec tsc --noEmit` dan `pnpm lint` exit 0; uji klik-through lulus; data uji dibersihkan. `pnpm build` **belum dijalankan** — lihat catatan di 15.5 (dev server sedang hidup dan pekerjaan sesi paralel yang belum di-commit masih memunculkan galat prerender di `/admin/settings` + `/admin/orders/[id]`)
+- [x] `pnpm exec tsc --noEmit`, `pnpm lint`, dan `pnpm build` exit 0 (build `BUILD_ID` `-QaYvtqgd1EVMzSAhR4O`, dijalankan pengguna, semua rute PH-10 ada di keluaran); uji klik-through lulus; data uji dibersihkan
 - [x] Bukti verifikasi ditulis di bagian 15.5 dan laporan review di bagian 15.6, lalu **STOP** menunggu keputusan pengguna
 
 ### 15.5. Bukti verifikasi (2026-10-11)
@@ -1479,7 +1479,7 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
 | `pnpm add @radix-ui/react-dialog` | exit 0 — dependensi dialog gaya shadcn (`package.json` + `pnpm-lock.yaml`); postinstall `prisma generate` ikut jalan dan sukses walau dev server hidup |
 | `pnpm exec tsc --noEmit` | exit 0 (bersih) |
 | `pnpm lint` | exit 0 |
-| `pnpm build` | belum dijalankan — lihat catatan di bawah |
+| `pnpm build` | exit 0 — dijalankan pengguna 2026-10-11 15:45 (`BUILD_ID` `-QaYvtqgd1EVMzSAhR4O`); keluaran `.next/server/app` memuat seluruh rute PH-10 (`(storefront)/profile`, `(storefront)/profile/addresses`, `(auth)/verify-email`, `api/customer/profile`, `api/customer/notifications`, `api/auth/verify-email`) |
 
 **Data uji:** 1 customer (`ph10.test@flexstore.local`, password `Ph10Test123!`) + 4 pesanan yang dibuat lewat skrip sementara **tanpa menyentuh stok**: `WAITING_PAYMENT` dengan `Payment` (tenggat), `SHIPPED` dengan `trackingNumber` + `shippedAt`, `CANCELED` sebelum bayar, dan `WAITING_PAYMENT` tanpa baris `Payment`.
 
@@ -1504,7 +1504,7 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
 
 **Catatan:**
 
-- **`pnpm build` belum dijalankan.** Dev server pengguna sedang hidup dan `next build` menulis `.next` yang sama, sedangkan pekerjaan **sesi paralel** yang belum di-commit (penghapusan `StoreSetting.storeName`) masih memunculkan galat prerender pada `/admin/settings` dan `/admin/orders/[id]` di log dev — build tidak akan mencerminkan PH-10 secara bersih. Sebagai gantinya: `tsc --noEmit` + `lint` exit 0, log dev **tidak** memuat galat prerender untuk rute PH-10 (`/profile`, `/profile/addresses`, `/verify-email`), dan seluruh rute diuji langsung di server nyata.
+- **`pnpm build` dijalankan oleh pengguna** (2026-10-11; exit 0, `BUILD_ID` `-QaYvtqgd1EVMzSAhR4O` pada 15:45). Diverifikasi dari artefak: keluaran `.next/server/app` memuat seluruh rute PH-10 (`(storefront)/profile`, `(storefront)/profile/addresses`, `(auth)/verify-email`, `api/customer/profile`, `api/customer/notifications`, `api/auth/verify-email`). Galat prerender `/admin/settings` + `/admin/orders/[id]` dari **pekerjaan sesi paralel** yang terlihat di log dev tidak memblokir build produksi milik PH-10.
 - **Cache modul Turbopack sempat usang** selama sesi ini: `profileUpdateSchema` terbaca `undefined` oleh route (galat 500) sampai dev server restart, walau `tsc` dan pemanggilan dari skrip `tsx` (baca disk) bersih. Setelah restart, ekspor terbaca normal — artefak cache dev, bukan masalah kode.
 - **Email verifikasi ditolak Resend** (`403`, akun Resend hanya boleh mengirim ke alamat pemiliknya) untuk alamat uji — non-blocking (hanya dicatat di log), dan token dibuat **sebelum** pengiriman sehingga alur verifikasi tetap dapat diuji. Sama seperti email PH-05/PH-07; hilang setelah `EMAIL_FROM` memakai domain terverifikasi.
 - **Judul/deskripsi notifikasi** memakai diksi paling lumrah (keputusan 15.2 butir 8b) dan boleh diganti kapan saja; teks acuan ada di `docs/03` NOTIF-02 bagian 9.
@@ -1518,22 +1518,20 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
    - **Lib:** `src/lib/customers/profile.ts` (baca/ubah akun + hash password), `src/lib/customers/notifications.ts` (turunan lima kejadian dari `Order`/`Payment`/`Refund`, batas 20 entri, penanda `notif:last-seen:{userId}`), token email di `src/lib/auth/tokens.ts` (`createEmailChangeToken`/`consumeEmailChangeToken`, satu tautan aktif, TTL 24 jam, batas 3/jam).
    - **UI:** `NotificationBell` (server, hanya customer) + `NotificationDialog` (dua bagian: daftar + `NotificationPreferencesForm` yang dipindah dari `/profile`), `AccountProfileForm`, `ChangePasswordForm`, `VerifyEmailForm`, `src/components/ui/dialog.tsx` (Radix), `AuthProvider` (`SessionProvider` di root layout) + `jwt` callback `trigger === "update"` untuk penyegaran sesi diam-diam, `Header` + `HeaderAccountMenu` ("Profil saya" / "Alamat saya").
    - **Email:** `src/emails/verify-email-change.ts` + `sendEmailChangeVerification` (selalu dikirim, tidak tunduk preferensi CUST-02).
-3. **Task selesai / belum selesai:** TASK-104 sampai TASK-108 dan TASK-110 **selesai**; TASK-109 (verifikasi) selesai kecuali `pnpm build` (lihat 15.5).
-4. **Verifikasi:** `tsc --noEmit` + `lint` exit 0; uji klik-through di server nyata untuk seluruh alur (daftar notifikasi, badge + penanda, preferensi dari dialog, ganti nama/email/password, verifikasi email, token sekali pakai, satu tautan aktif, batas 3/jam, otorisasi guest/admin). Rincian di 15.5.
+3. **Task selesai / belum selesai:** TASK-104 sampai TASK-110 **semua selesai**, termasuk TASK-109 (verifikasi) sejak `pnpm build` exit 0.
+4. **Verifikasi:** `tsc --noEmit`, `lint`, dan `build` exit 0; uji klik-through di server nyata untuk seluruh alur (daftar notifikasi, badge + penanda, preferensi dari dialog, ganti nama/email/password, verifikasi email, token sekali pakai, satu tautan aktif, batas 3/jam, otorisasi guest/admin). Rincian di 15.5.
 5. **Cara mencoba:**
    - `pnpm dev` → `http://localhost:3000/login` → login customer (mis. `verify.ph05@flexstore.local`, atau daftar akun baru)
    - Klik **ikon lonceng** di navbar → daftar notifikasi pesanan; tab **Pengaturan** → ubah preferensi email → Simpan
    - `/profile` → ganti nama (sesi ikut segar tanpa login ulang); ganti email → cek tautan `/verify-email?token=…` (di dev, tautan bisa diambil dari Redis `auth:email-change-user:{userId}` karena Resend menolak alamat uji); ubah password lalu coba login dengan password baru
    - `/profile/addresses` → kelola alamat seperti sebelumnya
 6. **Masalah / batasan:**
-   - `pnpm build` belum dijalankan (dev server hidup + pekerjaan sesi paralel belum landing) — perlu dijalankan saat dev server berhenti
-   - Email verifikasi tidak sampai ke alamat uji karena batas akun Resend (bukan bug aplikasi)
+   - Email verifikasi tidak sampai ke alamat uji karena batas domain uji Resend (`onboarding@resend.dev` hanya bisa kirim ke email pemilik akun; fix sebenarnya = verifikasi domain di Resend lalu isi `EMAIL_FROM`, sedang dilakukan pengguna) — bukan bug aplikasi
    - Judul/deskripsi notifikasi masih diksi lumrah, menunggu penggantian pengguna bila perlu
    - Komentar/commit: dokumen `docs/03` + `docs/04` juga memuat suntingan **sesi paralel** (`storeName`, beberapa baris) yang belum di-commit; commit PH-10 hanya membawa file PH-10 + `docs/03` + `docs/04`. File sesi paralel lain (`prisma/schema.prisma`, migrasi `20261011160000_drop_store_settings_store_name`, `src/lib/config/*`, `StoreSettingsForm`, `CheckoutForm`, dll.) **tidak** diikutkan
 7. **Keputusan yang dibutuhkan:**
    - Konfirmasi apakah PH-10 disetujui
    - Konfirmasi butir 20 entri: **tidak ditampilkan** (bukan dihapus dari database) — sudah begitu; beri tahu bila maksudnya membuang data
-   - Kapan `pnpm build` dijalankan (butuh dev server berhenti)
 
 ---
 
@@ -1543,7 +1541,7 @@ atas permintaan pengguna, baru diimplementasikan.
 
 **Next steps:**
 1. (Selesai 2026-10-11) Review dan approval PH-08 (bagian 13.6) + PH-09 (bagian 14.6) — pengguna: "gua approve"
-2. (Selesai 2026-10-11) PH-10 (Akun & Notifikasi, bagian 15) — implementasi + verifikasi selesai; **menunggu review pengguna**. Sisa: `pnpm build` dijalankan saat dev server berhenti (lihat 15.5)
+2. (Selesai 2026-10-11) PH-10 (Akun & Notifikasi, bagian 15) — implementasi + verifikasi selesai (`tsc`, `lint`, `build` exit 0); **menunggu review pengguna**. Sisa eksternal: `EMAIL_FROM` memakai domain Resend terverifikasi (sedang dipasang pengguna) supaya email verifikasi sampai ke alamat penerima mana pun
 3. Isi `EMAIL_FROM` dengan domain terverifikasi Resend bila email harus sampai ke pembeli mana pun
 4. (Selesai 2026-10-11) Rapikan dokumentasi yang belum sinkron: baris SDD usang (`middleware.ts` → `proxy.ts`, `@react-pdf/renderer`, status Resend, "Store Admin or Site Admin", nama model, perintah test), README, `docs/06`, `AGENTS.md`, `.env.example`; revisi SDD 4.10 dan PRD juga selesai
 5. Tulis bagian rinci 13 fitur yang belum punya spesifikasi `docs/03` (daftar di bagian 10, 2026-10-11) — batch terpisah setelah PH-09 atau saat penutupan MVP
