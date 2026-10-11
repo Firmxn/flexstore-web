@@ -1,7 +1,7 @@
 # Product Requirements Document (PRD)
 # FlexStore — E-Commerce Platform
 
-**Versi:** 1.4 (Finalized)  
+**Versi:** 1.5 (Finalized)  
 **Tanggal:** 8 Oktober 2026  
 **Status:** Finalized — Siap untuk SDD
 
@@ -12,6 +12,8 @@
 **Revisi 1.3 (11 Oktober 2026):** pusat notifikasi in-app ditambahkan ke bagian 3.1.I, 4.8, 4.9, dan 7.7 — ikon lonceng di navbar membuka dialog berisi daftar notifikasi (diturunkan dari data pesanan, tanpa tabel baru) dan pengaturan preferensi email; badge menandai notifikasi yang belum dilihat. Halaman alamat tersimpan dipisahkan agar fokus pada alamat (`/profile/addresses`), sedangkan `/profile` menjadi halaman akun mandiri (profil saja). Pada tanggal yang sama akses invoice dibatasi hanya untuk pesanan yang sudah lunas — tombol dan halaman invoice tidak tersedia untuk pesanan yang belum dibayar maupun yang dibatalkan sebelum bayar. Keputusan tercatat di `docs/04` bagian 10 dan 15; spek di `docs/03` CUST-01, CUST-02, CUST-03, dan NOTIF-02. Implementasi dijadwalkan pada fase **PH-10**.
 
 **Revisi 1.4 (11 Oktober 2026):** perubahan email customer wajib verifikasi ulang. Saat customer mengganti email di `/profile`, sistem mengirim tautan verifikasi sekali pakai ke email baru, dan `User.email` baru berubah setelah tautan itu dibuka; email lama tetap aktif sampai verifikasi selesai, dan permintaan baru membatalkan tautan sebelumnya. Keputusan tercatat di `docs/04` bagian 10 dan 15; spek di `docs/03` CUST-03. Implementasi dijadwalkan pada fase **PH-10**.
+
+**Revisi 1.5 (11 Oktober 2026):** centang "Variant images" di bagian 3.1.A dan 7.4 dipulihkan. Input unggah gambar per varian kini ada di form admin produk (satu berkas opsional per baris varian, memakai endpoint Uploadthing `productImage` yang sama dengan galeri), dikerjakan sebagai revisi pasca-persetujuan PH-01. Spek diperbarui di `docs/03` PROD-01; keputusan tercatat di `docs/04` bagian 4.8 dan 10.
 
 ---
 
@@ -118,7 +120,7 @@ Sistem memiliki **4 role** (single-store MVP):
 - ✅ Product status: Active, Inactive, Draft, Out of Stock, Discontinued
 - ✅ Product search dan filter (by name, category, price range, sort)
 - ✅ **Product images:** 1 gambar utama (wajib) + 3 gambar tambahan (opsional) = maksimal 4 gambar per produk
-- **Variant images (belum selesai):** Setiap variant bisa punya 1 gambar sendiri; dukungan UI admin untuk unggah/pilih gambar belum tersedia.
+- ✅ **Variant images:** Setiap variant bisa punya 1 gambar sendiri; unggah/pilih gambar tersedia di form admin produk dan tampil di keranjang (revisi 1.5)
 - ✅ **Size chart / Additional info image:** 1 gambar opsional untuk size chart, spec sheet, nutrition facts, dll
 - ✅ **Stock:** Dual tracking
   - Stock per variant (individual tracking per variant)
@@ -596,7 +598,7 @@ Keputusan teknis yang sudah ditetapkan untuk MVP:
 
 ### 7.4 Product Configuration
 - ✅ **Images:** 1 utama + 3 tambahan (max 4)
-- **Variant images (belum selesai):** 1 per variant; input gambar varian belum tersedia di form admin.
+- ✅ **Variant images:** 1 per variant; input unggah tersedia di form admin produk (revisi 1.5)
 - ✅ **Size chart:** 1 gambar opsional
 - ✅ **Stock:** Dual tracking (per variant + total)
 

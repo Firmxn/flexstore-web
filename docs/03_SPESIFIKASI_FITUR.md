@@ -11,8 +11,8 @@
 
 ## 1. Identitas dan indeks fitur
 
-- **Versi / tanggal:** v1.8 / 2026-10-11
-- **Versi PRD / SDD:** PRD v1.4, SDD v1.0
+- **Versi / tanggal:** v1.9 / 2026-10-11
+- **Versi PRD / SDD:** PRD v1.5, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
 ### Indeks Fitur (MVP) — Phase Bertahap
@@ -73,7 +73,7 @@
 - **Phase 6:** Shipping tracking, cancellation, refund, reports, settings ✓ MVP complete
 - **Phase 7:** Alamat tersimpan, re-order, set/reset password, preferensi notifikasi ✓ Customer management ready
 - **Phase 8:** Akses Site Admin, pengaturan platform, konfigurasi payment/shipping, kelola Store Admin ✓ platform configuration ready
-- **Phase 9:** Kustomisasi brand oleh Site Admin (identitas, palet warna, banner) — spek selesai, implementasi menyusul
+- **Phase 9:** Kustomisasi brand oleh Site Admin (identitas, palet warna, banner) ✓ terimplementasi dan disetujui (2026-10-11)
 - **Phase 10:** Halaman akun mandiri (`/profile`), halaman alamat khusus (`/profile/addresses`), pusat notifikasi in-app (daftar + pengaturan) lewat ikon navbar — spek selesai, implementasi menyusul
 
 **Catatan indeks:**
@@ -254,8 +254,8 @@ Tidak ada — ready for implementation.
 
 **Catatan unggahan (Uploadthing):**
 
-- Alur: klien mengunggah lebih dulu lewat `ImageUploader` (`useUploadThing`) ke endpoint `productImage` di `/api/uploadthing`; server hanya menyimpan URL hasil unggah, bukan berkas.
-- Batas endpoint: maksimal 4 berkas, 4MB per berkas, `accept="image/*"` di klien. Gerbang `STORE_ADMIN` — tanpa sesi atau role lain menjawab `403 FORBIDDEN` (`src/lib/uploadthing/core.ts`).
+- Alur: klien mengunggah lebih dulu lewat `useUploadThing` ke endpoint `productImage` di `/api/uploadthing`; server hanya menyimpan URL hasil unggah, bukan berkas. Tiga pemakai endpoint ini: galeri produk lewat `ImageUploader` (hingga 4 berkas), bagan ukuran lewat `ImageUploader max={1}`, dan gambar varian lewat `VariantImagePicker` (satu berkas per baris varian).
+- Batas endpoint: maksimal 4 berkas per permintaan unggah, 4MB per berkas, `accept="image/*"` di klien. Gerbang `STORE_ADMIN` — tanpa sesi atau role lain menjawab `403 FORBIDDEN` (`src/lib/uploadthing/core.ts`).
 - Batas 4MB menggantikan 5MB spesifikasi karena Uploadthing hanya menerima ukuran kelipatan pangkat dua (keputusan `docs/04` bagian 10, 2026-10-09).
 - Galat unggah di klien menampilkan "Gagal mengunggah gambar, coba lagi"; tombol unggah bisa dipakai ulang (bagian 8).
 - Endpoint terpisah `refundProof` (bukti refund manual, ORDER-06): gambar, maksimal 1 berkas 4MB, gerbang `STORE_ADMIN` sama.
@@ -299,7 +299,7 @@ Tidak ada — ready for implementation.
 
 - **Halaman:** Admin product form
 - **Elemen:** Name, slug, description, category, brand, status, images (4 max), size chart (opsional, maks 1), variants (dynamic)
-- **Gambar varian:** input UI belum ada di form — `VariantRow` hanya SKU, nama, harga, stok, berat, dan payload tidak mengirim `imageUrl` (selalu `null` lewat form). Field didukung API serta tampil di cart dengan fallback ke gambar produk pertama. Selisih dengan PRD 114 tercatat di `docs/04` bagian 10 (2026-10-11).
+- **Gambar varian:** setiap baris varian punya pemilih satu gambar opsional (`VariantImagePicker`) — pratinjau 64px, tombol Unggah/Ganti, dan Hapus. Unggahan memakai endpoint `productImage` yang sama dengan galeri; bidang kosong dikirim sebagai `null` dan nilai tersimpan di `ProductVariant.imageUrl`. Gambar tampil di keranjang, dengan fallback ke gambar produk pertama bila varian tidak punya gambar. Ditambahkan sebagai revisi PH-01 (2026-10-11, `docs/04` bagian 4.8 dan 10).
 
 | Kondisi | Tampilan | Tindakan |
 | --- | --- | --- |
@@ -320,6 +320,7 @@ Tidak ada — ready for implementation.
 | AC-PROD-01-05 | Admin | Duplicate slug | Error, not saved |
 | AC-PROD-01-06 | Admin | 0 variants | Error, not saved |
 | AC-PROD-01-07 | Customer/Guest | Access admin | 403 Forbidden |
+| AC-PROD-01-08 | Store Admin, baris varian tanpa gambar | Unggah satu gambar pada baris varian lalu simpan | `ProductVariant.imageUrl` terisi; gambar tampil di keranjang |
 
 ### 11. Contoh data
 
@@ -330,7 +331,7 @@ Tidak ada — ready for implementation.
 
 ### 12. Batas fitur
 
-- **Termasuk:** CRUD single product, images (galeri maks 4 + bagan ukuran opsional), variants (gambar varian opsional lewat API)
+- **Termasuk:** CRUD single product, images (galeri maks 4 + bagan ukuran opsional), variants (gambar varian opsional via form admin atau API)
 - **Tidak termasuk:** Bulk import, structured variant attributes
 - **Ketergantungan:** Uploadthing, Category/Brand
 
@@ -2967,7 +2968,7 @@ Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password
 | 1 | Customer buka `/profile` | Baca data akun dari sesi | Kartu "Info Akun" tampil |
 | 2 | Ubah nama lalu Simpan | `PATCH /api/customer/profile` | `200`, nama tersimpan |
 | 3 | Ubah email lalu Simpan | `PATCH` yang sama | `200` + `emailVerificationSent`, tautan verifikasi dikirim ke email baru; email akun belum berubah |
-| 4 | Buka tautan di email baru lalu klik Verifikasi | `POST /api/auth/verify-email` | `200`, email akun menjadi email baru |
+| 4 | Buka tautan di email baru lalu klik Verifikasi | `POST /api/auth/verify-email` | `200`, email akun menjadi email baru; sesi diperbarui diam-diam (tanpa paksa login ulang) |
 | 5 | Isi password saat ini + password baru lalu Simpan | `PATCH` yang sama | `200`, password berubah |
 | 6 | Buka `/profile/addresses` lewat tautan | - | Halaman alamat terbuka; info akun tetap utuh |
 
@@ -2976,7 +2977,7 @@ Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password
 - **Hasil:** Data akun terbaru; password baru bila diubah; email baru baru berlaku setelah verifikasi selesai
 - **Data dibaca:** `User` milik pemanggil; payload token verifikasi di Redis (`{ userId, newEmail }`)
 - **Data diubah:** `User.name` dan `User.passwordHash` (langsung); `User.email` (setelah verifikasi); token verifikasi di Redis (sekali pakai, TTL 24 jam)
-- **Setelah reload:** Perubahan tetap ada; selama verifikasi belum selesai, email lama tetap dipakai untuk login
+- **Setelah reload:** Perubahan tetap ada; selama verifikasi belum selesai, email lama tetap dipakai untuk login. Setelah verifikasi sukses, sesi diperbarui diam-diam sehingga email baru langsung dipakai (keputusan pengguna 2026-10-11, tanpa paksa login ulang)
 
 ### 7. Alur alternatif
 
@@ -3050,7 +3051,10 @@ Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password
 ### 13. Pertanyaan terbuka
 
 - Keputusan pengguna 2026-10-11: **perubahan email wajib verifikasi ulang** lewat tautan sekali pakai ke email baru. Email lama tetap aktif sampai verifikasi selesai; permintaan baru membatalkan tautan sebelumnya. Token disimpan di Redis (pola set/reset password), TTL 24 jam, dan dibatasi 3 permintaan per jam per akun.
-- Panjang minimum password mengikuti aturan AUTH-02/AUTH-05 yang sudah berlaku; angka final dicatat pada task PH-10.
+- Panjang minimum password mengikuti aturan AUTH-02/AUTH-05 yang sudah berlaku (min 8, maks 72); angka final dicatat pada task PH-10.
+- Keputusan pengguna 2026-10-11: saat password diganti, **password lama langsung tidak berlaku**; sesi lain tidak dipaksa logout (di luar cakupan).
+- Keputusan pengguna 2026-10-11: setelah verifikasi email, **sesi diperbarui diam-diam** (tidak memaksa login ulang) karena penggantian email adalah keinginan pengguna sendiri.
+- Keputusan pengguna 2026-10-11: email verifikasi **selalu dikirim**, tidak tunduk pada preferensi email (CUST-02/NOTIF-02) — sama seperti email set/reset password.
 - Keputusan pengguna 2026-10-11: halaman profil isinya **info akun saja** — riwayat pesanan tetap di `/orders`, alamat di `/profile/addresses`, notifikasi di dialog NOTIF-02.
 
 ---
@@ -3129,7 +3133,7 @@ Daftar notifikasi tidak menerima input dari klien; seluruh isinya diturunkan di 
 ### 9. Perilaku UI
 
 - **Elemen:** Ikon lonceng di navbar (dekat menu akun/keranjang) + dialog (shadcn `Dialog`) dengan dua bagian
-- **Bagian "Notifikasi":** daftar terbaru dulu (judul, deskripsi singkat, waktu, tautan); badge angka menandai jumlah belum dibaca
+- **Bagian "Notifikasi":** daftar terbaru dulu, maksimal 20 entri (judul, deskripsi singkat, waktu, tautan); badge angka menandai jumlah belum dibaca
 - **Bagian "Pengaturan":** lima kotak centang preferensi (sama dengan CUST-02) + tombol Simpan
 - Ikon hanya tampil untuk Customer login
 
@@ -3138,6 +3142,18 @@ Daftar notifikasi tidak menerima input dari klien; seluruh isinya diturunkan di 
 | Ada kejadian baru | Badge angka pada ikon | Buka dialog |
 | Dialog sudah pernah dibuka | Tanpa badge | - |
 | Tidak ada notifikasi | "Belum ada notifikasi" | - |
+
+**Judul dan deskripsi tiap kejadian (acuan; boleh diganti kapan saja):**
+
+| Kejadian | Judul | Deskripsi | Tautan |
+| --- | --- | --- | --- |
+| Belum dibayar | Menunggu Pembayaran | Selesaikan pembayaran pesanan {nomor} sebelum {tenggat}. | `/orders/[id]` |
+| Dikirim pertama kali | Pesanan Dikirim | Pesanan {nomor} sedang dalam perjalanan. | `/orders/[id]/tracking` |
+| Sudah tiba | Pesanan Tiba | Pesanan {nomor} sudah sampai. Terima kasih sudah berbelanja. | `/orders/[id]/tracking` |
+| Batal sebelum bayar | Pesanan Dibatalkan | Pesanan {nomor} dibatalkan sebelum dibayar. | `/orders/[id]` |
+| Refund selesai | Refund Selesai | Dana refund pesanan {nomor} sudah diproses. | `/orders/[id]` |
+
+Daftar dibatasi **20 entri terbaru** (urut terbaru dulu); entri yang lebih lama tidak ditampilkan — bukan dihapus, karena daftarnya diturunkan dari data pesanan.
 
 ### 10. Kriteria penerimaan
 
@@ -3165,8 +3181,8 @@ Daftar notifikasi tidak menerima input dari klien; seluruh isinya diturunkan di 
 
 ### 12. Batas fitur
 
-- **Termasuk:** Lima jenis kejadian pesanan, badge belum dibaca, formulir preferensi lima jenis email
-- **Tidak termasuk:** Tabel `Notification` baru (daftar diturunkan dari data pesanan), arsip/hapus per notifikasi, tanda baca per entri, notifikasi realtime (muncul saat reload/buka dialog, tanpa polling), push/WhatsApp, notifikasi untuk guest dan admin
+- **Termasuk:** Lima jenis kejadian pesanan (maksimal 20 entri terbaru ditampilkan), badge belum dibaca, formulir preferensi lima jenis email
+- **Tidak termasuk:** Tabel `Notification` baru (daftar diturunkan dari data pesanan), arsip/hapus per notifikasi, tanda baca per entri, paginasi/daftar lebih dari 20 entri, notifikasi realtime (muncul saat reload/buka dialog, tanpa polling), push/WhatsApp, notifikasi untuk guest dan admin
 - **Ketergantungan:** MOD-CUST (CUST-02 preferensi, sesi), MOD-ORDER dan MOD-PAY (data kejadian), Redis (penanda)
 
 ### 13. Pertanyaan terbuka
@@ -3174,11 +3190,12 @@ Daftar notifikasi tidak menerima input dari klien; seluruh isinya diturunkan di 
 - Lima jenis kejadian (keputusan pengguna 2026-10-11): pesanan dibuat dan belum dibayar, pesanan terkirim pertama kali, pesanan sudah tiba, pesanan dibatalkan sebelum bayar, refund selesai (batal setelah bayar). Kejadian di luar daftar ini tidak memunculkan notifikasi.
 - Karena tanpa tabel `Notification`, "belum dibaca" bersifat semua-atau-tidak (satu penanda waktu), bukan per entri; konsekuensinya dijelaskan di bagian 12.
 - Perhitungan badge dilakukan saat layout storefront dirender (request-time, `await connection()` pola `CartBadge`); pembaruan mengikuti reload halaman, tanpa polling.
-- Judul dan deskripsi tiap kejadian ditetapkan saat PH-10 dirinci; sumber waktu memakai kolom yang sudah ada (tanpa migrasi).
+- Judul dan deskripsi tiap kejadian memakai diksi paling lumrah (keputusan pengguna 2026-10-11) dan boleh diganti kapan saja — teks acuan di bagian 9. Daftar dibatasi 20 entri terbaru. Sumber waktu memakai kolom yang sudah ada (tanpa migrasi).
+- Keputusan pengguna 2026-10-11: email verifikasi perubahan email (CUST-03) **selalu dikirim** dan tidak tunduk pada preferensi di dialog ini (sama seperti email set/reset password).
 
 ---
 
-**Status:** Spesifikasi Fitur v1.8 — PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi; CUST-03 + NOTIF-02 (Phase 10) speknya selesai, menunggu implementasi PH-10. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`).
+**Status:** Spesifikasi Fitur v1.9 — PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) speknya selesai dan keputusan lanjutannya tercatat, menunggu implementasi PH-10. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`).
 
 **Next steps:**
 1. Tulis bagian rinci fitur yang belum berspesifikasi (utang dokumentasi; daftar di catatan indeks bagian 1 dan `docs/04` bagian 10)
