@@ -1506,7 +1506,8 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
 
 - **`pnpm build` dijalankan oleh pengguna** (2026-10-11; exit 0, `BUILD_ID` `-QaYvtqgd1EVMzSAhR4O` pada 15:45). Diverifikasi dari artefak: keluaran `.next/server/app` memuat seluruh rute PH-10 (`(storefront)/profile`, `(storefront)/profile/addresses`, `(auth)/verify-email`, `api/customer/profile`, `api/customer/notifications`, `api/auth/verify-email`). Galat prerender `/admin/settings` + `/admin/orders/[id]` dari **pekerjaan sesi paralel** yang terlihat di log dev tidak memblokir build produksi milik PH-10.
 - **Cache modul Turbopack sempat usang** selama sesi ini: `profileUpdateSchema` terbaca `undefined` oleh route (galat 500) sampai dev server restart, walau `tsc` dan pemanggilan dari skrip `tsx` (baca disk) bersih. Setelah restart, ekspor terbaca normal — artefak cache dev, bukan masalah kode.
-- **Email verifikasi ditolak Resend** (`403`, akun Resend hanya boleh mengirim ke alamat pemiliknya) untuk alamat uji — non-blocking (hanya dicatat di log), dan token dibuat **sebelum** pengiriman sehingga alur verifikasi tetap dapat diuji. Sama seperti email PH-05/PH-07; hilang setelah `EMAIL_FROM` memakai domain terverifikasi.
+- **Email verifikasi berhasil dikirim untuk pengguna nyata.** Awalnya ditolak Resend (`403`, domain uji `resend.dev` hanya boleh kirim ke email pemilik akun). Pengguna memverifikasi domain sendiri di Resend (`flexstore.web.id`, DNS record DKIM/SPF-CNAME/DMARC dipasang di SumoPod; status **Verified** 2026-10-11 17:00) dan menambahkan `EMAIL_FROM="Flex <no-reply@flexstore.web.id>"` di `.env.local`. Uji ulang: `PATCH` ganti email → `200` + `emailVerificationSent`, email masuk ke Gmail penerima (`firmxnsyah35@gmail.com`), tautan di email diklik → `/verify-email` "Email berhasil diverifikasi." + `User.email` berubah di database + `update({})` menyegarkan sesi tanpa login ulang. Batasan ini hilang untuk seluruh email aplikasi (PH-05/PH-07/PH-10).
+- **Gangguan Supabase sesaat sempat membuat sesi tidak segar** pada satu percobaan verifikasi (`Can't reach database server at aws-0-ap-southeast-1.pooler.supabase.com:6543` saat `update()`); diulang setelah koneksi normal → segar. Bukan bug kode; pembacaan kontak saat `update()` cukup dipastikan sederhananya gagal-aman jika database tak terjangkau.
 - **Judul/deskripsi notifikasi** memakai diksi paling lumrah (keputusan 15.2 butir 8b) dan boleh diganti kapan saja; teks acuan ada di `docs/03` NOTIF-02 bagian 9.
 
 ### 15.6. Laporan untuk review
@@ -1526,7 +1527,7 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
    - `/profile` → ganti nama (sesi ikut segar tanpa login ulang); ganti email → cek tautan `/verify-email?token=…` (di dev, tautan bisa diambil dari Redis `auth:email-change-user:{userId}` karena Resend menolak alamat uji); ubah password lalu coba login dengan password baru
    - `/profile/addresses` → kelola alamat seperti sebelumnya
 6. **Masalah / batasan:**
-   - Email verifikasi tidak sampai ke alamat uji karena batas domain uji Resend (`onboarding@resend.dev` hanya bisa kirim ke email pemilik akun; fix sebenarnya = verifikasi domain di Resend lalu isi `EMAIL_FROM`, sedang dilakukan pengguna) — bukan bug aplikasi
+   - Email: setelah domain `flexstore.web.id` terverifikasi di Resend dan `EMAIL_FROM` dipasang, email verifikasi berhasil dikirim dan dikonfirmasi sampai ke Gmail penerima (bukti di 15.5) — batasan domain uji Resend tidak ada lagi
    - Judul/deskripsi notifikasi masih diksi lumrah, menunggu penggantian pengguna bila perlu
    - Komentar/commit: dokumen `docs/03` + `docs/04` juga memuat suntingan **sesi paralel** (`storeName`, beberapa baris) yang belum di-commit; commit PH-10 hanya membawa file PH-10 + `docs/03` + `docs/04`. File sesi paralel lain (`prisma/schema.prisma`, migrasi `20261011160000_drop_store_settings_store_name`, `src/lib/config/*`, `StoreSettingsForm`, `CheckoutForm`, dll.) **tidak** diikutkan
 7. **Keputusan yang dibutuhkan:**
@@ -1541,7 +1542,7 @@ atas permintaan pengguna, baru diimplementasikan.
 
 **Next steps:**
 1. (Selesai 2026-10-11) Review dan approval PH-08 (bagian 13.6) + PH-09 (bagian 14.6) — pengguna: "gua approve"
-2. (Selesai 2026-10-11) PH-10 (Akun & Notifikasi, bagian 15) — implementasi + verifikasi selesai (`tsc`, `lint`, `build` exit 0); **menunggu review pengguna**. Sisa eksternal: `EMAIL_FROM` memakai domain Resend terverifikasi (sedang dipasang pengguna) supaya email verifikasi sampai ke alamat penerima mana pun
+2. (Selesai 2026-10-11) PH-10 (Akun & Notifikasi, bagian 15) — implementasi + verifikasi selesai (`tsc`, `lint`, `build` exit 0); **menunggu review pengguna**. Eksternal juga beres: domain `flexstore.web.id` terverifikasi di Resend + `EMAIL_FROM` dipasang, jadi email verifikasi (dan seluruh email aplikasi) sudah sampai ke alamat penerima nyata
 3. Isi `EMAIL_FROM` dengan domain terverifikasi Resend bila email harus sampai ke pembeli mana pun
 4. (Selesai 2026-10-11) Rapikan dokumentasi yang belum sinkron: baris SDD usang (`middleware.ts` → `proxy.ts`, `@react-pdf/renderer`, status Resend, "Store Admin or Site Admin", nama model, perintah test), README, `docs/06`, `AGENTS.md`, `.env.example`; revisi SDD 4.10 dan PRD juga selesai
 5. Tulis bagian rinci 13 fitur yang belum punya spesifikasi `docs/03` (daftar di bagian 10, 2026-10-11) — batch terpisah setelah PH-09 atau saat penutupan MVP
