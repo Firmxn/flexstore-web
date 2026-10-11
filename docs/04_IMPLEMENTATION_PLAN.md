@@ -8,11 +8,11 @@
 | --- | --- |
 | Proyek / target rilis | FlexStore MVP |
 | Versi / tanggal rencana | v1.0 / 2026-10-09 |
-| Versi PRD, SDD, dan spesifikasi | PRD v1.1, SDD v1.0, Spesifikasi Fitur v1.3 |
+| Versi PRD, SDD, dan spesifikasi | PRD v1.3, SDD v1.0, Spesifikasi Fitur v1.7 |
 | Reviewer / pemilik keputusan gate | Development Team / Product Owner |
-| Fase aktif | PH-07 — Customer Management (Akun + Alamat) — **Siap direview**. PH-01..PH-06 **Disetujui** (bagian 4.7, 5.7, 6.7, 7.7, 8.5, 9.5); revisi PH-03 pasca-persetujuan (perbaikan OTP guest + redesign urutan alamat) tercatat di bagian 6.8 |
-| Task aktif / terakhir | PH-07 — TASK-67 sampai TASK-79 selesai; verifikasi otomatis lulus (bagian 12.4), uji klik-through manual menunggu pengguna |
-| Instruksi mulai / lanjut terakhir | User: "mulai phase 1" (2026-10-09), "lanjutkan" (2026-10-09), "sudah bisa saya coba akses?" (2026-10-09), "perbaiki di PH-01" + "error.tsx tambahkan di PH-01" (2026-10-09), "opsi 1 gua setuju" (2026-10-10), "jalankan 1 dan 2 dulu" (2026-10-10), "jika ada masalah kredensial yang diperlukan, skip dulu, dan lanjutkan coding sampai selesai" (2026-10-10), "oke next lanjut ke phase 4?" (2026-10-10), "lanjutkan" (2026-10-10, memulai PH-05), "kerjakan phase 6" (2026-10-11), "next ph 7" (2026-10-11, menerima PH-06 sekaligus memulai PH-07) |
+| Fase aktif | PH-08 — Site Admin (Platform Configuration) — **Siap direview**. PH-01..PH-07 **Disetujui** (bagian 4.7, 5.7, 6.7, 7.7, 8.5, 9.5, 12.5); revisi PH-03 pasca-persetujuan (perbaikan OTP guest + redesign urutan alamat) tercatat di bagian 6.8. **PH-09 — Brand Customization** (bagian 14) **Siap direview**: implementasi + verifikasi selesai 2026-10-11 (bukti 14.5, laporan 14.6). **PH-10 — Akun & Notifikasi** (bagian 15) direncanakan: spek CUST-03 + NOTIF-02 sudah ditulis di `docs/03`, coding menunggu |
+| Task aktif / terakhir | PH-08 — TASK-80 sampai TASK-96 selesai; verifikasi otomatis lulus (bagian 13.5), uji klik-through menunggu pengguna. Spek `docs/03` v1.5 (SITE-00..SITE-04) ditulis lebih dulu atas permintaan pengguna. PH-09 — spek `docs/03` SITE-05 ditulis lebih dulu (2026-10-11, urutan "dokumen dulu, coding belakangan"); daftar task TASK-97..103 di bagian 14.3; **TASK-97..103 selesai** (implementasi 2026-10-11 + verifikasi otomatis + smoke HTTP 49 pemeriksaan lulus, bagian 14.5), uji klik-through menunggu pengguna. PH-10 — spek `docs/03` CUST-03 + NOTIF-02 ditulis lebih dulu (2026-10-11); daftar task TASK-104..109 di bagian 15.3 |
+| Instruksi mulai / lanjut terakhir | User: "mulai phase 1" (2026-10-09), "lanjutkan" (2026-10-09), "sudah bisa saya coba akses?" (2026-10-09), "perbaiki di PH-01" + "error.tsx tambahkan di PH-01" (2026-10-09), "opsi 1 gua setuju" (2026-10-10), "jalankan 1 dan 2 dulu" (2026-10-10), "jika ada masalah kredensial yang diperlukan, skip dulu, dan lanjutkan coding sampai selesai" (2026-10-10), "oke next lanjut ke phase 4?" (2026-10-10), "lanjutkan" (2026-10-10, memulai PH-05), "kerjakan phase 6" (2026-10-11), "next ph 7" (2026-10-11, menerima PH-06 sekaligus memulai PH-07), "minta dibalik: dokumen dulu, coding belakangan" (2026-10-11, menulis spek PH-07 di `docs/03`), "push ph 7" (2026-10-11, commit + push PH-07 `c20f525`), "next ph 8" (2026-10-11, memulai PH-08), "ini sudah tepat, pengaturan warna juga jangan hanya primary saja ... buat fitur palette warna dan bisa memasukkan kode warna. kustomisasi banner masuk akal? sebelumnya sudah ada rencana untuk banner itu" (2026-10-11, memulai PH-09 — konsep Site Admin direvisi jadi kustomisasi brand; tiga keputusan cakupan tercatat di bagian 14.2), "tambahkan dokumentasi untuk fix, gua mau halaman alat tersimpan hanya fokus untuk alamat, tidak include profil dan notifikasi. kemudian halaman profil akan berdiri sendiri nantinya, sedangkan notifikasi gua mau menambahkan pop up atau dialog yang muncul dari icon notifikasi di navbar" (2026-10-11, PH-10 — lima keputusan UI akun + notifikasi in-app tercatat di bagian 10, spek CUST-03 + NOTIF-02 ditulis), "apa yang lu kerjain? dimana kustomisasi brand nya?" lalu memilih "Bangun sekarang" (2026-10-11, implementasi PH-09 SITE-05 selesai + diverifikasi) |
 | Hambatan saat ini | Tidak ada yang memblokir. Catatan: (a) email produksi butuh domain Resend terverifikasi (`EMAIL_FROM`); (b) webhook Xendit tidak sampai ke `localhost` (rekonsiliasi menutupi); (c) DB Supabase kadang `P1001` saat dev (retry) |
 
 ## 2. Status dan aturan gate
@@ -42,8 +42,10 @@
 | PH-04 | Payment Integration | Create payment (Xendit), webhook handler, stock reservation release | MOD-PAY (PAY-01, PAY-02) | PH-03 disetujui, Xendit sandbox setup | **Disetujui** (2026-10-10) |
 | PH-05 | Core Features (Voucher + Notification + Invoice) | Apply voucher, voucher CRUD, email notification, invoice PDF | MOD-VOUCH (VOUCH-01, VOUCH-02), MOD-NOTIF (NOTIF-01), MOD-INV (INV-01) | PH-04 disetujui, Resend setup | **Disetujui** (2026-10-11) |
 | PH-06 | Polish MVP (Reports + Config + Advanced) | Kelola pesanan admin (status, resi, status pembayaran), sales report (5 laporan PRD 4.11), store settings + template alasan penolakan, shipping tracking, tracking pesanan customer (daftar dalam perjalanan + detail, ORDER-08), cancel/refund, pickup, voucher dibatasi produk/kategori, email lanjutan (shipped/cancel/refund) | MOD-SHIP (SHIP-02, SHIP-03), MOD-ORDER (ORDER-05, ORDER-06, ORDER-07, ORDER-08), MOD-REPORT (REPORT-01), MOD-CONFIG (CONFIG-01), MOD-VOUCH (lanjutan VOUCH-01), MOD-PROD (lanjutan PROD-01), MOD-NOTIF (lanjutan NOTIF-01) | PH-05 disetujui | **Disetujui** (2026-10-11) |
-| PH-07 | Customer Management (Akun + Alamat) | Simpan/ubah/hapus alamat (maks 5), pilih alamat saat checkout, pesan lagi dari pesanan lama, set password (guest isi email), reset password, preferensi notifikasi | MOD-CUST (CUST-01, CUST-02), MOD-ORDER (lanjutan ORDER-03), MOD-AUTH (AUTH-04, AUTH-05) | PH-03 + PH-05 disetujui (email untuk set/reset password; diubah dari "hanya PH-03" oleh audit 2026-10-10) | **Siap direview** (2026-10-11) |
-| PH-08 | Site Admin (Platform Configuration) | Login Site Admin, kelola akun Store Admin, konfigurasi payment gateway (Xendit), konfigurasi shipping provider (RajaOngkir), pengaturan platform | MOD-SITE (SITE-01, SITE-02, SITE-03, SITE-04) | PH-05 disetujui (disarankan setelah PH-06) | Belum dimulai |
+| PH-07 | Customer Management (Akun + Alamat) | Simpan/ubah/hapus alamat (maks 5), pilih alamat saat checkout, pesan lagi dari pesanan lama, set password (guest isi email), reset password, preferensi notifikasi | MOD-CUST (CUST-01, CUST-02), MOD-ORDER (lanjutan ORDER-03), MOD-AUTH (AUTH-04, AUTH-05) | PH-03 + PH-05 disetujui (email untuk set/reset password; diubah dari "hanya PH-03" oleh audit 2026-10-10) | **Disetujui** (2026-10-11, commit `c20f525`) |
+| PH-08 | Site Admin (Platform Configuration) | Login Site Admin, kelola akun Store Admin, konfigurasi payment gateway (Xendit), konfigurasi shipping provider (RajaOngkir), pengaturan platform | MOD-SITE (SITE-01, SITE-02, SITE-03, SITE-04), MOD-AUTH (SITE-00) | PH-05 disetujui (disarankan setelah PH-06) | **Siap direview** (2026-10-11) |
+| PH-09 | Brand Customization (Identitas + Palet + Banner) | Ganti nama brand, logo, favicon, tagline, palet warna (hex), teks footer, banner homepage dari `/site-admin/brand` tanpa mengubah kode | MOD-CONFIG (SITE-05) | PH-08 disetujui (role SITE-00 + area `/site-admin`) | **Siap direview** (2026-10-11) |
+| PH-10 | Akun & Notifikasi (Profil + Alamat + Pusat Notifikasi) | Halaman alamat khusus alamat (`/profile/addresses`), halaman akun mandiri (`/profile`), ikon notifikasi di navbar dengan dialog daftar notifikasi + pengaturan, badge belum dibaca | MOD-CUST (CUST-03, revisi UI CUST-01/CUST-02), MOD-NOTIF (NOTIF-02) | PH-07 disetujui (alamat + preferensi sudah jalan); tidak bergantung PH-08/PH-09 | **Belum dimulai** — spek `docs/03` CUST-03 + NOTIF-02 ditulis 2026-10-11 |
 
 **Phase Checkpoint:**
 - **PH-01:** Admin bisa CRUD products, Customer bisa register/login/view products → Foundation ready
@@ -54,6 +56,7 @@
 - **PH-06:** Reports (5 laporan PRD 4.11), settings + template alasan penolakan, kelola pesanan admin, shipping tracking, tracking pesanan customer tanpa input data (ORDER-08), cancel/refund, pickup, cakupan voucher per produk/kategori, email lanjutan work → MVP complete
 - **PH-07:** Customer bisa menyimpan alamat, memilihnya saat checkout, pesan lagi, set/reset password, atur preferensi notifikasi → fitur akun customer ready
 - **PH-08:** Site Admin bisa login dan mengonfigurasi platform (payment gateway, shipping provider, akun Store Admin) → kriteria sukses PRD #10 ready
+- **PH-10:** Customer punya halaman akun mandiri, halaman alamat khusus alamat, dan pusat notifikasi in-app (daftar + pengaturan) dari ikon navbar → UI akun customer rapi
 
 ---
 
@@ -769,7 +772,7 @@ Skrip verifikasi sementara (`ph04-verify.mjs`, `ph04-guest.mjs`, `ph04-dbcheck.m
 4. **Kuota dijaga di transaksi.** Penambahan `usageCount` memakai `updateMany` bersyarat (`usageCount < usageLimit`); `count === 0` membatalkan seluruh transaksi. Mencegah kuota terlewati pada pesanan berbarengan.
 5. **Pratinjau voucher dihitung server.** `POST /api/vouchers/validate` menghitung subtotal dari keranjang (bukan dari klien); `shippingCost` dari klien hanya untuk pratinjau voucher ongkir. Angka final selalu dihitung ulang saat pesanan dibuat.
 6. **`EMAIL_FROM` dibaca dari env** (`getEmailFrom()`), default dev `onboarding@resend.dev`. Email dikirim lewat HTTP API Resend (`fetch`, tanpa SDK).
-7. **Invoice = halaman HTML siap-cetak** (`/orders/[id]/invoice` + `PrintButton` `window.print()`), bukan `@react-pdf/renderer`. Deviasi dari SDD 4.10 (lihat bagian 10).
+7. **Invoice = halaman HTML siap-cetak** (`/orders/[id]/invoice` + `PrintButton` `window.print()`), bukan `@react-pdf/renderer`. Deviasi dari SDD 4.10 (lihat bagian 10). **Revisi 2026-10-11:** tautan "Lihat Invoice" dan halaman invoice hanya tersedia untuk pesanan **lunas** (`payment.status === "PAID"`) — pesanan yang belum dibayar atau dibatalkan sebelum bayar tidak menampilkan invoice (keputusan di bagian 10).
 
 ### 8.3. Daftar task
 
@@ -809,6 +812,22 @@ Catatan: jalur email terbukti **non-blocking** — pada uji H15 Resend menolak `
 - Email hanya terkirim ke alamat pemilik akun Resend selama `EMAIL_FROM` masih `onboarding@resend.dev`. Untuk kirim ke pembeli mana pun, isi `EMAIL_FROM` dengan domain terverifikasi di Resend (lihat `docs/06`).
 - Invoice berupa HTML siap-cetak; penyimpanan PDF dilakukan lewat dialog cetak browser.
 
+### 8.6. Revisi pasca-persetujuan PH-05 (2026-10-11)
+
+PH-05 sudah disetujui, tetapi akses invoice dikoreksi setelah dilaporkan pengguna. Tidak ada fase baru: ini revisi INV-01 di lingkup halaman pesanan (PH-03) + invoice (PH-05). Keputusan lengkap ada di bagian 10.
+
+**Masalah:** tombol "Lihat Invoice" dirender tanpa syarat status di blok Pembayaran `/orders/[id]`, sehingga tepat setelah checkout ia tampil menumpuk di atas tenggat + tombol "Bayar". Pesanan yang dibatalkan sebelum bayar pun masih menawarkan invoice, dan halaman `/orders/[id]/invoice` bisa dibuka lewat URL langsung.
+
+**Keputusan pengguna:** invoice hanya untuk pesanan **lunas**.
+
+**Perbaikan:**
+
+- Tautan "Lihat Invoice" di `/orders/[id]` dirender hanya bila `order.payment?.status === "PAID"`.
+- Halaman `/orders/[id]/invoice` menjawab `notFound()` bila status pembayaran bukan `PAID` (URL langsung pun ditolak). Berlaku juga untuk pesanan lunas yang kemudian dibatalkan + refund — bukti transaksinya tetap sah.
+- PRD 3.1.I dan 4.10 diberi catatan pembatas (revisi 1.3). Tanpa perubahan skema.
+
+**Verifikasi:** `pnpm exec tsc --noEmit` exit 0; `pnpm exec eslint` pada kedua berkas exit 0. Uji klik-through menunggu pengguna: pesanan belum bayar → tombol tidak ada; pesanan lunas → tombol ada; URL invoice pesanan belum bayar → `404`.
+
 ---
 
 ## 9. Rincian Fase: PH-06 — Polish MVP (Reports + Config + Advanced)
@@ -821,7 +840,7 @@ Catatan: jalur email terbukti **non-blocking** — pada uji H15 Resend menolak `
   - Lanjutan VOUCH-01 (cakupan voucher: produk eligible, produk dikecualikan, kategori — PRD 5.4 butir 1-3)
   - ORDER-07 (Admin Order Management — ID baru dari audit 2026-10-10: daftar + detail pesanan di `/admin/orders`, ubah status pesanan `SHIPPED`/`COMPLETED` + isi nomor resi, lihat status pembayaran — PRD 2.3/3.1.K/4.4). Tanpa fitur ini tidak ada pemilik transisi pesanan ke `SHIPPED`/`COMPLETED`; SHIP-02/ORDER-05/ORDER-06 di fase ini menggantung padanya sebagai tulang punggung UI admin
   - SHIP-03 (Pickup — PRD 3.1.F/3.1.J/4.7: opsi ambil di toko bila diaktifkan, tanpa ongkir)
-  - ORDER-08 (Tracking Pesanan Customer — PRD 2.2/3.1.H: `/track-order` jadi dua jalur — guest isi form nomor pesanan + nomor HP (ORDER-04, sudah jalan, tidak berubah), customer login langsung lihat daftar seluruh pesanan dalam perjalanan tanpa input; tombol "Lacak Pesanan" di `/orders` — placeholder sejak 2026-10-10 — mengarah ke detail tracking per pesanan yang session-scoped, bukan ke form. Keputusan lengkap: bagian 10, baris ORDER-08)
+  - ORDER-08 (Tracking Pesanan Customer — PRD 2.2/3.1.H: `/track-order` jadi dua jalur — guest isi form nomor pesanan + nomor HP (ORDER-04, tidak berubah), customer login langsung lihat daftar seluruh pesanan dalam perjalanan tanpa input; tombol "Lacak Pesanan" di `/orders` mengarah ke detail tracking per pesanan yang session-scoped, bukan ke form. Keputusan lengkap: bagian 10, baris ORDER-08)
   - Lanjutan PROD-01 (peran gambar: size chart / info tambahan, 1 opsional — PRD 3.1.A/7.4; `ProductImage` belum punya peran). Lanjutan PROD-02 (filter katalog) **sudah dikerjakan lebih awal pada 2026-10-10** — lihat bagian 10
   - Lanjutan NOTIF-01 (email order shipped + tracking link, cancellation approved/rejected, refund completed — PRD 3.1.I; 2 dari 6 jenis email sudah jalan sejak PH-05)
   - REPORT-01 diperluas mencakup lima laporan PRD 4.11 (sales, kinerja produk, stok, order, refund)
@@ -965,27 +984,36 @@ Catatan: verifikasi V3-V4 adalah otomatis. Uji klik-through manual (alur admin u
 | 2026-10-10 | **Filter katalog (PROD-02 lanjutan) ditarik dari PH-06 ke sekarang.** User: "pada katalog hanya ada fitur search, tanpa filter/sort? di prd harusnya ada" (PRD 3.1.A: filter by name, category, price range, sort) | PRD 3.1.A baru sebagian terpenuhi: `search` + paginasi jalan; kategori, kisaran harga, dan urutan belum ada. Audit 2026-10-10 sudah menaruh sisanya di PH-06 | User memilih "Implement sekarang". Ditambahkan: pil kategori (dari `Category`), filter kisaran harga, dan urutan (Terbaru/Harga termurah/Harga termahal/Nama A-Z) di `/products`; `catalogFilterSchema` (toleran, nilai rusak jatuh ke default) memvalidasi query string. `Product.minPrice` (Decimal, denormalisasi harga varian termurah — pola sama seperti `totalStock`) ditambah lewat migrasi `20261010140000_add_product_min_price` + backfill, karena Prisma 5.22 tidak mendukung `orderBy` agregat relasi (`_min` ditolak: "Unknown argument `_min`"). Urutan harga memakai `minPrice` untuk naik dan turun; `id` jadi pemecah seri. PH-06 kehilangan butir filter katalog (bagian 3, 9.1) | `src/lib/products/{validation,queries,mutations}.ts`, `src/components/products/{CategoryPills,CatalogFilters}.tsx`, `src/app/(storefront)/products/page.tsx`, `prisma/schema.prisma`, `prisma/seed.ts`, `prisma/migrations/20261010140000_add_product_min_price/`; `docs/03` PROD-02 |
 | 2026-10-10 | **ORDER-08 — Tracking Pesanan Customer diberi rumah di PH-06 (menutup celah audit 13-kebutuhan).** User: "/track-order ... selain digunakan guest digunakan customer juga ... ketika tombol lacak pada order list ditekan akan mengarahkan ke detail tracking bukan ke track ordernya saja; track order customer akan menampilkan seluruh pesanan yang masih dalam perjalanan; untuk guest tetap seperti sekarang". Kebutuhan ini sebenarnya sudah dijanjikan PRD 2.2 ("Track shipping status", "Tracking order tanpa input data (langsung list order mereka)") dan PRD 3.1.H ("Customer: login langsung list order mereka (tanpa input data)"), tetapi tidak pernah turun ke spesifikasi/task: ORDER-04 didefinisikan guest-only dan tabel hak aksesnya menyuruh customer "disarankan pakai `/orders`"; ORDER-03 hanya daftar+detail; PH-06 tidak mencantumkan PRD 3.1.H di daftar referensinya; slot rute SDD bagian 5 (`track/[orderNumber]`, publik) tidak pernah dibangun — yang jalan hanya `/track-order` (form guest) | PRD 2.2/3.1.H tanpa pemilik task (pola yang sama dengan alamat tersimpan dan cakupan voucher sebelum dicatat); tombol "Lacak Pesanan" yang sudah dirender di `/orders` (placeholder, tanpa handler, 2026-10-10) tidak punya tujuan yang disepakati | **Ditempatkan di PH-06 sebagai ORDER-08 (MOD-ORDER)**, satu fase dengan SHIP-02 + ORDER-07 yang jadi sumber datanya (resi/posisi kurir). Perilaku yang disepakati: (a) `/track-order` jadi dua jalur — guest isi form nomor pesanan + nomor HP (ORDER-04, tidak berubah), customer login langsung lihat daftar seluruh pesanan dalam perjalanan tanpa input; (b) tombol "Lacak Pesanan" di `/orders` mengarah ke **detail tracking per pesanan**, bukan ke form; (c) detail tracking customer **session-scoped** (kepemilikan dari sesi, `404` generik — pola `/orders/[id]`), bukan rute publik per nomor pesanan tanpa bukti kepemilikan (nomor pesanan saja bocor keberadaan pesanan; ORDER-04 sengaja mewajibkan nomor + HP). Rute direncanakan: daftar in-transit di `/track-order` (mode customer), detail di `/orders/[id]/tracking`; slot lama SDD bagian 5 dibetulkan. Spesifikasi ORDER-08 ditulis saat PH-06 dimulai (pola ORDER-05/06); indeks fitur `docs/03`, pohon rute `docs/02` bagian 5, dan catatan ORDER-04/ORDER-03 sudah disinkronkan | `docs/01_PRD.md` 2.2/3.1.H, `docs/03` indeks fitur + ORDER-03 bagian 12 + ORDER-04 bagian 3 & 12, `docs/02` bagian 5, `docs/04` bagian 3 & 9.1, `src/components/orders/OrderListItem.tsx` (tombol placeholder) |
 | 2026-10-10 | **Input nomor HP dihapus dari form registrasi (AUTH-02).** User: "di daftar akun, karena nomor hp itu opsional, better gausah ada inputnya gasi?". Jejak konsumen `User.phone` sebelum keputusan: prefill "Nomor HP penerima" di checkout (kenyamanan saja), login via nomor (`findUserByPhone`), batas voucher per-HP (`resolveBuyerPhone` → eligibility — cek hanya jalan kalau phone ada, dan phone akun tidak pernah diverifikasi), lacak publik (`findOrderForTracking` cocokkan `user.phone`). Field opsional justru mengundang data palsu — nomor palsu di akun bisa memblokir voucher per-HP milik pemilik nomor asli | Field opsional = friksi + data sampah; 3 dari 4 konsumen bisa digantikan: customer lacak via `/orders` (dan ORDER-08 PH-06 tanpa input), prefill hanya kenyamanan (phone penerima tetap wajib diisi di checkout — itu phone alamat, bukan phone akun), batas per-HP per PRD 5.4 (baris 154, 454) berlaku ke "nomor HP terverifikasi" — hanya phone OTP guest yang terverifikasi; lubang lolos sudah ada hari ini lewat field kosong/isi palsu | **Ya, hapus inputnya** (`RegisterForm.tsx`: state, payload, JSX). API `/api/auth/register` tidak berubah: `registerSchema.phone` sudah `.optional()`, tetap menerima phone dari klien lain (backward compatible); user lama yang sudah punya phone tetap bisa login via nomor. Konsekuensi dicatat: customer baru login via email saja, batas voucher per-HP tidak mengikat customer tanpa phone (kondisi sama seperti field dikosongkan hari ini — bukan lubang baru) | `src/components/auth/RegisterForm.tsx`, `src/lib/auth/validation.ts` (tidak berubah), PRD 5.4 |
+| 2026-10-11 | **Halaman detail tracking customer `/orders/[id]/tracking` dibangun (ORDER-08).** User: "tambahkan dulu". Sebelumnya: `/track-order` dual mode (guest form / customer list in-transit via `getInTransitOrdersForUser`) + navbar Link "Lacak" untuk login sudah ada, tetapi semua tombol Lacak (navbar, `/track-order`, daftar pesanan) menunjuk ke rute yang belum ada → 404 | Link Lacak tanpa tujuan; fitur tracking customer setengah jadi | Halaman session-scoped (pola `/orders/[id]`: null → 404 generik, keberadaan pesanan tidak bocor): kop status badge + riwayat milestone dari timestamp nyata (`createdAt`, `Payment.paidAt`, `shippedAt`, `completedAt` — tanpa tabel riwayat status) + kartu pengiriman (kurir, resi `trackingNumber`, ETD, tujuan). Guest tidak berubah: tetap form `/track-order` (ORDER-04). `getTrackingOrderForUser` include `payment`; komentar OrderListItem dibetulkan (tombol Lacak bukan placeholder) | `src/app/(storefront)/orders/[id]/tracking/page.tsx`, `src/lib/orders/admin.ts`, `docs/02` bagian 5 |
 | 2026-10-11 | **Keputusan desain UI pemilihan alamat tersimpan di checkout (dasar TASK-72, PH-07).** User: "jika sudah ada alamat tersimpan maka akan menampilkan alamat tersimpan dan jika ada lebih dari 1 alamat tersimpan maka ada component yang perlu ditrigger untuk menampilkan daftar alamat dan memilih alamat yg sesuai. namun jika tidak ada, maka UI saat ini sudah tepat" | Menetapkan bentuk UI integrasi checkout per jumlah alamat tersimpan: tepat satu alamat ditampilkan langsung dengan isian terisi, lebih dari satu lewat komponen pemicu yang membuka daftar alamat untuk dipilih, dan nol alamat tetap memakai UI manual saat ini (`DestinationPicker`) tanpa perombakan | Disetujui sebagai dasar TASK-72 bersama keputusan desain PH-07 lainnya. Guest selalu jatuh ke jalur manual (selaras bagian 12.1: alamat guest tidak termasuk). Detail komponen (bentuk pemicu, posisi daftar, perilaku pilih) ditetapkan saat spesifikasi CUST-01 dan TASK-72 dirinci | `docs/04` bagian 12.1, 12.2 (TASK-72) |
+| 2026-10-11 | **Keputusan cakupan PH-09 (jawaban pengguna): palet warna, bukan hanya primary; dan banner homepage.** User mengonfirmasi enam item identitas brand (nama, logo, favicon, tagline, warna, teks footer), lalu: "pengaturan warna juga jangan hanya primary saja yang bisa di atur, buat fitur palette warna dan bisa memasukkan kode warna. kustomisasi banner masuk akal? sebelumnya sudah ada rencana untuk banner itu" — banner memang sudah tercatat di PRD 3.1.J, 4.12, 7.6 sejak awal tetapi tidak pernah diimplementasi (hero homepage masih hardcode di `(storefront)/page.tsx`) | Menentukan jumlah slot warna, ruang lingkup penerapan, dan isi banner | Tiga keputusan user: (a) palet = **9 grup inti / 15 kolom hex** (primary, secondary, accent, background+foreground, muted, border, destructive, success), token `card`/`popover`/`input`/`ring` tetap bawaan; (b) warna berlaku **seluruh aplikasi** (admin ikut, satu override `:root`); (c) banner **lengkap** — gambar (Uploadthing) + judul + teks + tombol (label + link) + sakelar aktif, hero teks default bila mati | `docs/03` SITE-05 bagian 4, 9; `docs/04` bagian 14.2 |
+| 2026-10-11 | **Konsep Site Admin direvisi: peran utamanya kustomisasi brand per deployment (1 deployment = 1 brand store), bukan knop infrastruktur.** Pengguna menolak konsep awal PH-08 yang berpusat pada rahasia env + knob operasional; cakupan baru = identitas brand + kelola akun Store Admin, sementara konfigurasi payment/shipping tetap dipertahankan sementara. Pemeriksaan kode menemukan "FlexStore" hardcode di 14 titik TSX + 8 titik TS (UI, metadata, kop invoice, 7 subjek email, footer email, fallback `EMAIL_FROM`) | Identitas brand tidak bisa diubah tanpa mengedit kode; PRD 2.3/3.1.J masih menempatkan logo/banner/warna di tangan Store Admin | **PRD direvisi v1.2:** kustomisasi brand pindah ke bagian 2.4 (Site Admin), 2.3 dirapikan, 3.1.J dan 7.6 diperluas (favicon, tagline, teks footer, palet hex, banner lengkap). Fitur baru **SITE-05** ditulis di `docs/03` (v1.6) + fase **PH-09** di bagian 14 | `docs/01_PRD.md` (revisi 1.2), `docs/03` SITE-05, `docs/04` bagian 3 dan 14 |
+| 2026-10-11 | **Detail Uploadthing dan gambar dilengkapi ke `docs/03` (PROD-01); temuan: input gambar varian tidak ada di form admin.** User: "catat detail uploadthing yang seharusnya ada di doc". Pemeriksaan kode: `ProductForm` tidak punya input `imageUrl` varian (`VariantRow` = SKU/nama/harga/stok/berat; payload tidak mengirim field); field hanya terpakai di cart (fallback `product.images[0]`). `sizeChartUrl` juga tidak pernah tercatat di `docs/03` | `docs/03` PROD-01 tidak memuat detail unggahan (endpoint, gerbang, batas 4MB), size chart, maupun `imageUrl` varian — padahal ketiganya didukung kode; PRD 114 melebih kenyataan karena menandai gambar varian sebagai selesai | Ditulis ke PROD-01: baris `sizeChartUrl` dan `variants[].imageUrl`, catatan unggahan Uploadthing, penyimpanan `SIZE_CHART`, serta status UI varian. User memutuskan mencabut centang PRD untuk gambar varian yang belum selesai: `docs/01` bagian 3.1.A dan 7.4 kini menandainya belum selesai; implementasi UI varian tidak termasuk perubahan ini. `UPLOADTHING_TOKEN` sudah terisi (dicek 2026-10-11, 168 karakter), jadi penghalang kunci sudah lewat; unggah berkas nyata tetap belum diuji | `docs/01` bagian 3.1.A/7.4; `docs/03` PROD-01; `docs/04` bagian 11; `src/components/admin/{ProductForm,ImageUploader}.tsx`, `src/lib/uploadthing/core.ts` |
+| 2026-10-11 | **Penyelarasan dokumen dengan implementasi (audit 2026-10-11).** Dipicu permintaan user agar dokumen dicek terhadap kode lalu disamakan | Temuan: `README.md` masih menggambarkan keadaan PH-05; SDD memuat baris usang (`middleware.ts` padahal Next.js 16 memakai `proxy.ts`, dependensi `@react-pdf/renderer`, status Resend "Direncanakan (PH-05)", redaksi "Store Admin or Site Admin", perintah `pnpm test`/`test:e2e` yang tidak ada, nama model `StoreSettings`/`PlatformSettings`/`Shipping`); indeks `docs/03` masih menandai fitur yang sudah jalan sebagai "Draft"/"Belum dirinci" dan belum memuat ORDER-07 serta SHIP-03; `docs/06` belum punya bagian Site Admin; `.env.example` baris `RAJAONGKIR_API_KEY` bersufiks nyasar. | Dokumen drift: agent berikutnya tidak bisa memakai `docs/03` dan `README.md` sebagai sumber kebenaran, pola yang sama dengan audit 2026-10-10 | Diselaraskan 2026-10-11: indeks `docs/03` diberi status "Terimplementasi (PH-XX)", baris ORDER-07 dan SHIP-03 ditambahkan, checkpoint Phase 9 ditulis; README disegarkan ke PH-08; SDD, `docs/06`, `AGENTS.md`, dan `.env.example` ikut dirapikan. **Keputusan user:** bagian rinci fitur yang belum punya spesifikasi `docs/03` (AUTH-02/03, PROD-03/04/05 dari PH-01; VOUCH-01/02, NOTIF-01, INV-01 dari PH-05; SHIP-02/03, ORDER-05..08, REPORT-01, CONFIG-01 dari PH-06) dicatat sebagai **utang dokumentasi** dan ditulis dalam satu batch setelah PH-09 atau saat penutupan MVP, bukan sekarang | `README.md`, `docs/02_SDD.md`, `docs/03_SPESIFIKASI_FITUR.md`, `docs/06_SETUP_KREDENSIAL.md`, `AGENTS.md`, `.env.example` |
+| 2026-10-11 | **Perbaikan UI akun customer (keputusan pengguna): halaman alamat dipisah, profil berdiri sendiri, notifikasi jadi dialog dari ikon navbar.** User: "gua mau halaman alat tersimpan hanya fokus untuk alamat, tidak include profil dan notifikasi. kemudian halaman profil akan berdiri sendiri nantinya, sedangkan notifikasi gua mau menambahkan pop up atau dialog yang muncul dari icon notifikasi di navbar" | Kode saat ini menumpuk judul + nama/email + "Alamat Tersimpan" + "Preferensi Notifikasi" dalam satu halaman `/profile`; PRD 4.9 hanya mengatur email sehingga daftar notifikasi in-app belum punya dasar kebutuhan | Lima keputusan pengguna: (a) route alamat `/profile/addresses` — sub-halaman, bisa dibuka langsung tanpa lewat `/profile`; (b) `/profile` jadi halaman akun mandiri berisi info akun saja (nama, email, ubah password) = CUST-03; (c) ikon notifikasi di navbar membuka dialog berisi **daftar notifikasi + pengaturan**; (d) daftar notifikasi **diturunkan dari data pesanan**, tanpa tabel `Notification` baru — lima kejadian: pesanan dibuat & belum dibayar (`WAITING_PAYMENT`), pesanan terkirim pertama kali (`shippedAt`), pesanan sudah tiba (`completedAt`), pesanan dibatalkan sebelum bayar (`canceledAt` tanpa bayar), refund selesai (`Refund.status = COMPLETED`); (e) badge "belum dibaca" memakai penanda `notif:last-seen:{userId}` di Redis (semua-atau-tidak, bukan per entri). PRD direvisi **v1.3** (notifikasi in-app masuk 3.1.I, 4.8, 4.9, 7.7). Fase baru **PH-10** (bagian 15) dengan spek `docs/03` CUST-03 dan NOTIF-02. **Dokumentasi ditulis sekarang, implementasi menyusul** | `docs/01_PRD.md` (revisi 1.3), `docs/02_SDD.md` 4.8/4.9/5, `docs/03` CUST-01/CUST-02/CUST-03/NOTIF-02, `docs/04` bagian 3, 10, 15; `README.md` |
+| 2026-10-11 | **Akses invoice dibatasi ke pesanan lunas.** User: "masalah muncul di order/id atau detail order setelah checkout, yang mana belum dibayar tapi sudah muncul tombol 'lihat invoice' tepat di atas tombol 'bayar'" dan "tombol seharusnya muncul ketika lunas saja, bahkan saat pesanan dibatalkan sebelum membayar tetap ada tombol 'lihat invoice'. saya tidak yakin lihat invoice lumrah di saat seperti ini" | Tombol "Lihat Invoice" dirender tanpa syarat status di blok Pembayaran `/orders/[id]`, tepat di atas tenggat + tombol "Bayar" (baris 179-184 vs 185-200) — pembeli melihat "invoice" untuk dokumen yang belum ada, dan pesanan batal sebelum bayar pun masih menawarkannya. Halaman `/orders/[id]/invoice` juga bisa dibuka lewat URL langsung | **Keputusan pengguna:** invoice hanya untuk pesanan **lunas**. Diterapkan: tautan dirender hanya bila `order.payment?.status === "PAID"`; halaman invoice menjawab `notFound()` bila status pembayaran bukan `PAID` (berlaku juga untuk pesanan yang lunas lalu dibatalkan + refund, karena bukti transaksinya tetap sah). PRD 3.1.I dan 4.10 diberi catatan pembatas (revisi 1.3). Tanpa perubahan skema | `src/app/(storefront)/orders/[id]/page.tsx`, `src/app/(storefront)/orders/[id]/invoice/page.tsx`, `docs/01` 3.1.I/4.10, `docs/04` 8.2 |
 
 
 ---
 
 ## 11. Catatan lanjutan sesi
 
-- **Terakhir dikerjakan:** PH-05 TASK-47 sampai TASK-53 — implementasi dan verifikasi end-to-end selesai (menunggu review). PH-04 sudah **Disetujui** (2026-10-10); kode + dokumen PH-04 belum di-commit. PH-03 sudah di-commit: `e1f5ab9` (kode) + `a0a7961` (docs). Ditambah revisi pasca-persetujuan PH-03 (perbaikan OTP guest + redesign urutan alamat) dan penghapusan `/verify-phone` — lihat bagian 6.8 dan 10; belum di-commit
-- **Kondisi pekerjaan (PH-03, riwayat):** PH-02 **sudah di-commit** (`68e5ce8` kode, `f167fa4` dokumentasi). Perubahan PH-03 **belum di-commit**: 14 berkas termodifikasi (`docs/03`, `docs/04`, `prisma/schema.prisma`, `(storefront)/cart/page.tsx`, `api/admin/products/[id]/route.ts`, `api/shipping/route.ts`, `components/auth/OtpVerificationForm.tsx`, `components/cart/CartItemRow.tsx`, `components/cart/CartSummary.tsx`, `components/layout/HeaderUserMenu.tsx`, `lib/auth/otp.ts`, `lib/auth/session.ts`, `lib/cart/queries.ts`, `lib/shipping/validation.ts`) + 20 berkas baru (migrasi `20261009231301_add_orders/`, `(storefront)/checkout/`, `(storefront)/orders/`, `(storefront)/track-order/`, `api/orders/`, `components/cart/CartView.tsx`, `components/checkout/`, `components/orders/`, `components/shipping/`, `lib/orders/`). HEAD `f167fa4`
-- **Pemeriksaan terakhir (PH-03):** `pnpm lint` exit 0; `pnpm build` exit 0 (33 rute, termasuk `ƒ /api/orders/create`, `ƒ /api/orders/track`, `ƒ /checkout`, `ƒ /orders`, `◐ /orders/[id]`, `◐ /track-order`); 23 pemeriksaan HTTP terhadap server dev + database Supabase + Redis Upstash — ongkir terfilter, gerbang OTP guest, pembuatan pesanan guest/customer, lacak publik + batas percobaan per IP, anti-overselling dua permintaan bersamaan, pelepasan reservasi kedaluwarsa (idempoten), dan pesanan lintas pengguna (rincian: bagian 6.6). 0 galat tak tertangani di log dev. Data uji dibersihkan (`orders=0`, `orderItems=0`, user `qa.ph03.*`=0, stok seed kaos 25 / sneakers 5, `totalStock` seluruh produk cocok). Pemeriksaan PH-02 sebelumnya: 40 PASS / 0 FAIL (bagian 5.5)
-- **Keputusan terakhir:** 2026-10-10 — **PH-04 Disetujui; PH-05 dikerjakan dan siap direview.** User: "lanjutkan". Keputusan PH-05 (bagian 8.2): kalkulasi bertahap (nominal lalu persen dari sisa); stacking default menolak (opt-in lewat matriks kompatibilitas); kuota dijaga di transaksi; `EMAIL_FROM` dari env (default `onboarding@resend.dev`); invoice HTML siap-cetak
+- **Terakhir diperbarui:** 2026-10-11 — **PH-08 Siap direview**: TASK-80 sampai TASK-96 selesai, verifikasi otomatis lulus (bagian 13.5), uji klik-through menunggu pengguna (bagian 13.6); spek `docs/03` SITE-00..SITE-04 ditulis lebih dulu atas permintaan user; di sesi yang sama indeks `docs/03`, README, SDD, `docs/06`, `AGENTS.md`, dan `.env.example` diselaraskan dengan implementasi (audit 2026-10-11, bagian 10). PH-01 sampai PH-07 **Disetujui** — rincian dan bukti per fase di bagian 4 sampai 9 serta 12; commit: PH-06 `3501367`, PH-07 `c20f525` (riwayat lengkap `git log`, konvensi `type(scope)` per fase). Menyusul pada hari yang sama: **PH-10 — Akun & Notifikasi** direncanakan (bagian 15) — spek `docs/03` CUST-03 + NOTIF-02 ditulis, implementasi menunggu
+- **Kondisi pekerjaan (2026-10-11):** PH-08 selesai dikerjakan, belum di-commit (HEAD `c20f525`) — seluruhnya ada di working tree: migrasi `20261011130000_add_ph08_site_admin`, route `/api/site-admin/{platform-settings,payment-settings,shipping-settings,users}`, skrip sementara `_ph08-{http,orders,seed-siteadmin,verify}` (hapus setelah fase), plus revisi `docs/03` (spek SITE) dan `docs/04`. Daftar persis: `git status --porcelain -uall`. Dua baris kondisi-pekerjaan lama (riwayat file PH-03 dan pemeriksaannya) dihapus — buktinya lengkap di bagian 6.5 dan 6.6, commit PH-03 `e1f5ab9`/`a0a7961` tercatat di bagian 6.7; commit PH-02 `68e5ce8` (kode) dan `f167fa4` (dokumentasi) disimpan sekali di sini sebagai rujukan singkat karena tidak dicatat di tempat lain
+- **Keputusan terakhir:** 2026-10-11 — PH-08 dikerjakan dalam satu sesi: spek `docs/03` SITE-00..04 user-request ditulis lebih dulu, baru TASK-80..96 dieksekusi; kini menunggu review. Keputusan desain pekan ini: UI pemilihan alamat tiga keadaan (dasar TASK-72) dan detail Uploadthing + temuan gambar varian — keduanya di bagian 10, 2026-10-11. Ditambah: PH-10 (Akun & Notifikasi) — lima keputusan pengguna soal pemisahan halaman alamat, halaman akun mandiri, dialog notifikasi dari ikon navbar, daftar notifikasi turunan lima kejadian pesanan, dan badge unread lewat Redis (bagian 10 dan 15). Ditambah lagi: akses invoice dibatasi ke pesanan lunas (bagian 10)
 - **Langkah berikutnya (setelah instruksi user):**
-  1. Review dan approval PH-05; setelah disetujui, mulai PH-06 — Polish MVP (Reports, Config, Shipping Tracking, Cancel/Refund, Admin Order, Pickup, Filter Katalog, Email lanjutan — cakupan diperluas audit 2026-10-10)
-  2. Commit perubahan PH-04 + revisi PH-03 + PH-05 — draf pesan disiapkan agent, `git commit` dijalankan user
-  3. (PH-05) Isi `EMAIL_FROM` dengan domain terverifikasi Resend bila email harus sampai ke pembeli mana pun (default hanya bisa kirim ke alamat pemilik akun)
-  4. (PH-05) Revisi SDD 4.10 (invoice HTML siap-cetak, bukan `@react-pdf/renderer`) saat dokumentasi dirapikan
-  5. (Opsional) Ubah `XENDIT_INVOICE_DURATION` (mis. 1800 = 30 menit) bila masa bayar perlu lebih longgar
-  6. (PH-01) `SEED_ADMIN_PASSWORD` dev lemah dan **wajib diganti** sebelum produksi
-- **Hal yang masih menghalangi:** Tidak ada yang menghalangi PH-05. Butir yang masih terbuka:
+  1. Review dan approval PH-08 (laporan bagian 13.6); uji klik-through menunggu pengguna (bukti bagian 13.5)
+  2. Kerjakan PH-10 (bagian 15) — spek CUST-03 + NOTIF-02 sudah siap: pindahkan alamat ke `/profile/addresses`, jadikan `/profile` halaman akun mandiri, tambahkan ikon notifikasi + dialog (daftar lima kejadian pesanan + pengaturan preferensi) dengan badge unread
+  3. Uji unggah Uploadthing dengan berkas nyata — kunci sudah terisi (2026-10-11), gerbang sudah lulus sejak PH-01
+  4. Gambar varian masih belum selesai: input unggah/pilih `imageUrl` belum ada di `ProductForm`; tuntutan PRD ditandai belum selesai di `docs/01` (keputusan 2026-10-11, bagian 10)
+  5. Isi `EMAIL_FROM` dengan domain terverifikasi Resend agar email sampai ke pembeli mana pun (default hanya bisa kirim ke alamat pemilik akun)
+  6. Sinkronisasi dokumen dengan implementasi (audit 2026-10-11) — **selesai**: indeks `docs/03` memakai status "Terimplementasi (PH-XX)" plus baris ORDER-07/SHIP-03, README ke PH-08, sisa baris SDD, `docs/06`, `AGENTS.md`, `.env.example`
+  7. Tulis bagian rinci fitur yang belum punya spesifikasi `docs/03` (13 fitur, daftar di bagian 10, 2026-10-11) — satu batch setelah PH-09 atau saat penutupan MVP
+  8. (Opsional) Ubah `XENDIT_INVOICE_DURATION` (mis. 1800 = 30 menit) bila masa bayar perlu lebih longgar
+  9. (PH-01) `SEED_ADMIN_PASSWORD` dev lemah dan **wajib diganti** sebelum produksi
+- **Hal yang masih menghalangi:** tidak ada untuk PH-08. Butir eksternal terbuka:
   (a) verifikasi webhook dari Xendit asli (tunnel publik / tombol "Test webhook" dashboard) belum dijalankan — verifikasi PH-04 memanggil endpoint webhook langsung ke server dev; (b) unggah berkas Uploadthing
-  dengan berkas nyata belum diuji (kunci masih placeholder); (c) `EMAIL_FROM` domain terverifikasi belum diisi sehingga email baru sampai ke alamat pemilik akun Resend; (d) format PDF invoice final menunggu keputusan (saat ini HTML siap-cetak). Pengiriman OTP, kredensial ongkir, dan kredensial Xendit Test Mode sudah lengkap.
+  dengan berkas nyata belum diuji (kunci sudah terisi 2026-10-11, gerbang `403`/`200` lulus sejak PH-01); (c) `EMAIL_FROM` domain terverifikasi belum diisi sehingga email baru sampai ke alamat pemilik akun Resend; (d) format PDF invoice final menunggu keputusan (saat ini HTML siap-cetak). Pengiriman OTP, kredensial ongkir, dan kredensial Xendit Test Mode sudah lengkap.
 - **Catatan teknis yang berguna untuk sesi berikutnya:**
   - Next.js 16 mengganti `middleware.ts` menjadi `proxy.ts`, dan ekspor hasil destrukturisasi (`export const { auth: proxy } = ...`) **tidak** dapat dianalisis Next.js — harus `const { auth } = NextAuth(cfg); export default auth;`
   - Dengan `cacheComponents: true`, data URL (`params`, `searchParams`) wajib diakses di dalam `<Suspense>`
@@ -1149,21 +1177,279 @@ Catatan: verifikasi V3-V4 adalah otomatis. Uji klik-through manual (alur admin u
 - **Langkah demo:** Login Site Admin → buat akun Store Admin baru → nonaktifkan akun Store Admin → ubah konfigurasi payment gateway → ubah konfigurasi shipping provider (termasuk origin) → simpan pengaturan platform → Store Admin login dan bekerja seperti biasa
 - **Estimasi:** 2-3 hari
 
-*Task detail dirinci saat PH-08 dimulai. Pertanyaan desain yang harus dijawab saat itu: (a) apakah kunci Xendit/RajaOngkir disimpan di database atau tetap di env (implikasi OWASP A02 — kunci pembayaran di database butuh perlindungan ekstra); (b) apakah area Site Admin memakai prefix rute terpisah atau subdomain; (c) bagaimana akun Site Admin pertama dibuat (seed, seperti admin Store Admin).*
+### 13.2. Keputusan desain (2026-10-11)
+
+Dijawab oleh pengguna saat PH-08 dimulai:
+
+- **(a) Penyimpanan kredensial:** **rahasia tetap di env** (`XENDIT_SECRET_KEY`, `XENDIT_WEBHOOK_TOKEN`, `RAJAONGKIR_API_KEY`, `RESEND_API_KEY`). Database hanya menyimpan knob operasional non-rahasia (mode, durasi invoice, asal ongkir, kurir, berat/item, tarif flat, sakelar) dan UI hanya menampilkan **status ada/belum** kunci (boolean), tidak pernah nilainya. Alasan: OWASP A02 (kriptografi gagal) — menyimpan kunci pembayaran di database menuntut manajemen kunci + rotasi yang tidak sepadan untuk MVP.
+  - Jawaban atas pertanyaan "kenapa Site Admin tugasnya konfigurasi": yang dikelola Site Admin bukan rahasia, melainkan **knob operasional level platform** dan **akun Store Admin** — hanya Site Admin yang boleh melihat/mengubahnya (PRD 2.4 melarang Store Admin).
+- **(b) Rute:** prefix terpisah `/site-admin/*` (halaman) dan `/api/site-admin/*` (API). Bukan subdomain (ribet di dev lokal) dan bukan sub-bagian `/admin/platform` (melanggar pemisahan PRD 2.4).
+- **(c) Akun Site Admin pertama:** lewat seed, pola sama seperti Store Admin — `SEED_SITE_ADMIN_EMAIL` / `SEED_SITE_ADMIN_PASSWORD`; bila password kosong dibuat acak dan dicetak sekali (tidak ada kredensial hardcode).
+
+Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
+
+- **Pemisahan ketat.** Site Admin tidak boleh mengakses `/admin/*` dan Store Admin tidak boleh mengakses `/site-admin/*`. Ini **menyimpang dari SDD 8** yang menulis `GET /api/admin/products` boleh "Store Admin or Site Admin"; baris SDD itu tidak diadopsi demi pemisahan PRD 2.4. Dicatat juga di `docs/03` SITE-00.
+- **Penonaktifan berlaku segera.** Guard API (`requireStoreAdmin`, `requireCustomer`) dan fungsi halaman (`requireStoreAdminPage`, `requireCustomerPage`) membaca ulang `role` + `deactivatedAt` dari database per permintaan, bukan hanya mempercayai JWT (OWASP A07). Menambah satu query PK per permintaan terlindungi.
+- **Nilai efektif:** `PlatformSetting` (bila baris ada) → env → bawaan. Baris `PlatformSetting` memakai pola satu baris tetap `id = "default"`, sama seperti `StoreSetting` (PH-06).
+- **Reset password Store Admin:** Site Admin menetapkan password baru langsung dari UI (tanpa email), supaya tidak bergantung pada domain Resend terverifikasi.
+- **Mode pemeliharaan:** banner di storefront + penolakan pembuatan pesanan (`503 MAINTENANCE`); bukan penguncian seluruh situs (proxy Edge tidak bisa membaca database).
+- **`paymentMode`** (`SANDBOX`/`PRODUCTION`) bersifat label/jejak audit; Xendit memakai base URL sama dan membedakan lewat kunci.
+
+### 13.3. Daftar task
+
+| ID | Task | Fitur | Dependensi | Status |
+| --- | --- | --- | --- | --- |
+| TASK-80 | Skema: `Role.SITE_ADMIN`, `User.deactivatedAt`, model `PlatformSetting`, enum `PlatformPaymentMode`; migrasi | SITE-00..04 | - | Selesai |
+| TASK-81 | Seed Site Admin (`SEED_SITE_ADMIN_*`), pola acak bila kosong | SITE-00 | TASK-80 | Selesai |
+| TASK-82 | Lib platform: `src/lib/platform/{queries,mutations,users,status,view,validation,index}.ts` (baca/baca-efektif/tulis + Zod) | SITE-01..03 | TASK-80 | Selesai |
+| TASK-83 | Auth: `proxy.ts` matcher `/site-admin`, callback `authorized`, `requireSiteAdmin` + `requireSiteAdminPage`, pemeriksaan `deactivatedAt` dari DB di guard + halaman, routing role di `LoginForm` | SITE-00 | TASK-80 | Selesai |
+| TASK-84 | API `GET`/`PATCH /api/site-admin/platform-settings` | SITE-01 | TASK-82, 83 | Selesai |
+| TASK-85 | API `GET`/`PATCH /api/site-admin/payment-settings` + panel status env (boolean) | SITE-02 | TASK-82, 83 | Selesai |
+| TASK-86 | API `GET`/`PATCH /api/site-admin/shipping-settings` + panel status env (boolean) | SITE-03 | TASK-82, 83 | Selesai |
+| TASK-87 | API `GET`/`POST /api/site-admin/users` + `PATCH /api/site-admin/users/[id]` (aktif/nonaktif, reset password) | SITE-04 | TASK-83 | Selesai |
+| TASK-88 | Resolusi nilai efektif: durasi invoice (payments), asal/kurir/berat/tarif flat (shipping) + penegakan `paymentEnabled`/`shippingEnabled` | SITE-02, 03 | TASK-82 | Selesai |
+| TASK-89 | Penegakan platform: `maintenanceMode` (banner + `503` order create), `registrationEnabled` (`403` register + pemberitahuan) | SITE-01 | TASK-82 | Selesai |
+| TASK-90 | UI area platform: `src/app/site-admin/layout.tsx`, `Sidebar` platform, dasbor `/site-admin` | SITE-00 | TASK-83 | Selesai |
+| TASK-91 | UI `/site-admin/settings` (form pengaturan platform) | SITE-01 | TASK-84, 90 | Selesai |
+| TASK-92 | UI `/site-admin/payment` (form + panel status) | SITE-02 | TASK-85, 90 | Selesai |
+| TASK-93 | UI `/site-admin/shipping` (form + panel status) | SITE-03 | TASK-86, 90 | Selesai |
+| TASK-94 | UI `/site-admin/users` (tabel + form + aksi) | SITE-04 | TASK-87, 90 | Selesai |
+| TASK-95 | Routing role storefront: alihkan non-customer ke `/admin` atau `/site-admin` sesuai role (`cart`, `checkout`, `session.ts`, `HeaderAccountMenu`) | SITE-00 | TASK-83 | Selesai |
+| TASK-96 | Verifikasi + dokumentasi: exit criteria, bukti, status `docs/03` SITE-00..04 → Terimplementasi | SITE-00..04 | semua | Selesai |
+
+### 13.4. Exit criteria
+
+- [x] `prisma generate` + `prisma migrate deploy` sukses; enum `SITE_ADMIN`, `deactivatedAt`, `PlatformSetting` ada
+- [x] Seed membuat akun Site Admin (kredensial dari env; acak bila kosong, dicetak sekali)
+- [x] Site Admin login → `/site-admin`; Store Admin tidak bisa `/site-admin`; Site Admin tidak bisa `/admin` (AC-SITE-00-01..06)
+- [x] Pengaturan platform tersimpan dan berlaku (AC-SITE-01-01..06)
+- [x] Konfigurasi pembayaran tersimpan; durasi efektif dipakai; sakelar menolak pembayaran; nilai kunci tidak pernah terkirim (AC-SITE-02-01..06)
+- [x] Konfigurasi ongkir tersimpan; asal/kurir/berat/tarif flat dipakai; sakelar memaksa fallback (AC-SITE-03-01..06)
+- [x] Kelola Store Admin: buat, nonaktifkan (berlaku segera), aktifkan, reset password (AC-SITE-04-01..07)
+- [x] `tsc --noEmit` bersih, `pnpm lint` exit 0, `pnpm build` exit 0, rute `/site-admin/*` + `/api/site-admin/*` muncul
+- [x] Smoke HTTP: 401 tanpa sesi, 403 role salah, 404 target bukan Store Admin, 200 dengan sesi Site Admin
+- [x] `docs/03` SITE-00..04 → Terimplementasi; `docs/04` bagian 13.5 bukti + 13.6 laporan review
+
+### 13.5. Bukti verifikasi (2026-10-11)
+
+**Perintah:**
+
+| Perintah | Hasil |
+| --- | --- |
+| `pnpm exec prisma migrate diff --from-schema-datasource prisma/schema.prisma --to-schema-datamodel prisma/schema.prisma --script -o prisma/_ph08.sql` | exit 0 — isi SQL: `CREATE TYPE "PlatformPaymentMode"`, `ALTER TYPE "Role" ADD VALUE 'SITE_ADMIN'`, `ALTER TABLE "users" ADD COLUMN "deactivatedAt"`, `CREATE TABLE "platform_settings"` |
+| File dipindah ke `prisma/migrations/20261011130000_add_ph08_site_admin/migration.sql` lalu `pnpm exec prisma migrate deploy` | exit 0 — `All migrations have been successfully applied.` (11 migrasi) |
+| `pnpm exec prisma generate` | exit 0 — Prisma Client v5.22.0 |
+| `pnpm exec tsc --noEmit` | exit 0 (bersih) |
+| `pnpm lint` | exit 0 |
+| `pnpm build` | exit 0 — rute keluar: `/site-admin`, `/site-admin/{settings,payment,shipping,users}`, `/api/site-admin/{platform-settings,payment-settings,shipping-settings,users}`, `/api/site-admin/users/[id]`, `ƒ Proxy (Middleware)` |
+
+**Uji lib (tsx, terhadap database Supabase aktif):** 35 pemeriksaan **lulus**, 0 gagal. Per katup:
+
+- SITE-01: baris `platform_settings` belum ada → bawaan; simpan `{maintenanceMode: true, maintenanceMessage: "Uji pemeliharaan", registrationEnabled: false}` → terbaca ulang lewat `getPublicPlatformStatus`.
+- SITE-02: `isPaymentEnabled()` → `false`; `getEffectiveInvoiceDurationSeconds()` → `1800`; `paymentMode` → `PRODUCTION`; sakelar `paymentEnabled: false` membuat `createPaymentForOrder` menjawab `PAYMENT_DISABLED` (pesanan uji `WAITING_PAYMENT` dibuat dan dihapus khusus untuk uji ini, tidak menyentuh data yang ada).
+- SITE-03: nilai efektif dari database (`originDistrictId "1234"`, `weightPerItemGram 750`, `flatRateIdr 15000`); `isShippingApiConfigured()` → `false` saat dimatikan; `calculateShippingQuote` → `source: "fallback"` dengan `cost: 15000`.
+- SITE-04: `createStoreAdmin` → `role: STORE_ADMIN` dan password terverifikasi `verifyPassword`; email duplikat → `P2002`; `findStoreAdmin(id Site Admin)` → `null` (jalur 404); `updateStoreAdmin(active: false)` → `deactivatedAt` terisi dan `findUserAccessById` melihatnya; `active: true` → kembali `null`; reset password → verifikasi dengan password baru berlaku.
+- Pembersihan: baris `platform_settings` dihapus, akun uji dihapus, pengaturan kembali ke bawaan (`maintenanceMode: false`).
+
+**Smoke HTTP (dev server `pnpm dev` + skrip Node dengan cookie jar manual):** 50 pemeriksaan **lulus**, 0 gagal.
+
+- **A (401 tanpa sesi):** keempat `GET /api/site-admin/*` → `401`.
+- **B (Store Admin vs platform):** login `admin@flexstore.local` → `GET /api/site-admin/users` `403`, `GET /api/admin/products` `200`, `GET /site-admin` `302` → `/admin`.
+- **C (Site Admin):** login `siteadmin@flexstore.local` → `GET /api/site-admin/platform-settings` `200` (field `secrets` hanya boolean, tidak ada nilai kunci), keempat halaman `/site-admin/*` `200`, `GET /admin` `302` → `/site-admin`.
+- **D-F (SITE-04):** `POST /api/site-admin/users` `201`; akun baru login → `GET /api/admin/products` `200`; setelah `PATCH {active:false}` → **sesi lama** `GET /api/admin/products` `401` dan login ulang gagal; setelah `{active:true}` + `{password}` → login dengan password baru berhasil.
+- **G-H (batas):** email duplikat `409`, target akun Site Admin `404`, id bukan UUID `400`, body kosong `400`.
+- **I (SITE-01 pemeliharaan):** storefront `/` tetap `200` **dan** banner berisi pesan pemeliharaan; `POST /api/orders/create` `503` `MAINTENANCE`; `POST /api/auth/register` tetap `200`.
+- **J (SITE-01 pendaftaran):** `POST /api/auth/register` `403` `REGISTRATION_DISABLED`; halaman `/register` `200` dan menampilkan "Pendaftaran sedang ditutup"; buka lagi → `200`.
+- **K-L (validasi Zod):** `paymentMode` salah `400`, `couriers` salah format `400`, `maintenanceMode: "ya"` `400`.
+- **Bersih-bersih:** akun uji terhapus, baris `platform_settings` `0`.
+
+**Data uji yang ditambahkan (persisten):** akun Site Admin `siteadmin@flexstore.local` / `123456`, id `251881e3-9e99-4a52-b406-a8c5c37a2a7c`, dibuat dengan logika seed yang sama (password sengaja disamakan dengan akun Store Admin uji agar mudah dicoba).
+
+### 13.6. Laporan untuk review
+
+1. **Fase dan status:** PH-08 — Site Admin (Platform Configuration), **Siap direview** (2026-10-11)
+2. **Hasil yang tersedia:** Role `SITE_ADMIN` + area `/site-admin/*` terpisah dari `/admin` (layout, sidebar platform, dasbor); konfigurasi platform (`PlatformSetting` satu baris) untuk mode pemeliharaan dan status pendaftaran; konfigurasi pembayaran Xendit (sakelar, mode, durasi invoice) dan ongkir RajaOngkir (sakelar, asal, kurir, berat/item, tarif flat) dengan nilai efektif database → env → bawaan; panel status kunci yang hanya menampilkan boolean; kelola akun Store Admin (buat, nonaktifkan/aktifkan, reset password) dengan penegakan status aktif dari database; `prisma/seed.ts` bertambah `seedSiteAdmin`
+3. **Task selesai / belum selesai:** TASK-80 sampai TASK-96 **semua selesai** (bagian 13.3)
+4. **Verifikasi:** `migrate deploy`, `generate`, `tsc`, `lint`, `build` semuanya exit 0; uji lib 35 pemeriksaan lulus; smoke HTTP 50 pemeriksaan lulus. Rincian di bagian 13.5
+5. **Cara mencoba:**
+   - `pnpm dev` → buka `http://localhost:3000/login`
+   - Login **Site Admin**: `siteadmin@flexstore.local` / `123456` → dialihkan ke `/site-admin`
+   - `/site-admin/shipping`: matikan ongkir, simpan → buka keranjang → checkout → ongkir memakai tarif flat
+   - `/site-admin/settings`: aktifkan mode pemeliharaan → banner muncul di halaman toko, checkout ditolak `503`
+   - `/site-admin/users`: buat Store Admin baru dengan password yang Anda pilih → login dengan akun itu → kembali ke tab Site Admin → Nonaktifkan → sesi Store Admin langsung `401`
+   - `/site-admin/payment`: ubah "Masa bayar invoice" → pesanan baru (bila ada) memakai durasi baru
+   - Login **Store Admin**: `admin@flexstore.local` / `123456` → buka `/site-admin` → dialihkan ke `/admin`
+6. **Masalah / batasan:**
+   - **`pnpm db:seed` tidak dijalankan penuh.** `seedCatalog` menghapus dan membuat ulang varian, sementara `OrderItem` masih merujuk `variantId`; menjalankannya berisiko memutus tautan pesanan. Akun Site Admin dibuat dengan menjalankan fungsi seed yang sama lewat skrip sekali jalan; `seedSiteAdmin()` tetap ada di `prisma/seed.ts` untuk run berikutnya
+   - **Rahasia tetap di env.** Artinya Site Admin tidak bisa mengganti kunci Xendit/RajaOngkir dari UI — hanya status keberadaannya. Ini keputusan yang Anda pilih (OWASP A02); untuk MVP satu deployment hal ini cukup
+   - **`paymentMode` label saja.** Xendit memakai base URL yang sama; sandbox vs produksi ditentukan oleh kunci, jadi kolom ini jejak audit, bukan pengubah perilaku
+   - **Mode pemeliharaan tidak mengunci seluruh situs.** Proxy (Edge) tidak bisa membaca database, jadi yang ditegakkan adalah banner dan penolakan pembuatan pesanan. Pembacaan keranjang, lacak pesanan, dan invoice tetap jalan
+   - **Cache ongkir lama tidak dibersihkan massal** saat konfigurasi berubah; nilainya masih terikat TTL 10 menit. Perilaku lama (PH-02) tetap berlaku untuk kunci cache yang sama
+   - **Uji klik-through manual lewat browser belum dijalankan** oleh agent (uji memakai HTTP langsung + cookie jar). Yang ingin Anda cek sendiri: keempat halaman platform terbaca benar, dan banner pemeliharaan tampil di layar
+   - Pemeriksaan `GET /api/admin/products` saat mematikan akun membaca ulang database per permintaan — tambahan satu query PK. Tidak diukur performanya
+7. **Keputusan yang dibutuhkan:**
+   - Konfirmasi apakah pemisahan ketat (Site Admin dilarang masuk `/admin`, meski SDD 8 menulis "Store Admin or Site Admin") diterima; jika tidak, perubahan hanya ada di `authorized()` dan guard
+   - Konfirmasi apakah pembuatan akun Site Admin tambahan (lewat aplikasi, bukan seed) perlu ditambahkan — sekarang di luar cakupan PRD 2.4
+   - Konfirmasi apakah PH-08 disetujui, dan apakah lanjut ke PH-09 (bila ada) atau penutupan MVP
 
 ---
 
-**Status:** Implementation Plan v1.0 — **PH-05 siap direview** (2026-10-10). PH-01 sampai PH-04
-disetujui. Audit PRD 2026-10-10 (bagian 10) menutup 13 kebutuhan PRD yang belum punya task: PH-06
-diperluas (kelola pesanan admin, pickup, email lanjutan, lima laporan, size chart,
-template alasan penolakan), PH-07 diperluas (re-order, set password, reset password, preferensi
-notifikasi), dan PH-08 dibuat (Site Admin — konfigurasi platform; Site Admin dipastikan ada oleh
-user).
+## 14. Rincian Fase: PH-09 — Brand Customization (SITE-05)
+
+### 14.1. Tujuan dan batas
+
+- **Tujuan:** Site Admin bisa mengubah identitas brand per deployment lewat UI tanpa menyentuh kode: nama brand, logo, favicon, tagline, palet warna (kode heksadesimal), teks footer, dan banner homepage; semua titik hardcode "FlexStore" diganti nilai dinamis dari `BrandSetting`.
+- **Batas:** Sesuai `docs/03` SITE-05 bagian 12 — tanpa kustomisasi halaman bayar Xendit (domain Xendit), token sekunder `card`/`popover`/`input`/`ring` tetap bawaan, tanpa slider multi-banner/promo berjadwal, info toko & kebijakan tetap CONFIG-01 (Store Admin).
+- **Prasyarat:** PH-08 disetujui (role `SITE-00` + area `/site-admin`). Fase ini menunggu gate PH-08.
+- **Hasil yang bisa dicoba:** Ubah nama/warna/logo/banner di `/site-admin/brand`, reload storefront, `/admin`, halaman invoice — semuanya ikut berubah tanpa rebuild; email berikutnya memakai nama baru.
+
+### 14.2. Keputusan desain (2026-10-11)
+
+1. **Konsep Site Admin direvisi oleh pengguna:** peran utama = kustomisasi brand per deployment (1 deployment = 1 brand store) + kelola akun Store Admin; konfigurasi payment/shipping tetap dipertahankan sementara. PRD direvisi **v1.2** (logo/banner/warna pindah dari bagian 2.3 ke 2.4). Terinci di bagian 10.
+2. **Cakupan (jawaban pengguna):** (a) palet = **9 grup inti / 15 kolom hex** — `primary`(+fg), `secondary`(+fg), `accent`(+fg), `background`/`foreground`, `muted`(+fg), `border`, `destructive`(+fg), `success`(+fg); (b) warna berlaku **seluruh aplikasi** (admin ikut); (c) banner **lengkap** — gambar + judul + teks + tombol (label + link) + sakelar aktif, hero teks default bila mati.
+3. **Penyimpanan:** model baru `BrandSetting`, satu baris tetap `id = "default"` (pola `PlatformSetting`/`StoreSetting`). Semua kolom nullable + default, sehingga tanpa baris = tampilan persis seperti sekarang; palet sebagian juga sah (hanya kolom terisi yang menimpa).
+4. **Penerapan palet:** nilai hex disuntikkan sebagai custom properties React lewat atribut `style` pada `<html>` di root layout — inline style mengalahkan aturan `:root` di `globals.css`. **Tanpa** `dangerouslySetInnerHTML` (ATURAN: XSS/A03); nilai sudah tervalidasi Zod (`^#[0-9A-Fa-f]{6}$`) saat disimpan, jadi tidak ada ruang bagi gaya sembarang.
+5. **Pembacaan request-time tanpa mengorbankan PPR:** `getBrandSetting()` memakai `use cache` + `cacheTag("brand-settings")` (bukan `connection()`). Alasannya: `connection()` di root layout membuat **semua** rute yang diprerender gagal build (`Next.js encountered uncached or runtime data during prerendering`), sedangkan cache ber-tag menjaga shell PPR tetap statis. Penyimpanan memanggil `revalidateTag("brand-settings", "max")` **dan** `revalidatePath("/", "layout")`; `revalidatePath` membuat permintaan pertama setelah simpan sudah memakai identitas baru (tanpa jeda stale-while-revalidate satu permintaan). API `GET` dan halaman `/site-admin/brand` sengaja memakai `readBrandSetting()` (tanpa cache) supaya form selalu melihat nilai database.
+6. **Unggah gambar:** endpoint Uploadthing baru `brandAsset` (logo + favicon, 2MB) dan `bannerImage` (banner, 4MB), keduanya dengan middleware role `SITE_ADMIN` (pola `productImage`). URL yang disimpan divalidasi hanya host `utfs.io`/`*.ufs.sh` — menutup `javascript:`/domain liar (A03). `next.config.ts` `remotePatterns` sudah mencakup kedua host.
+7. **Nama tampilan = `BrandSetting.brandName`.** `StoreSetting.storeName` (Store Admin, PRD 4.12) tidak digantikan dan tidak menggantikan — identitas brand per deployment vs info toko operasional.
+8. **Titik hardcode yang diganti** (audit 2026-10-11):
+   - TSX: `src/app/layout.tsx` (title default/template + `icons` favicon baru + description → tagline), `components/layout/Header.tsx` (nama → logo/teks), `components/layout/Footer.tsx` (nama, tagline, `©`, teks footer), `(auth)/layout.tsx`, `(auth)/login/page.tsx`, `(auth)/register/page.tsx`, `(storefront)/page.tsx` (hero → banner), `(storefront)/products/[slug]/page.tsx` (meta deskripsi), `(storefront)/orders/[id]/invoice/page.tsx` (kop), `admin/layout.tsx`, `admin/products/page.tsx`, `site-admin/layout.tsx`
+   - TS: `src/emails/` — 7 subjek (`order-confirmation`, `order-shipped`, `payment-success`, `refund-completed`, `cancellation`, `set-password`, `password-reset`) + isi `set-password`/`password-reset`, footer `src/emails/layout.ts`, dan fallback `EMAIL_FROM` di `src/lib/notifications/config.ts` (kini `"${brandName} <onboarding@resend.dev>"`)
+   - `src/lib/site.ts` tetap ada sebagai fallback tagline bila kolom kosong
+9. **Email membaca brand saat pengiriman** (bukan disimpan di template); email lama memakai nama lama (jejak histori tidak diubah).
+
+### 14.3. Daftar task
+
+| ID | Deskripsi | Fitur | Depends | Status |
+| --- | --- | --- | --- | --- |
+| TASK-97 | Skema `BrandSetting` + migrasi Prisma + lib `src/lib/brand/` (`queries` dengan cache ber-tag, `palette` bebas-Prisma untuk client, `validation` Zod, `mutations`, `view`, `index`) + `GET`/`PATCH /api/site-admin/brand` (role check + `withRouteErrors`) | SITE-05 | - | Selesai |
+| TASK-98 | Endpoint Uploadthing `brandAsset` (logo + favicon) dan `bannerImage`, middleware `SITE_ADMIN`, `UploadThingError` berkode | SITE-05 | TASK-97 | Selesai |
+| TASK-99 | Halaman `/site-admin/brand` + `src/components/platform/BrandSettingsForm` (4 bagian: Identitas, Palet Warna — input hex + color picker + tombol atur ulang, Banner Homepage, Teks Footer) + `AssetPicker` + item nav di `SiteAdminSidebar` | SITE-05 | TASK-97 | Selesai |
+| TASK-100 | Penerapan global: root layout (`generateMetadata` — title/template/description/icons) + palet di `<html style>`; `Header` (logo/teks), `Footer` (nama/tagline/teks footer/`©`) | SITE-05 | TASK-97 | Selesai |
+| TASK-101 | Ganti sisa hardcode storefront/auth/admin/site-admin + kop invoice + hero homepage menjadi banner dinamis (komponen banner baru di `(storefront)/page.tsx`) | SITE-05 | TASK-100 | Selesai |
+| TASK-102 | Email: 7 subjek + isi set/reset password + footer email + fallback `EMAIL_FROM` memakai `brandName` saat kirim | SITE-05 | TASK-97 | Selesai |
+| TASK-103 | Verifikasi (`migrate deploy`, `tsc`, `lint`, `build`, uji lib + smoke HTTP), bersihkan data uji, tulis bukti (14.5) dan laporan (14.6) | SITE-05 | TASK-98..102 | Selesai |
+
+### 14.4. Exit criteria
+
+- [x] `PATCH /api/site-admin/brand` menerima data valid → `200`, perubahan berlaku di seluruh rute **tanpa rebuild** (AC-SITE-05-01)
+- [x] Store Admin → `403`; tanpa sesi → `401`; hex/URL/link tidak valid → `400 VALIDATION_ERROR` tanpa mengubah data lama (AC-SITE-05-03/04)
+- [x] Ubah `primaryColor` → tombol/link aktif berubah warna di storefront **dan** `/admin` (AC-SITE-05-02)
+- [x] Endpoint unggah brand menolak role selain Site Admin (`403`) (AC-SITE-05-09)
+- [x] Logo, favicon, banner aktif/mati, dan teks footer tampil sesuai AC-05/06/08/10
+- [x] `brandName` baru terbaca di header, judul halaman, kop invoice, dan subjek email berikutnya (AC-SITE-05-07)
+- [x] `pnpm exec tsc --noEmit`, `pnpm lint`, `pnpm build` exit 0; uji lib + smoke HTTP lulus; data uji dibersihkan
+- [x] Bukti verifikasi ditulis di bagian 14.5 dan laporan review di bagian 14.6, lalu **STOP** menunggu keputusan pengguna
+
+### 14.5. Bukti verifikasi (2026-10-11)
+
+**Perintah:**
+
+| Perintah | Hasil |
+| --- | --- |
+| `pnpm db:deploy` (`prisma migrate deploy`) | exit 0 — 12 migrasi, termasuk `20261011140000_add_ph09_brand_setting` (`CREATE TABLE "brand_settings"`) |
+| `pnpm exec prisma generate` | exit 0 — Prisma Client v5.22.0 (sempat `EPERM` karena dev server memegang `query_engine-windows.dll.node`; dev server dihentikan dulu) |
+| `pnpm exec tsc --noEmit` | exit 0 (bersih) |
+| `pnpm lint` | exit 0 |
+| `pnpm build` | exit 0 — rute baru: `/site-admin/brand`, `/api/site-admin/brand`; PPR tetap jalan (`◐ /`, `◐ /products`, `◐ /products/[slug]`, `◐ /orders/[id]/invoice`), `/login` tetap statis (`○`) |
+
+**Smoke HTTP (`next start -p 3001` + skrip Node dengan cookie jar manual):** 49 pemeriksaan **lulus**, 0 gagal.
+
+- **A (tanpa sesi):** `PATCH /api/site-admin/brand` → `401`; `POST /api/uploadthing` tanpa sesi ditolak.
+- **B (Site Admin):** login → `GET /site-admin/brand` `200` (judul, bagian Palet Warna, bagian Banner Homepage, tautan sidebar).
+- **C (bawaan):** `PATCH {brandName: "FlexStore", bannerEnabled: false}` → hero `Selamat datang di FlexStore`, footer `FlexStore`, tagline bawaan `Toko online terpercaya…` — sama seperti sebelum ada baris `brand_settings`.
+- **D (berlaku di seluruh rute):** `PATCH` nama `Toko Uji Brand` + `primaryColor #123456` + `primaryFg #FFFFFF` + `accentColor #ABCDEF` + banner aktif (`Promo Uji Otomatis`, tombol `Beli Sekarang` → `/products`) + tagline/teks footer uji → beranda: nama brand, `<html style="--primary:#123456…">`, judul banner, tautan tombol, teks footer, `<title>Toko Uji Brand</title>`; `/login`: `Masuk ke Toko Uji Brand` + `<title>Masuk | Toko Uji Brand</title>`; invoice pesanan uji: kop `Toko Uji Brand` (tanpa `FlexStore`).
+- **E (validasi Zod, 400 `VALIDATION_ERROR`):** `#ZZZZZZ`, `#12345`, `javascript:alert(1)`, `//evil.example.com`, `https://evil.example.com/logo.png`, nama brand kosong, nama > 50 karakter, `bannerEnabled: "ya"`. Lolos: `https://contoh.example.com/promo` dan `https://utfs.io/f/abc123.png`.
+- **F (otorisasi):** customer `PATCH`/`GET` → `403`, halaman `/site-admin/brand` → `302`; Store Admin `PATCH` → `403`.
+- **Pembersihan:** 3 akun smoke + 1 pesanan uji (`SMOKE-PH09-0001`) + baris `brand_settings` dihapus; storefront kembali ke tampilan bawaan.
+
+**Probe khusus cache/PPR:** dengan `revalidateTag("brand-settings", "max")` saja, permintaan **pertama** setelah simpan masih menyajikan shell lama (stale-while-revalidate), permintaan kedua baru baru. Setelah ditambah `revalidatePath("/", "layout")`, permintaan pertama sudah memakai nama/warna/banner baru (storefront dan `/login`).
+
+**Probe jalur gambar (8 pemeriksaan lulus, 0 gagal):** `PATCH` dengan `logoUrl`/`faviconUrl`/`bannerImageUrl` (`https://utfs.io/f/...`) + banner aktif → header menampilkan `<img src="...logo...">` dengan `alt` nama brand, metadata memuat `rel="icon" href="...favicon..."`, homepage menampilkan gambar + judul banner, `/login` memakai nama baru. Data uji (akun + baris brand) dihapus setelah probe.
+
+**Mode dev (`pnpm dev`, port 3000):** `PATCH` → `200`, tampilan langsung berubah, server tetap hidup. Catatan: build/`prisma generate` tidak boleh jalan bersamaan dengan dev server (mengunci engine Prisma dan `.next`).
+
+### 14.6. Laporan untuk review
+
+1. **Fase dan status:** PH-09 — Brand Customization (SITE-05), **Siap direview** (2026-10-11)
+2. **Hasil yang tersedia:** model `BrandSetting` (satu baris `id = "default"`, semua kolom nullable) + migrasi; lib `src/lib/brand/` (`queries` ber-cache tag, `palette` bebas-Prisma, `validation` Zod, `mutations` + invalidasi, `view`, `index`); `GET`/`PATCH /api/site-admin/brand`; endpoint Uploadthing `brandAsset` (logo/favicon 2MB) + `bannerImage` (4MB) dengan middleware `SITE_ADMIN`; halaman `/site-admin/brand` dengan 4 bagian (Identitas, Palet Warna 15 slot + color picker + atur ulang, Banner Homepage, Teks Footer) + `AssetPicker` + nav sidebar; penerapan ke root layout (title/template/description/icons + palet di `<html style>`), Header (logo), Footer, layout auth + login/register, layout admin + daftar produk, layout site-admin, meta deskripsi detail produk, kop invoice, hero homepage (banner dinamis), dan email (7 subjek + isi set/reset password + footer + fallback `EMAIL_FROM`)
+3. **Task selesai / belum selesai:** TASK-97 sampai TASK-103 **semua selesai** (bagian 14.3)
+4. **Verifikasi:** `migrate deploy`, `generate`, `tsc`, `lint`, `build` exit 0; smoke HTTP 49 pemeriksaan lulus, 0 gagal; probe invalasi cache; mode dev dicek. Rincian di bagian 14.5
+5. **Cara mencoba:**
+   - `pnpm dev` → `http://localhost:3000/login` → login Site Admin (`siteadmin@flexstore.local`; password dari `SEED_SITE_ADMIN_PASSWORD` atau yang dicetak saat seed)
+   - `/site-admin/brand` → ubah nama brand, tagline, unggah logo/favicon, isi palet (mis. Primary `#123456`), aktifkan banner + unggah gambar + judul/tombol, isi teks footer → Simpan
+   - Reload beranda: hero/banner, nama di header, warna tombol, footer berubah; buka `/admin` (warna ikut), `/login`, dan invoice pesanan → nama/logo baru
+   - Kembalikan ke bawaan: kosongkan semua kolom + matikan banner → tampilan kembali seperti semula
+6. **Masalah / batasan:**
+   - **Token sekunder tetap bawaan** (`card`, `popover`, `input`, `ring`): kombinasi ekstrem (mis. `background` gelap) bisa menurunkan kontras kartu. Sesuai keputusan cakupan (14.2 butir 2); bisa ditambah nanti bila perlu
+   - **Unggah berkas nyata belum diuji end-to-end**: validasi URL + middleware role sudah diuji lewat HTTP, tetapi unggahan sungguhan butuh browser + `UPLOADTHING_TOKEN`; kotak unggah belum diklik manual
+   - **`revalidateTag(..., "max")` bersifat stale-while-revalidate**; ditutup dengan `revalidatePath("/", "layout")` supaya permintaan pertama setelah simpan sudah baru. Di dev, cache selalu segar
+   - **Email memakai brand saat kirim**, jadi email lama menyimpan nama lama (jejak histori tidak diubah)
+   - **Nama tampilan email** hanya berlaku bila `EMAIL_FROM` kosong; bila `EMAIL_FROM` diisi di env, nama di env yang menang
+   - **`pnpm db:seed` penuh tetap tidak dijalankan** (alasan sama seperti PH-08)
+   - **Uji klik-through browser belum dijalankan** agent; yang sebaiknya Anda cek sendiri: unggah logo/favicon/banner, warna di `/admin`, dan tampilan mobile
+7. **Keputusan yang dibutuhkan:**
+   - Konfirmasi apakah PH-09 disetujui
+   - Konfirmasi urutan commit: PH-08 (masih ter-staging) + dokumen PH-09 + kode PH-09 dalam satu commit, atau dipisah
+   - Konfirmasi apakah perlu varian palet gelap (mode gelap) atau cukup satu palet terang seperti sekarang
+
+---
+
+## 15. Rincian Fase: PH-10 — Akun & Notifikasi (Profil + Alamat + Pusat Notifikasi)
+
+### 15.1. Tujuan dan batas
+
+- **Tujuan:** Merapikan UI akun customer: halaman alamat berdiri sendiri dan fokus pada alamat (`/profile/addresses`), `/profile` menjadi halaman akun mandiri (info akun saja), dan notifikasi pindah dari halaman ke dialog yang dibuka dari ikon lonceng di navbar — daftar notifikasi pesanan + pengaturan preferensi email, dengan badge belum dibaca.
+- **Termasuk:**
+  - CUST-01 (revisi UI) — halaman `/profile/addresses` hanya alamat; tanpa info akun dan preferensi
+  - CUST-03 (baru) — halaman `/profile` sebagai halaman akun mandiri: nama, email, ubah password
+  - CUST-02 (revisi UI) — formulir lima preferensi email dipindah dari `/profile` ke dialog notifikasi
+  - NOTIF-02 (baru) — ikon lonceng di navbar + dialog berisi daftar notifikasi dan pengaturan, badge belum dibaca
+- **Batas:** Sesuai `docs/03` CUST-03 bagian 12 dan NOTIF-02 bagian 12 — tanpa tabel `Notification` baru (daftar diturunkan dari data pesanan), tanpa arsip/baca per entri, tanpa notifikasi realtime, tanpa notifikasi untuk guest/admin, tanpa fitur hapus akun atau foto profil.
+- **Prasyarat:** PH-07 disetujui (alamat + preferensi sudah jalan, API-nya dipakai ulang). Tidak bergantung PH-08/PH-09.
+- **Hasil yang bisa dicoba:** Customer membuka `/profile` (hanya info akun), `/profile/addresses` (hanya alamat), dan klik ikon lonceng di navbar untuk melihat daftar notifikasi pesanan lalu mengubah preferensi email dari dialog yang sama.
+
+### 15.2. Keputusan desain (2026-10-11)
+
+1. **Lima keputusan pengguna** (terinci di bagian 10): route alamat `/profile/addresses`; `/profile` = halaman akun mandiri; ikon notifikasi di navbar membuka dialog berisi daftar + pengaturan; daftar notifikasi diturunkan dari data pesanan; badge belum dibaca lewat Redis.
+2. **Lima jenis kejadian notifikasi** (tanpa tabel baru): (a) pesanan dibuat dan belum dibayar (`Order.status = WAITING_PAYMENT`), (b) pesanan terkirim pertama kali (`Order.shippedAt`), (c) pesanan sudah tiba (`Order.completedAt`), (d) pesanan dibatalkan sebelum bayar (`Order.canceledAt` dengan pembayaran bukan `PAID`), (e) refund selesai (`Refund.status = COMPLETED`). Kejadian di luar daftar ini tidak memunculkan notifikasi.
+3. **Badge belum dibaca** memakai penanda `notif:last-seen:{userId}` di Redis (pola sama seperti token set/reset password), di-set saat dialog dibuka. Konsekuensi: "belum dibaca" bersifat semua-atau-tidak, bukan per entri; tidak perlu migrasi.
+4. **API preferensi dipakai ulang.** Formulir di dialog memakai `GET`/`PATCH /api/customer/notification-preferences` yang sudah ada (CUST-02) dan penegakan `shouldSendNotification` di jalur kirim email tidak berubah. API alamat juga tidak berubah — hanya lokasi halamannya.
+5. **Request-time, bukan polling.** Daftar dan badge dihitung saat layout storefront dirender (`await connection()`, pola `CartBadge`/`HeaderUserMenu`, karena Next.js 16 `cacheComponents` melarang `crypto.getRandomValues()` saat prerender). Pembaruan mengikuti reload halaman.
+6. **Akses:** ikon dan API hanya untuk Customer login; guest dan role lain tidak melihat ikon; API menjawab `401`/`403` dan selalu membangun daftar dari sesi (tanpa parameter pemilik dari klien).
+
+### 15.3. Daftar task
+
+| ID | Deskripsi | Fitur | Depends | Status |
+| --- | --- | --- | --- | --- |
+| TASK-104 | Skema `updateProfileSchema` (nama, email, password) + lib profil customer + `PATCH /api/customer/profile` (role check, Zod sebelum query, `withRouteErrors`, hash password) | CUST-03 | - | Direncanakan |
+| TASK-105 | Halaman `/profile/addresses`: pindahkan `AddressManager` dari `/profile`; tautan dari menu akun; `/profile` dibersihkan dari daftar alamat | CUST-01 | - | Direncanakan |
+| TASK-106 | Halaman `/profile` jadi halaman akun mandiri (kartu Info Akun + Ubah Password + tautan ke `/profile/addresses`), tanpa alamat dan preferensi | CUST-03 | TASK-104, TASK-105 | Direncanakan |
+| TASK-107 | Lib `src/lib/customers/notifications.ts`: turunkan lima kejadian dari `Order`/`Payment`/`Refund` milik pemanggil, hitung unread dari `notif:last-seen:{userId}` (Redis), set penanda + `GET`/`POST /api/customer/notifications` (role check, Zod) | NOTIF-02 | - | Direncanakan |
+| TASK-108 | Komponen `NotificationBell` + dialog (bagian "Notifikasi" dan "Pengaturan") dipasang di `Header`; badge unread; pindahkan `NotificationPreferencesForm` dari `/profile` ke dialog | NOTIF-02, CUST-02 | TASK-107 | Direncanakan |
+| TASK-109 | Verifikasi (`tsc`, `lint`, `build`, uji lib + smoke HTTP), bersihkan data uji, tulis bukti (15.5) dan laporan review (15.6) | Semua | TASK-104..108 | Direncanakan |
+
+### 15.4. Exit criteria
+
+- [ ] `/profile/addresses` hanya memuat alamat (CRUD + batas 5 + alamat utama); tanpa info akun dan preferensi (AC-CUST-03-01)
+- [ ] `/profile` adalah halaman akun mandiri: nama, email, ubah password; email bentrok → `409 EMAIL_IN_USE`, password lama salah → `400 INVALID_PASSWORD` (AC-CUST-03-02..05)
+- [ ] Guest/Store Admin tidak bisa mengakses API profil (`401`/`403`) (AC-CUST-03-06/07)
+- [ ] Ikon lonceng tampil hanya untuk Customer login; guest dan role lain tidak melihatnya (AC-NOTIF-02-01, AC-NOTIF-02-08)
+- [ ] Dialog menampilkan lima jenis kejadian pesanan dan tautan ke `/orders/[id]` atau `/orders/[id]/tracking` (AC-NOTIF-02-02..06)
+- [ ] Badge belum dibaca tampil lalu hilang setelah dialog dibuka (penanda Redis) (AC-NOTIF-02-07)
+- [ ] Pengaturan di dialog menyimpan lima preferensi dan berlaku pada email berikutnya (aturan CUST-02 tidak berubah) (AC-NOTIF-02-09)
+- [ ] `pnpm exec tsc --noEmit`, `pnpm lint`, `pnpm build` exit 0; uji lib + smoke HTTP lulus; data uji dibersihkan
+- [ ] Bukti verifikasi ditulis di bagian 15.5 dan laporan review di bagian 15.6, lalu **STOP** menunggu keputusan pengguna
+
+---
+
+**Status:** Implementation Plan v1.0 — **PH-08 siap direview** (2026-10-11), **PH-09 direncanakan** (spek SITE-05 selesai di `docs/03`, coding menunggu persetujuan), dan **PH-10 direncanakan** (spek CUST-03 + NOTIF-02 selesai di `docs/03` v1.7, coding menunggu). PH-01 sampai PH-07
+disetujui (PH-07 commit `c20f525`). Spek PH-08 (SITE-00..SITE-04) ditulis lebih dulu di `docs/03` v1.5
+atas permintaan pengguna, baru diimplementasikan.
 
 **Next steps:**
-1. Review dan approval PH-05 (Voucher, Email, Invoice)
-2. Commit perubahan PH-04 + revisi PH-03 + PH-05 — draf pesan disiapkan agent, `git commit` dijalankan user
-3. Setelah disetujui, mulai PH-06 — Polish MVP (Reports, Config, Shipping Tracking, Cancel/Refund, Admin Order, Pickup, Email lanjutan)
-4. Isi `EMAIL_FROM` dengan domain terverifikasi Resend bila email harus sampai ke pembeli mana pun
-5. Revisi SDD 4.10 (invoice HTML siap-cetak) saat dokumentasi dirapikan — revisi PRD 2.3/model role sudah selesai 2026-10-10 (bagian 10)
-6. Sinkronisasi indeks fitur `docs/03`: fitur terimplementasi yang masih tercatat "Belum dirinci" (PROD-02..05, AUTH-02/03, dsb.) plus ID baru dari audit 2026-10-10 (ORDER-07, SHIP-03, AUTH-04, AUTH-05, CUST-02, SITE-01..04)
+1. Review dan approval PH-08 (Site Admin — Platform Configuration, bagian 13.6)
+2. Kerjakan PH-10 (Akun & Notifikasi, bagian 15) setelah PH-08 di-approve atau bila pengguna memprioritaskan — spek CUST-03 + NOTIF-02 sudah siap
+3. Isi `EMAIL_FROM` dengan domain terverifikasi Resend bila email harus sampai ke pembeli mana pun
+4. (Selesai 2026-10-11) Rapikan dokumentasi yang belum sinkron: baris SDD usang (`middleware.ts` → `proxy.ts`, `@react-pdf/renderer`, status Resend, "Store Admin or Site Admin", nama model, perintah test), README, `docs/06`, `AGENTS.md`, `.env.example`; revisi SDD 4.10 dan PRD juga selesai
+5. Tulis bagian rinci 13 fitur yang belum punya spesifikasi `docs/03` (daftar di bagian 10, 2026-10-11) — batch terpisah setelah PH-09 atau saat penutupan MVP

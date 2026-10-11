@@ -1,0 +1,33 @@
+-- CreateTable
+CREATE TABLE "brand_settings" (
+    "id" TEXT NOT NULL DEFAULT 'default',
+    "brandName" TEXT NOT NULL DEFAULT 'FlexStore',
+    "tagline" TEXT,
+    "logoUrl" TEXT,
+    "faviconUrl" TEXT,
+    "footerText" TEXT,
+    "primaryColor" TEXT,
+    "primaryFg" TEXT,
+    "secondaryColor" TEXT,
+    "secondaryFg" TEXT,
+    "accentColor" TEXT,
+    "accentFg" TEXT,
+    "backgroundColor" TEXT,
+    "foregroundColor" TEXT,
+    "mutedColor" TEXT,
+    "mutedFg" TEXT,
+    "borderColor" TEXT,
+    "destructiveColor" TEXT,
+    "destructiveFg" TEXT,
+    "successColor" TEXT,
+    "successFg" TEXT,
+    "bannerEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "bannerImageUrl" TEXT,
+    "bannerTitle" TEXT,
+    "bannerText" TEXT,
+    "bannerButtonLabel" TEXT,
+    "bannerButtonHref" TEXT,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "brand_settings_pkey" PRIMARY KEY ("id")
+);

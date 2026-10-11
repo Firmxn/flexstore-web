@@ -8,15 +8,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getBrandSetting } from "@/lib/brand";
 
 export const metadata: Metadata = { title: "Masuk" };
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  // SITE-05 (PH-09): nama brand dari pengaturan Site Admin.
+  const brand = await getBrandSetting();
+
   return (
     <div className="flex flex-col">
       <Card>
         <CardHeader>
-          <CardTitle>Masuk ke FlexStore</CardTitle>
+          <CardTitle>Masuk ke {brand.brandName}</CardTitle>
           <CardDescription>
             Gunakan email atau nomor HP yang terdaftar.
           </CardDescription>

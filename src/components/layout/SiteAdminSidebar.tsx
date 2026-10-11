@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils/cn";
 // SITE-00 (PH-08): navigasi area konfigurasi platform.
 const LINKS = [
   { href: "/site-admin", label: "Dasbor", exact: true },
+  { href: "/site-admin/brand", label: "Identitas Brand" },
   { href: "/site-admin/settings", label: "Pengaturan Platform" },
   { href: "/site-admin/payment", label: "Payment Gateway" },
   { href: "/site-admin/shipping", label: "Shipping Provider" },

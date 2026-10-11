@@ -1,13 +1,14 @@
-import { renderLayout } from "./layout";
+import { escapeHtml, renderLayout } from "./layout";
 
 // AUTH-05 (PH-07, PRD 4.1): tautan reset password untuk customer yang lupa
 // password. Token sekali pakai, berlaku 1 jam.
 export function buildPasswordResetEmail(
   resetUrl: string,
+  brandName: string,
 ): { subject: string; html: string } {
   const bodyHtml = `
     <p style="margin:0 0 12px;font-size:14px;">
-      Kami menerima permintaan reset password untuk akun FlexStore Anda. Klik
+      Kami menerima permintaan reset password untuk akun ${escapeHtml(brandName)} Anda. Klik
       tombol di bawah untuk membuat password baru.
     </p>
     <p style="margin:16px 0 0;">
@@ -21,11 +22,12 @@ export function buildPasswordResetEmail(
     </p>`;
 
   return {
-    subject: "Reset Password FlexStore",
+    subject: `Reset Password ${brandName}`,
     html: renderLayout({
       heading: "Reset Password",
       intro: "Atur ulang password akun Anda.",
       bodyHtml,
+      footerHtml: brandName,
     }),
   };
 }

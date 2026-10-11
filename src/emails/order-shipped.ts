@@ -11,6 +11,7 @@ export type OrderShippedEmailData = {
 export function buildOrderShippedEmail(
   order: OrderShippedEmailData,
   trackingUrl: string,
+  brandName: string,
 ): { subject: string; html: string } {
   const rows = [
     renderSummaryRow("Nomor pesanan", order.orderNumber),
@@ -39,11 +40,12 @@ export function buildOrderShippedEmail(
     </p>`;
 
   return {
-    subject: `Pesanan ${order.orderNumber} Dikirim - FlexStore`,
+    subject: `Pesanan ${order.orderNumber} Dikirim - ${brandName}`,
     html: renderLayout({
       heading: "Pesanan Dikirim",
       intro: "Pesanan Anda sedang dalam perjalanan.",
       bodyHtml,
+      footerHtml: brandName,
     }),
   };
 }

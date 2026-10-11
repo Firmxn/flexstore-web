@@ -1,5 +1,6 @@
 import { buildPasswordResetEmail } from "@/emails/password-reset";
 import { buildSetPasswordEmail } from "@/emails/set-password";
+import { getBrandSetting } from "@/lib/brand";
 import { prisma } from "@/lib/db/prisma";
 import {
   createPasswordResetToken,
@@ -58,9 +59,13 @@ export async function sendSetPasswordEmailForOrder(
       phone: order.guestPhone,
     });
 
+    // SITE-05 (PH-09): subjek dan footer memakai identitas brand.
+    const brand = await getBrandSetting();
+
     const { subject, html } = buildSetPasswordEmail(
       { name },
       `${appUrl()}/set-password?token=${token}`,
+      brand.brandName,
     );
 
     const result = await sendEmail({ to: email, subject, html });
@@ -82,8 +87,13 @@ export async function sendPasswordResetEmail(
     if (!isEmailConfigured()) return;
 
     const token = await createPasswordResetToken(userId);
+
+    // SITE-05 (PH-09): subjek dan footer memakai identitas brand.
+    const brand = await getBrandSetting();
+
     const { subject, html } = buildPasswordResetEmail(
       `${appUrl()}/reset-password?token=${token}`,
+      brand.brandName,
     );
 
     const result = await sendEmail({ to: email, subject, html });

@@ -13,7 +13,7 @@ export function isEmailConfigured(): boolean {
 }
 
 // Alamat pengirim. Default memakai domain uji Resend supaya dev bisa jalan
-// tanpa verifikasi domain.
-export function getEmailFrom(): string {
-  return process.env.EMAIL_FROM?.trim() || "FlexStore <onboarding@resend.dev>";
+// tanpa verifikasi domain. Nama tampilan mengikuti identitas brand (SITE-05).
+export function getEmailFrom(brandName = "FlexStore"): string {
+  return process.env.EMAIL_FROM?.trim() || `${brandName} <onboarding@resend.dev>`;
 }

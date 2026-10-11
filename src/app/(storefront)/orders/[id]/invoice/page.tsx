@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PrintButton } from "@/components/invoices/PrintButton";
 import { getShopperUser } from "@/lib/auth/session";
+import { getBrandSetting } from "@/lib/brand";
 import { ORDER_STATUS_LABELS } from "@/lib/orders/status";
 import {
   getGuestAccessPhone,
@@ -47,11 +48,14 @@ export default async function InvoicePage({
       ? await getGuestOrderDetail(id, guestPhone)
       : null;
   if (!order) notFound();
+
   // Invoice hanya sah setelah pembayaran lunas: pesanan yang belum dibayar atau
   // dibatalkan sebelum bayar tidak punya dokumen tagihan yang bisa dicetak
   // (keputusan 2026-10-11, `docs/04` bagian 10). URL langsung pun ditolak.
   if (order.payment?.status !== "PAID") notFound();
 
+  // SITE-05 (PH-09): kop invoice memakai identitas brand.
+  const brand = await getBrandSetting();
 
   const address = (order.shippingAddress ?? {}) as AddressJson;
   const isPaid = order.payment?.status === "PAID";
@@ -71,7 +75,20 @@ export default async function InvoicePage({
       <article className="flex flex-col gap-6 rounded-xl border border-border bg-background p-4 print:rounded-none print:border-0 print:p-0">
         <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-4">
           <div>
-            <p className="text-lg font-bold tracking-tight">FlexStore</p>
+            {brand.logoUrl ? (
+              // URL berasal dari Uploadthing; pakai img biasa agar tidak
+              // bergantung pada allowlist domain next/image.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={brand.logoUrl}
+                alt={brand.brandName}
+                className="h-8 w-auto"
+              />
+            ) : (
+              <p className="text-lg font-bold tracking-tight">
+                {brand.brandName}
+              </p>
+            )}
             <p className="text-sm text-muted-foreground">
               Invoice {order.orderNumber}
             </p>

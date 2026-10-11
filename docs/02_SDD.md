@@ -33,24 +33,24 @@
 | File Storage | Uploadthing | Latest | Next.js native, S3-backed | https://docs.uploadthing.com | Ditetapkan |
 | Validation | Zod | 3.x | Type-safe validation | https://zod.dev | Ditetapkan |
 | Auth | NextAuth.js | 5.x beta | App Router support | https://authjs.dev | Ditetapkan |
-| PDF | @react-pdf/renderer | Latest | React PDF components | https://react-pdf.org | Ditetapkan |
+| PDF | Dialog cetak browser (HTML siap-cetak) | - | Invoice HTML + `window.print()`, tanpa dependensi baru | https://developer.mozilla.org/docs/Web/API/Window/print | Ditetapkan |
 | Testing | Vitest | Latest | Fast unit tests | https://vitest.dev | Asumsi sementara |
 | E2E | Playwright | Latest | Browser automation | https://playwright.dev | Asumsi sementara |
 
 **Dependency utama:**
 ```json
 {
-  "next": "^15.0.0",
-  "react": "^19.0.0",
-  "@prisma/client": "^5.0.0",
-  "next-auth": "^5.0.0-beta",
-  "zod": "^3.0.0",
-  "@upstash/redis": "^1.0.0",
-  "uploadthing": "^7.0.0",
-  "resend": "^4.0.0",
-  "twilio": "^5.0.0",
-  "@react-pdf/renderer": "^4.0.0"
+  "next": "16.4.0",
+  "react": "19.3.0",
+  "@prisma/client": "^5.22.0",
+  "next-auth": "5.0.0-beta.25",
+  "zod": "^3.24.1",
+  "@upstash/redis": "^1.34.3",
+  "uploadthing": "^7.4.0",
+  "twilio": "^5.3.5"
 }
+
+Xendit, Resend, dan RajaOngkir dipanggil lewat `fetch` tanpa SDK (lihat bagian 9).
 ```
 
 **Batas layanan (checked 2026-10-09):**
@@ -145,11 +145,11 @@ graph TB
 | Di luar tanggung jawab | Product/order/payment logic |
 | Fitur yang dilayani | PRD 4.1: Authentication & Authorization |
 | Komponen UI | Login, register, OTP verify, password reset forms |
-| Komponen backend | NextAuth providers, `/api/auth/[...nextauth]`, `/api/otp/*`, middleware |
+| Komponen backend | NextAuth providers, `/api/auth/[...nextauth]`, `/api/otp/*`, `proxy.ts` |
 | Data yang dikelola | User, Session, Account, VerificationToken, OTP codes (Redis) |
 | Antarmuka | `getServerSession()`, `signIn()`, `signOut()`, `sendOTP()`, `verifyOTP()` |
 | Ketergantungan | Redis, Twilio, Prisma |
-| Lokasi kode | `/src/lib/auth/`, `/src/app/api/auth/`, `/src/middleware.ts` |
+| Lokasi kode | `/src/lib/auth/`, `/src/app/api/auth/`, `/src/proxy.ts` |
 
 ### 4.2. MOD-PROD — Product Management
 
@@ -236,7 +236,7 @@ graph TB
 | Fitur yang dilayani | PRD 3.1.F: Shipping |
 | Komponen UI | Shipping method selection, cost display, tracking page |
 | Komponen backend | `/api/shipping/calculate`, `/api/shipping/track`, fallback flat rate |
-| Data yang dikelola | Shipping (order_id, provider, service, cost, tracking) |
+| Data yang dikelola | Kolom pengiriman pada `Order` (`courier`, `service`, `shippingCost`, `trackingNumber`, `shippedAt`, `fulfillment`); tanpa model `Shipping` terpisah |
 | Antarmuka | `calculateShippingCost()`, `getShippingOptions()`, `trackShipment()` |
 | Ketergantungan | RajaOngkir API, MOD-ORDER, Redis (cache 5-10 min) |
 | Lokasi kode | `/src/lib/shipping/`, `/src/app/api/shipping/` |
@@ -247,29 +247,40 @@ graph TB
 
 | Bagian | Rancangan |
 | --- | --- |
-| Tanggung jawab | Customer profile, address mgmt (max 5), order history |
-| Di luar tanggung jawab | Auth, order creation |
-| Fitur yang dilayani | PRD 4.8: Customer Management, PRD 5.8: Customer Address |
-| Komponen UI | Profile page, address CRUD, order history |
-| Komponen backend | Server Components, `/api/customer/addresses`, Server Actions |
-| Data yang dikelola | User (profile), Address (max 5) |
-| Antarmuka | `getProfile()`, `updateProfile()`, `getAddresses()`, `addAddress()` |
-| Ketergantungan | MOD-AUTH, MOD-ORDER, Prisma |
+| Tanggung jawab | Profil akun customer (nama, email, ubah password), alamat tersimpan (maks 5), riwayat pesanan |
+| Di luar tanggung jawab | Autentikasi (MOD-AUTH), pembuatan pesanan (MOD-ORDER); formulir preferensi notifikasi (MOD-NOTIF NOTIF-02 — dibaca di sini saat kirim lewat CUST-02) |
+| Fitur yang dilayani | PRD 4.8: Customer Management, PRD 5.8: Customer Address; CUST-01, CUST-03 (`docs/03`) |
+| Komponen UI | Halaman `/profile` (akun: CUST-03) dan `/profile/addresses` (alamat: CUST-01), CRUD alamat, riwayat pesanan di `/orders` |
+| Komponen backend | Server Components, `/api/customer/addresses`, `/api/customer/addresses/[id]` |
+| Data yang dikelola | `User` (profil), `Address` (maks 5); preferensi notifikasi dibaca lewat helper MOD-CUST (`getNotificationPreferences`, `shouldSendNotification`) |
+| Antarmuka | `getAddresses()`, `getAddressById()`, `countAddresses()`, `createAddress()`, `updateAddress()`, `deleteAddress()`, `getNotificationPreferences()`, `updateNotificationPreferences()` |
+| Ketergantungan | MOD-AUTH, MOD-ORDER, MOD-NOTIF (preferensi), Prisma |
 | Lokasi kode | `/src/app/(storefront)/profile/`, `/src/lib/customers/` |
 
 ### 4.9. MOD-NOTIF — Notification
 
 | Bagian | Rancangan |
 | --- | --- |
-| Tanggung jawab | Email notifications (order, payment, shipping, cancellation, refund) |
-| Di luar tanggung jawab | OTP delivery (MOD-AUTH via Twilio) |
-| Fitur yang dilayani | PRD 3.1.I: Email Notification |
-| Komponen UI | Email templates (React Email) |
-| Komponen backend | `/api/notifications/send`, Resend SDK, templates `/src/emails/` |
-| Data yang dikelola | Notification log (optional) |
-| Antarmuka | `sendOrderConfirmation()`, `sendPaymentSuccess()`, `sendShippingNotif()` |
-| Ketergantungan | Resend, MOD-ORDER, MOD-PAY |
-| Lokasi kode | `/src/lib/notifications/`, `/src/emails/` |
+| Tanggung jawab | Email transaksional: konfirmasi pesanan, pembayaran sukses, pesanan dikirim, pembatalan (approve/reject), refund selesai, set password (klaim akun guest, AUTH-04), reset password (AUTH-05) |
+| Di luar tanggung jawab | Pengiriman OTP (MOD-AUTH via Twilio SMS); penyimpanan pilihan preferensi customer (MOD-CUST CUST-02 — dibaca di sini saat kirim) |
+| Fitur yang dilayani | PRD 3.1.I: Email Notification, PRD 4.9; NOTIF-01 (`docs/04` bagian 8 dan 9), NOTIF-02 (PH-10: pusat notifikasi in-app) |
+| Komponen UI | Template email `src/emails/` (7 jenis + `layout.ts` bersama); ikon notifikasi + dialog (daftar + pengaturan preferensi) di navbar — dipindah dari `/profile` pada PH-10 (NOTIF-02) |
+| Komponen backend | `src/lib/notifications/` (`order-emails.ts`, `account-emails.ts`, `email.ts`, `config.ts`); Resend HTTP API lewat `fetch` (tanpa SDK); tanpa route `/api/notifications/*` |
+| Data yang dikelola | Tanpa log email (hanya `console.error` di server); token set/reset password di Redis (`src/lib/auth/tokens.ts`); penanda notifikasi terakhir dilihat `notif:last-seen:{userId}` di Redis (PH-10 — tanpa tabel baru) |
+| Antarmuka | `sendOrderConfirmationEmail()`, `sendPaymentSuccessEmail()`, `sendOrderShippedEmail()`, `sendCancellationEmail()`, `sendRefundCompletedEmail()`, `sendSetPasswordEmailForOrder()`, `sendPasswordResetEmail()` |
+| Ketergantungan | Resend (opsional — tanpa `RESEND_API_KEY` email dilewati), MOD-ORDER, MOD-PAY, MOD-AUTH, MOD-CUST (preferensi) |
+| Lokasi kode | `/src/lib/notifications/`, `/src/emails/`, `/src/app/api/auth/forgot-password/` |
+
+**Aturan pengiriman:**
+
+- Semua pengiriman **non-blocking**: kegagalan hanya dicatat di log server dan tidak membatalkan alur pesanan/pembayaran (SDD 4.9, PRD 3.1.I).
+- Dilewati seluruhnya bila `isEmailConfigured()` false (tanpa `RESEND_API_KEY`).
+- Lima email pesanan diperiksa `shouldSendNotification(userId, kind)` (CUST-02): preferensi customer dihormati per jenis; guest (`userId = null`) selalu dikirimi; kegagalan baca preferensi dianggap aktif.
+- Email set/reset password **tidak** tunduk preferensi (email keamanan akun yang diminta langsung pengguna).
+- Penerima: `Order.guestEmail` (guest) atau email customer pemilik pesanan; set password → `Order.guestEmail`, reset password → email user terdaftar.
+- Email pembayaran hanya saat pembayaran benar-benar baru diproses (`APPLIED`) — termasuk lewat rekonsiliasi status ke Xendit; webhook ulang tidak mengirim.
+- Tautan pelacakan berbeda per pembeli: customer → `/orders/[id]/tracking`, guest → `/track-order`.
+- **Pusat notifikasi in-app (NOTIF-02, PH-10 — rencana):** ikon lonceng di navbar membuka dialog berisi daftar notifikasi + pengaturan preferensi email. Daftar notifikasi **diturunkan dari data pesanan**, bukan tabel `Notification` baru: (1) pesanan dibuat dan belum dibayar (`Order.status = WAITING_PAYMENT`), (2) pesanan terkirim pertama kali (`Order.shippedAt`), (3) pesanan sudah tiba (`Order.completedAt`), (4) pesanan dibatalkan sebelum bayar (`Order.canceledAt` tanpa pembayaran `PAID`), (5) refund selesai (`Refund.status = COMPLETED`). Badge "belum dibaca" dihitung dari kejadian yang lebih baru daripada `notif:last-seen:{userId}`; penanda di-set saat dialog dibuka. Tautan tiap notifikasi mengarah ke `/orders/[id]` atau `/orders/[id]/tracking`; guest tidak punya ikon ini (tanpa akun) dan tetap memakai email.
 
 ### 4.10. MOD-INV — Invoice
 
@@ -301,19 +312,33 @@ graph TB
 | Ketergantungan | Prisma, MOD-ORDER, MOD-PAY, MOD-PROD |
 | Lokasi kode | `/src/app/admin/reports/`, `/src/lib/reports/` |
 
-### 4.12. MOD-CONFIG — Store Configuration
+### 4.12. MOD-CONFIG — Store Configuration (Store Admin)
 
 | Bagian | Rancangan |
 | --- | --- |
-| Tanggung jawab | Store info, payment/shipping settings, cancellation templates, theme |
-| Di luar tanggung jawab | Product/order/payment data |
-| Fitur yang dilayani | PRD 3.1.J: Store Customization, PRD 4.12: Store Configuration |
-| Komponen UI | Settings forms (Store/Site Admin), theme customization (upload, colors) |
-| Komponen backend | Server Components, `/api/admin/settings`, Server Actions |
-| Data yang dikelola | StoreSettings (singleton), PlatformSettings (singleton), CancellationReasonTemplate |
-| Antarmuka | `getStoreSettings()`, `updateStoreSettings()`, `getCancellationTemplates()` |
-| Ketergantungan | Uploadthing (logo, banner), Prisma |
-| Lokasi kode | `/src/app/admin/settings/`, `/src/lib/config/` |
+| Tanggung jawab | Info toko, kebijakan operasional, template alasan pembatalan, opsi pickup |
+| Di luar tanggung jawab | Konfigurasi tingkat platform (MOD-SITE), data produk/pesanan |
+| Fitur yang dilayani | PRD 3.1.J/4.12: Store Customization + CONFIG-01 (`docs/03`) |
+| Komponen UI | Form `/admin/settings`, daftar template `/admin/cancellation-reasons` |
+| Komponen backend | Server Components, `GET`/`PATCH /api/admin/settings`, `/api/admin/cancellation-reasons` |
+| Data yang dikelola | `StoreSetting` (singleton), `CancellationReason` |
+| Antarmuka | `getStoreSettings()`, `updateStoreSettings()`, `getCancellationReasons()` |
+| Ketergantungan | Prisma |
+| Lokasi kode | `/src/app/admin/settings/`, `/src/app/admin/cancellation-reasons/`, `/src/lib/config/` |
+
+### 4.13. MOD-SITE — Platform Configuration (Site Admin)
+
+| Bagian | Rancangan |
+| --- | --- |
+| Tanggung jawab | Konfigurasi tingkat platform (mode pemeliharaan, status pendaftaran), konfigurasi payment gateway dan shipping provider, kelola akun Store Admin; PH-09 menambah kustomisasi brand |
+| Di luar tanggung jawab | Data produk/pesanan; info toko operasional (MOD-CONFIG) |
+| Fitur yang dilayani | PRD 2.4/3.1.K: SITE-00..SITE-04 (`docs/03`), SITE-05 (PH-09) |
+| Komponen UI | Area `/site-admin/*` (settings, payment, shipping, users) + sidebar platform; PH-09 menambah `/site-admin/brand` |
+| Komponen backend | Server Components, `GET`/`PATCH /api/site-admin/{platform-settings,payment-settings,shipping-settings}`, `GET`/`POST`/`PATCH /api/site-admin/users`; PH-09 `GET`/`PATCH /api/site-admin/brand` |
+| Data yang dikelola | `PlatformSetting` (singleton), `User` (akun Store Admin); PH-09 `BrandSetting` (singleton) |
+| Antarmuka | `getPlatformSettings()`, `updatePlatformSettings()`, `listStoreAdmins()`, `createStoreAdmin()`, `setStoreAdminActive()`, `resetStoreAdminPassword()` |
+| Ketergantungan | Prisma, NextAuth (role `SITE_ADMIN`), PH-09: Uploadthing |
+| Lokasi kode | `/src/app/site-admin/`, `/src/app/api/site-admin/`, `/src/lib/platform/` |
 
 ## 5. Project Structure
 
@@ -321,7 +346,7 @@ graph TB
 
 **Next.js 16 App Router Patterns:**
 - **File-based routing** (`/src/app/`) — folder = route segment, `page.tsx` = UI, `layout.tsx` = shared wrapper
-- **Route Groups** (`(storefront)`, `admin`) — organize routes tanpa affect URL path
+- **Route Groups** (`(storefront)`, `(auth)`, `admin`, `site-admin`) — organize routes tanpa affect URL path
 - **Server Components default** — all components di `/src/app/` are Server Components kecuali marked `'use client'`
 - **API Routes** (`/src/app/api/`) — serverless functions via Route Handlers (Next.js 13+)
 - **Colocation** — `loading.tsx`, `error.tsx`, `not-found.tsx` co-located dengan routes
@@ -341,6 +366,7 @@ flexstore/
 │   └── seed.ts                    # Seed data script
 ├── src/
 │   ├── app/                       # Next.js 16 App Directory (file-based routing)
+│   │   ├── (auth)/                # Route group: login, register, lupa/reset password, set password
 │   │   ├── (storefront)/          # Route group: Customer-facing routes (no '/storefront' in URL)
 │   │   │   ├── page.tsx           # Homepage: `/`
 │   │   │   ├── layout.tsx         # Storefront layout (header, footer)
@@ -360,14 +386,14 @@ flexstore/
 │   │   │   │       ├── invoice/
 │   │   │   │       │   └── page.tsx # Invoice: `/orders/[id]/invoice`
 │   │   │   │       └── tracking/
-│   │   │   │           └── page.tsx # Tracking detail customer (ORDER-08, PH-06): `/orders/[id]/tracking`
+│   │   │   │           └── page.tsx # Tracking detail customer (ORDER-08): `/orders/[id]/tracking`
 │   │   │   ├── profile/
-│   │   │   │   ├── page.tsx       # Profile: `/profile`
+│   │   │   │   ├── page.tsx       # Profil akun (CUST-03, PH-10): `/profile`
 │   │   │   │   └── addresses/
-│   │   │   │       └── page.tsx   # Manage addresses: `/profile/addresses`
+│   │   │   │       └── page.tsx   # Alamat tersimpan (CUST-01): `/profile/addresses`
 │   │   │   └── track-order/
-│   │   │       └── page.tsx       # Lacak pesanan: `/track-order` — guest isi form (ORDER-04); customer login lihat daftar pesanan dalam perjalanan (ORDER-08, PH-06)
-│   │   ├── admin/                 # Admin routes (protected by middleware)
+│   │   │       └── page.tsx       # Lacak pesanan: `/track-order` — guest isi form (ORDER-04); customer login lihat daftar pesanan dalam perjalanan (ORDER-08)
+│   │   ├── admin/                 # Admin routes (protected by proxy.ts)
 │   │   │   ├── page.tsx           # Admin dashboard: `/admin`
 │   │   │   ├── layout.tsx         # Admin layout (sidebar, auth check)
 │   │   │   ├── products/
@@ -392,6 +418,17 @@ flexstore/
 │   │   │   │   └── page.tsx       # Sales reports: `/admin/reports`
 │   │   │   └── settings/
 │   │   │       └── page.tsx       # Store settings: `/admin/settings`
+│   │   ├── site-admin/            # Site Admin routes (protected by proxy.ts)
+│   │   │   ├── page.tsx           # Dasbor platform: `/site-admin`
+│   │   │   ├── layout.tsx         # Layout platform (sidebar, auth check)
+│   │   │   ├── settings/
+│   │   │   │   └── page.tsx       # Pengaturan platform: `/site-admin/settings`
+│   │   │   ├── payment/
+│   │   │   │   └── page.tsx       # Konfigurasi pembayaran: `/site-admin/payment`
+│   │   │   ├── shipping/
+│   │   │   │   └── page.tsx       # Konfigurasi ongkir: `/site-admin/shipping`
+│   │   │   └── users/
+│   │   │       └── page.tsx       # Kelola Store Admin: `/site-admin/users`
 │   │   ├── api/                   # API Routes (Route Handlers)
 │   │   │   ├── auth/
 │   │   │   │   └── [...nextauth]/ # NextAuth v5 catch-all route
@@ -427,6 +464,15 @@ flexstore/
 │   │   │   │   │   └── route.ts   # Category CRUD: GET/POST/PATCH/DELETE `/api/admin/categories`
 │   │   │   │   └── brands/
 │   │   │   │       └── route.ts   # Brand CRUD: GET/POST/PATCH/DELETE `/api/admin/brands`
+│   │   │   ├── site-admin/
+│   │   │   │   ├── platform-settings/
+│   │   │   │   │   └── route.ts   # Platform settings: GET/PATCH `/api/site-admin/platform-settings`
+│   │   │   │   ├── payment-settings/
+│   │   │   │   │   └── route.ts   # Konfigurasi Xendit: GET/PATCH `/api/site-admin/payment-settings`
+│   │   │   │   ├── shipping-settings/
+│   │   │   │   │   └── route.ts   # Konfigurasi RajaOngkir: GET/PATCH `/api/site-admin/shipping-settings`
+│   │   │   │   └── users/
+│   │   │   │       └── route.ts   # Akun Store Admin: GET/POST/PATCH `/api/site-admin/users`
 │   │   │   └── uploadthing/
 │   │   │       └── route.ts       # Uploadthing handler: POST `/api/uploadthing`
 │   │   ├── layout.tsx             # Root layout (global metadata, font, Providers)
@@ -442,6 +488,7 @@ flexstore/
 │   │   │   ├── Header.tsx
 │   │   │   ├── Footer.tsx
 │   │   │   ├── PageContainer.tsx  # Wrapper lebar konten storefront (max-w-6xl)
+│   │   │   ├── NotificationBell.tsx # Ikon notifikasi + dialog daftar & pengaturan (NOTIF-02, PH-10)
 │   │   │   └── Sidebar.tsx
 │   │   ├── products/              # Product-related components
 │   │   │   ├── ProductCard.tsx
@@ -500,7 +547,7 @@ flexstore/
 │   ├── types/                     # TypeScript type definitions
 │   │   ├── api.ts                 # API response types
 │   │   └── database.ts            # Prisma-generated types
-│   └── middleware.ts              # Next.js middleware (auth, redirects)
+│   └── proxy.ts                   # Next.js 16 proxy (auth, redirects)
 ├── public/                        # Static assets (served from `/`)
 │   ├── favicon.ico
 │   └── images/
@@ -527,7 +574,7 @@ flexstore/
 - `error.tsx` — Error boundary
 - `not-found.tsx` — 404 UI
 - `route.ts` — API Route Handler (serverless function)
-- `middleware.ts` — Edge middleware (runs before request)
+- `proxy.ts` — Next.js 16 Proxy (Edge, runs before request; pengganti `middleware.ts`)
 
 **Import Rules (Dependency Direction):**
 - `/src/app/` (UI) → `/src/lib/` (logic), `/src/components/` (UI components)
@@ -541,25 +588,29 @@ flexstore/
 
 | Entitas | Arti | Modul | PK | Relasi |
 | --- | --- | --- | --- | --- |
-| User | User account | MOD-AUTH | id (UUID) | 1 → N Orders, 1 → N Addresses, 1 → N Sessions |
-| Session | NextAuth session | MOD-AUTH | id (UUID) | N → 1 User |
-| Category | Product category | MOD-PROD | id (UUID) | 1 → N Products |
-| Brand | Product brand | MOD-PROD | id (UUID) | 1 → N Products |
-| Product | Product base | MOD-PROD | id (UUID) | 1 → N Images, 1 → N Variants, N → 1 Category, N → 1 Brand |
-| ProductImage | Product images | MOD-PROD | id (UUID) | N → 1 Product |
-| ProductVariant | Variants (SKU, stock) | MOD-PROD | id (UUID) | N → 1 Product |
-| Order | Order | MOD-ORDER | id (UUID) | 1 → N OrderItems, N → 1 User (nullable), 1 → 1 Payment, 1 → 1 Shipping |
-| OrderItem | Order line item | MOD-ORDER | id (UUID) | N → 1 Order, N → 1 ProductVariant |
-| Payment | Payment record | MOD-PAY | id (UUID) | 1 → 1 Order, 1 → N Refunds |
-| Refund | Refund record | MOD-PAY | id (UUID) | N → 1 Payment |
-| Shipping | Shipping record | MOD-SHIP | id (UUID) | 1 → 1 Order |
-| Address | Customer addresses | MOD-CUST | id (UUID) | N → 1 User |
-| Voucher | Voucher/promotion | MOD-VOUCH | id (UUID) | 1 → N VoucherCompatibility, 1 → N VoucherUsage |
-| VoucherCompatibility | Stacking compat | MOD-VOUCH | id (UUID) | N → 1 Voucher (2 FKs) |
-| VoucherUsage | Usage tracking | MOD-VOUCH | id (UUID) | N → 1 Voucher, N → 1 Order |
-| StoreSettings | Store config | MOD-CONFIG | id (UUID) | Singleton |
-| PlatformSettings | Platform config | MOD-CONFIG | id (UUID) | Singleton |
-| CancellationReasonTemplate | Cancel templates | MOD-CONFIG | id (UUID) | Standalone |
+| User | Akun pengguna (customer, Store Admin, Site Admin) | MOD-AUTH | id (UUID) | 1 → N Order, 1 → N Address, 1 → 1 NotificationPreference |
+| Address | Alamat tersimpan customer | MOD-CUST | id (UUID) | N → 1 User |
+| NotificationPreference | Preferensi notifikasi customer | MOD-NOTIF | id (UUID) | 1 → 1 User |
+| Category | Kategori produk | MOD-PROD | id (UUID) | 1 → N Product |
+| Brand | Brand produk | MOD-PROD | id (UUID) | 1 → N Product |
+| Product | Produk dasar | MOD-PROD | id (UUID) | 1 → N ProductImage, 1 → N ProductVariant, N → 1 Category, N → 1 Brand |
+| ProductImage | Gambar produk (peran `GALLERY`/`SIZE_CHART`) | MOD-PROD | id (UUID) | N → 1 Product |
+| ProductVariant | Varian (SKU, stok, harga) | MOD-PROD | id (UUID) | N → 1 Product |
+| CartItem | Item keranjang customer | MOD-CART | id (UUID) | N → 1 User, N → 1 ProductVariant |
+| Order | Pesanan (termasuk data pengiriman: `courier`, `trackingNumber`, `shippedAt`, `fulfillment`) | MOD-ORDER | id (UUID) | 1 → N OrderItem, N → 1 User (nullable), 1 → 1 Payment |
+| OrderItem | Baris item pesanan | MOD-ORDER | id (UUID) | N → 1 Order, N → 1 ProductVariant |
+| Payment | Catatan pembayaran | MOD-PAY | id (UUID) | 1 → 1 Order, 1 → N Refund |
+| Refund | Catatan refund | MOD-PAY | id (UUID) | N → 1 Payment |
+| Voucher | Voucher/promosi | MOD-VOUCH | id (UUID) | 1 → N VoucherCompatibility, 1 → N VoucherUsage, 1 → N VoucherProduct, 1 → N VoucherCategory |
+| VoucherCompatibility | Kompatibilitas stacking | MOD-VOUCH | id (UUID) | N → 1 Voucher (2 FK) |
+| VoucherUsage | Jejak pemakaian | MOD-VOUCH | id (UUID) | N → 1 Voucher, N → 1 Order |
+| VoucherProduct | Batas voucher per produk (`ELIGIBLE`/`EXCLUDED`) | MOD-VOUCH | id (UUID) | N → 1 Voucher, N → 1 Product |
+| VoucherCategory | Batas voucher per kategori | MOD-VOUCH | id (UUID) | N → 1 Voucher, N → 1 Category |
+| StoreSetting | Konfigurasi toko | MOD-CONFIG | id (UUID) | Singleton |
+| PlatformSetting | Konfigurasi platform | MOD-SITE | id (UUID) | Singleton |
+| CancellationReason | Template alasan pembatalan | MOD-CONFIG | id (UUID) | Standalone |
+
+NextAuth memakai strategi sesi JWT sehingga tidak ada tabel `Session`/`Account`; model `BrandSetting` menyusul di PH-09.
 
 ### ERD:
 
@@ -573,10 +624,12 @@ erDiagram
     Product ||--o{ ProductVariant : has
     Order ||--|{ OrderItem : contains
     Order ||--|| Payment : has
-    Order ||--|| Shipping : has
     ProductVariant ||--o{ OrderItem : in
     Payment ||--o{ Refund : has
     Voucher ||--o{ VoucherUsage : used
+    User ||--o| NotificationPreference : has
+    User ||--o{ CartItem : owns
+    ProductVariant ||--o{ CartItem : in
 ```
 
 ### 6.2. Data dictionary (key fields)
@@ -695,7 +748,7 @@ erDiagram
 - Idempotency: klaim baris `Payment` (`updateMany` bersyarat, `status: PENDING`)
 
 **GET /api/admin/products**
-- Auth: Store Admin or Site Admin
+- Auth: Store Admin (Site Admin ditolak `403`; endpoint platform ada di `/api/site-admin/*`)
 - Query: `?page=1&limit=20&status=ACTIVE`
 - Response (200): `{ products: [...], total, page, limit }`
 - Response (403): `{ error: "FORBIDDEN" }`
@@ -719,7 +772,7 @@ erDiagram
 | --- | --- | --- | --- | --- | --- |
 | Xendit | Payment | Xendit Invoice API v2 | XENDIT_SECRET_KEY, XENDIT_WEBHOOK_TOKEN | Return error to user | Terimplementasi (PH-04) |
 | Twilio | OTP SMS | Twilio Verify API | TWILIO_ACCOUNT_SID, AUTH_TOKEN, VERIFY_SERVICE_SID | Retry 1x, show error | Terimplementasi (PH-01) |
-| Resend | Email | Resend API | RESEND_API_KEY | Log error, continue (non-blocking) | Direncanakan (PH-05) |
+| Resend | Email | Resend API | RESEND_API_KEY | Log error, continue (non-blocking) | Terimplementasi (PH-05) |
 | RajaOngkir | Shipping | RajaOngkir Komerce v1 | RAJAONGKIR_API_KEY, SHIPPING_ORIGIN_DISTRICT_ID | Fallback flat rate Rp10k | Terimplementasi (PH-02) |
 | Biteship | Shipping | (tidak dipakai) | - | - | Dibatalkan — memakai RajaOngkir |
 | Uploadthing | File storage | Uploadthing SDK | UPLOADTHING_TOKEN | Show upload error | Terimplementasi (PH-01) |
@@ -754,7 +807,7 @@ erDiagram
 
 | OWASP Risk | Mitigation | Implementation |
 | --- | --- | --- |
-| **A01:2021 — Broken Access Control** | Server-side authorization checks | NextAuth middleware (`/src/middleware.ts`) protect `/admin/*` routes, role check di setiap API handler (`if (session.user.role !== 'STORE_ADMIN') return 403`), Guest dapat checkout tapi tidak akses `/profile/*` |
+| **A01:2021 — Broken Access Control** | Server-side authorization checks | NextAuth proxy (`/src/proxy.ts`) memisahkan `/admin/*` (Store Admin) dan `/site-admin/*` (Site Admin); role check di setiap API handler (`if (session.user.role !== 'STORE_ADMIN') return 403`, Site Admin ditolak dari `/api/admin/*` dan sebaliknya); Guest dapat checkout tapi tidak akses `/profile/*` |
 | **A02:2021 — Cryptographic Failures** | Encrypt sensitive data | Bcrypt password hashing (cost 10), NextAuth JWT tokens (httpOnly cookies), HTTPS only (Vercel enforced), no plaintext secrets (use `.env.local`), payment data NOT stored (Xendit handles) |
 | **A03:2021 — Injection (SQL/NoSQL)** | Parameterized queries | Prisma ORM (auto-parameterized), **NO raw SQL** (`prisma.$executeRaw` banned), Zod validation BEFORE Prisma queries, escape user input di email templates |
 | **A04:2021 — Insecure Design** | Secure-by-default architecture | Stock reservation (prevent overselling), webhook idempotency (prevent double-processing), OTP rate limiting (prevent spam), guest checkout requires OTP (prevent fake orders) |
@@ -893,8 +946,8 @@ pnpm db:deploy
 | Run app | `pnpm dev` | Root | Dev server localhost:3000 |
 | Format check | `pnpm lint` | Root | No errors |
 | Type check | `pnpm build` | Root | Build success |
-| Unit test | `pnpm test` | Root | All tests pass |
-| E2E test | `pnpm test:e2e` | Root | Checkout flow pass |
+| Unit test | (belum ada) | - | Repo belum memakai Vitest/Playwright; verifikasi manual per fase (`docs/04`) |
+| E2E test | (belum ada) | - | Skenario E2E dijalankan manual (daftar di bawah) |
 | DB migration | `pnpm db:migrate` | Root | Migration applied |
 | DB seed | `pnpm db:seed` | Root | Seed data created |
 
@@ -934,13 +987,15 @@ pnpm db:deploy
 | Tanggal | Perubahan | Kebutuhan | Referensi |
 | --- | --- | --- | --- |
 | 2026-10-09 | Initial draft | PRD v1.0 MVP scope | All sections |
+| 2026-10-11 | Penyelarasan dengan implementasi: `proxy.ts` (Next.js 16), invoice HTML siap-cetak (bukan `@react-pdf/renderer`), status Resend, MOD-NOTIF 4.9 (tujuh jenis email, Resend lewat `fetch`, preferensi CUST-02, non-blocking), pemisahan ketat Store Admin/Site Admin, nama model (`StoreSetting`, `PlatformSetting`, `CancellationReason`) + model PH-07/PH-08, paritas struktur (`(auth)`, `site-admin`) dan perintah verifikasi manual | Sinkronisasi dokumen | `docs/04` bagian 10 (2026-10-11) |
+| 2026-10-11 | Perbaikan UI akun + notifikasi in-app (PH-10, rencana): 4.8 dipisah menjadi halaman profil akun (CUST-03) dan halaman alamat (CUST-01), 4.9 memuat pusat notifikasi in-app (dialog dari ikon navbar, daftar dari lima kejadian pesanan, badge lewat Redis `notif:last-seen`), struktur bagian 5 diperbarui, PRD naik ke v1.3 | Kebutuhan baru (keputusan pengguna) | `docs/04` bagian 10 dan 15; `docs/01` revisi 1.3 |
 
 ---
 
-**Status:** Draft SDD v1.0 complete. Ready for review.
+**Status:** SDD v1.0 — dipakai sebagai dasar implementasi PH-01 sampai PH-08, diselaraskan dengan kode pada 2026-10-11; rancangan PH-09 (SITE-05) dan PH-10 (CUST-03 + NOTIF-02) sudah tercermin di bagian 4, 5, dan 6.
 
 **Next steps:**
-1. Review SDD dengan team
-2. Draft `03_SPESIFIKASI_FITUR.md`
-3. Draft `04_IMPLEMENTATION_PLAN.md`
-4. Draft `05_INSTRUKSI_AGENT.md`
+1. Review PH-08 dan lanjut PH-09 (`docs/04` bagian 3 dan 14)
+2. Perbarui bagian 6 saat PH-09 menambah `BrandSetting`
+3. Kerjakan PH-10 (`docs/04` bagian 15): halaman `/profile/addresses`, halaman akun `/profile`, ikon notifikasi + dialog (NOTIF-02)
+4. Jaga SDD tetap sinkron setiap fase selesai (pola penyelarasan 2026-10-11)

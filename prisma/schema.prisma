@@ -493,6 +493,50 @@ model PlatformSetting {
   @@map("platform_settings")
 }
 
+// SITE-05 (PH-09): identitas brand per deployment (1 deployment = 1 brand
+// store). Satu baris tetap `id = "default"`, pola sama seperti StoreSetting dan
+// PlatformSetting. Semua kolom tampilan nullable; `null` berarti memakai nilai
+// bawaan (nama "FlexStore", tagline `siteDescription`, palet oklch di
+// globals.css, hero teks default), sehingga tanpa baris tampilan tidak berubah.
+// Warna disimpan sebagai hex `#RRGGBB` hasil validasi Zod.
+model BrandSetting {
+  id         String  @id @default("default")
+  brandName  String  @default("FlexStore")
+  tagline    String?
+  logoUrl    String?
+  faviconUrl String?
+  footerText String?
+
+  // Palet warna (9 grup inti; token card/popover/input/ring tetap bawaan).
+  primaryColor     String?
+  primaryFg        String?
+  secondaryColor   String?
+  secondaryFg      String?
+  accentColor      String?
+  accentFg         String?
+  backgroundColor  String?
+  foregroundColor  String?
+  mutedColor       String?
+  mutedFg          String?
+  borderColor      String?
+  destructiveColor String?
+  destructiveFg    String?
+  successColor     String?
+  successFg        String?
+
+  // Banner homepage (hero). `bannerEnabled = false` memakai hero teks default.
+  bannerEnabled     Boolean @default(false)
+  bannerImageUrl    String?
+  bannerTitle       String?
+  bannerText        String?
+  bannerButtonLabel String?
+  bannerButtonHref  String?
+
+  updatedAt DateTime @updatedAt
+
+  @@map("brand_settings")
+}
+
 // Template alasan penolakan pembatalan (MOD-CONFIG, PH-06 / PRD 5.5).
 model CancellationReason {
   id        String   @id @default(uuid()) @db.Uuid

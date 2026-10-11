@@ -5,6 +5,30 @@ import { MAX_PRODUCT_IMAGES } from "@/lib/products/validation";
 
 const f = createUploadthing();
 
+// SITE-05 (PH-09): unggahan aset brand hanya boleh oleh Site Admin.
+// `UploadThingError` tanpa `code` dipetakan ke 500, jadi `code` wajib eksplisit
+// (Uploadthing tidak punya kode 401; FORBIDDEN dipakai untuk keduanya).
+function siteAdminMiddleware() {
+  return async () => {
+    const session = await auth();
+
+    if (!session?.user) {
+      throw new UploadThingError({
+        code: "FORBIDDEN",
+        message: "Anda harus masuk terlebih dahulu",
+      });
+    }
+    if (session.user.role !== "SITE_ADMIN") {
+      throw new UploadThingError({
+        code: "FORBIDDEN",
+        message: "Hanya Site Admin yang dapat mengunggah aset brand",
+      });
+    }
+
+    return { userId: session.user.id };
+  };
+}
+
 export const ourFileRouter = {
   productImage: f({
     image: {
@@ -61,6 +85,22 @@ export const ourFileRouter = {
 
       return { userId: session.user.id };
     })
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { url: file.ufsUrl, uploadedBy: metadata.userId };
+    }),
+  // SITE-05 (PH-09): logo dan favicon brand (satu berkas per slot).
+  brandAsset: f({
+    image: { maxFileSize: "2MB", maxFileCount: 1 },
+  })
+    .middleware(siteAdminMiddleware())
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { url: file.ufsUrl, uploadedBy: metadata.userId };
+    }),
+  // SITE-05 (PH-09): gambar banner homepage.
+  bannerImage: f({
+    image: { maxFileSize: "4MB", maxFileCount: 1 },
+  })
+    .middleware(siteAdminMiddleware())
     .onUploadComplete(async ({ metadata, file }) => {
       return { url: file.ufsUrl, uploadedBy: metadata.userId };
     }),

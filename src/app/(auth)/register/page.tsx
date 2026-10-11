@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getBrandSetting } from "@/lib/brand";
 import { getPlatformSettings } from "@/lib/platform";
 
 export const metadata: Metadata = { title: "Daftar" };
@@ -17,14 +18,17 @@ export const metadata: Metadata = { title: "Daftar" };
 export const instant = false;
 
 export default async function RegisterPage() {
-  const platform = await getPlatformSettings();
+  const [platform, brand] = await Promise.all([
+    getPlatformSettings(),
+    getBrandSetting(),
+  ]);
   const closed = !platform.registrationEnabled;
 
   return (
     <div className="flex flex-col">
       <Card>
         <CardHeader>
-          <CardTitle>Buat Akun FlexStore</CardTitle>
+          <CardTitle>Buat Akun {brand.brandName}</CardTitle>
           <CardDescription>
             Nomor HP bersifat opsional dan bisa ditambahkan nanti.
           </CardDescription>

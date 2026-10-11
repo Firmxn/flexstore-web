@@ -11,6 +11,7 @@ export type CancellationEmailData = {
 export function buildCancellationEmail(
   order: CancellationEmailData,
   orderUrl: string,
+  brandName: string,
 ): { subject: string; html: string } {
   const approved = order.decision === "approved";
 
@@ -39,13 +40,14 @@ export function buildCancellationEmail(
     </p>`;
 
   return {
-    subject: `Pembatalan Pesanan ${order.orderNumber} ${approved ? "Disetujui" : "Ditolak"} - FlexStore`,
+    subject: `Pembatalan Pesanan ${order.orderNumber} ${approved ? "Disetujui" : "Ditolak"} - ${brandName}`,
     html: renderLayout({
       heading: approved ? "Pembatalan Disetujui" : "Pembatalan Ditolak",
       intro: approved
         ? "Pesanan Anda telah dibatalkan."
         : "Pesanan Anda tetap diproses.",
       bodyHtml,
+      footerHtml: brandName,
     }),
   };
 }

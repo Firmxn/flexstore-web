@@ -3,8 +3,16 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { ProductGrid } from "@/components/products/ProductGrid";
+import {
+  DEFAULT_BANNER_BUTTON_HREF,
+  DEFAULT_BANNER_BUTTON_LABEL,
+  DEFAULT_BANNER_TEXT,
+  defaultBannerTitle,
+  getBrandSetting,
+} from "@/lib/brand";
 import { getCartAccess } from "@/lib/cart";
 import { getPublishedProducts } from "@/lib/products";
+import { cn } from "@/lib/utils/cn";
 
 async function FeaturedProducts() {
   // Membaca cookie/sesi (getCartAccess) untuk menentukan tombol tampil, jadi
@@ -36,22 +44,66 @@ function ProductGridSkeleton() {
   );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  // SITE-05 (PH-09): hero/banner mengikuti identitas brand. Banner hanya
+  // menggantikan hero saat sakelar aktif; kolom yang kosong jatuh ke teks
+  // bawaan.
+  const brand = await getBrandSetting();
+  const banner = brand.banner;
+  const title = banner.title ?? defaultBannerTitle(brand.brandName);
+  const text = banner.text ?? DEFAULT_BANNER_TEXT;
+  const buttonLabel = banner.buttonLabel ?? DEFAULT_BANNER_BUTTON_LABEL;
+  const buttonHref = banner.buttonHref ?? DEFAULT_BANNER_BUTTON_HREF;
+  const imageUrl = banner.enabled ? banner.imageUrl : null;
+
   return (
     <PageContainer>
-      <section className="rounded-2xl border border-border bg-muted/30 px-6 py-14 text-center">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Selamat datang di FlexStore
-        </h1>
-        <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-          Belanja produk pilihan dengan pengiriman ke seluruh Indonesia.
-        </p>
-        <Link
-          href="/products"
-          className="mt-8 inline-flex h-11 items-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      <section
+        className={cn(
+          "relative overflow-hidden rounded-2xl border border-border",
+          !imageUrl && "bg-muted/30",
+        )}
+      >
+        {imageUrl ? (
+          // URL berasal dari Uploadthing; pakai img biasa agar tidak bergantung
+          // pada allowlist domain next/image.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={imageUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : null}
+
+        <div
+          className={cn(
+            "relative px-6 py-14 text-center",
+            imageUrl && "bg-black/50",
+          )}
         >
-          Lihat Semua Produk
-        </Link>
+          <h1
+            className={cn(
+              "text-3xl font-bold tracking-tight sm:text-4xl",
+              imageUrl && "text-white",
+            )}
+          >
+            {title}
+          </h1>
+          <p
+            className={cn(
+              "mx-auto mt-4 max-w-xl",
+              imageUrl ? "text-white/90" : "text-muted-foreground",
+            )}
+          >
+            {text}
+          </p>
+          <Link
+            href={buttonHref}
+            className="mt-8 inline-flex h-11 items-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            {buttonLabel}
+          </Link>
+        </div>
       </section>
 
       <section className="flex flex-col gap-4">

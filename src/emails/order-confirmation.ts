@@ -25,6 +25,7 @@ export type OrderEmailData = {
 export function buildOrderConfirmationEmail(
   order: OrderEmailData,
   orderUrl: string,
+  brandName: string,
 ): { subject: string; html: string } {
   const summary = [
     renderSummaryRow("Subtotal", formatRupiah(Number(order.subtotal))),
@@ -71,11 +72,12 @@ export function buildOrderConfirmationEmail(
     </p>`;
 
   return {
-    subject: `Konfirmasi Pesanan ${order.orderNumber} - FlexStore`,
+    subject: `Konfirmasi Pesanan ${order.orderNumber} - ${brandName}`,
     html: renderLayout({
       heading: "Pesanan Diterima",
       intro: "Terima kasih, pesanan Anda sudah kami catat.",
       bodyHtml,
+      footerHtml: brandName,
     }),
   };
 }

@@ -1,11 +1,19 @@
 import Link from "next/link";
+import { getBrandSetting } from "@/lib/brand";
 
 // Layout untuk halaman autentikasi (login, daftar). Sengaja terpisah dari
 // `(storefront)` supaya halaman login/daftar tidak memuat Header (badge
 // keranjang, menu akun, tautan "Masuk/Daftar" yang menunjuk ke halaman yang
 // sedang dibuka) dan Footer. URL tidak berubah: route group tidak
 // memengaruhi path.
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export default async function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // SITE-05 (PH-09): nama brand dari pengaturan Site Admin.
+  const brand = await getBrandSetting();
+
   return (
     // `flex-1` (bukan `min-h-full`): `<body>` root layout hanya punya
     // `min-height`, sehingga persentase tinggi tidak dapat dihitung.
@@ -13,7 +21,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <header className="border-b border-border">
         <div className="mx-auto flex h-16 max-w-6xl items-center px-4">
           <Link href="/" className="text-xl font-bold tracking-tight">
-            FlexStore
+            {brand.brandName}
           </Link>
         </div>
       </header>

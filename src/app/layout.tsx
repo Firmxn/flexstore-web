@@ -1,6 +1,8 @@
+import type { CSSProperties } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { siteDescription } from "@/lib/site";
+import { brandTagline, getBrandSetting } from "@/lib/brand";
+import { brandCssVariables } from "@/lib/brand/palette";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,18 +15,34 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "FlexStore",
-    template: "%s | FlexStore",
-  },
-  description: siteDescription,
-};
+// SITE-05 (PH-09): judul, deskripsi, dan favicon mengikuti identitas brand yang
+// diatur Site Admin. Dibaca per permintaan supaya perubahan langsung berlaku.
+export async function generateMetadata(): Promise<Metadata> {
+  const brand = await getBrandSetting();
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+  return {
+    title: {
+      default: brand.brandName,
+      template: `%s | ${brand.brandName}`,
+    },
+    description: brandTagline(brand),
+    icons: brand.faviconUrl ? { icon: brand.faviconUrl } : undefined,
+  };
+}
+
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const brand = await getBrandSetting();
+  // Palet disuntikkan sebagai custom properties pada <html>; inline style
+  // mengalahkan aturan `:root` di globals.css. Nilainya sudah divalidasi Zod
+  // (hex #RRGGBB), jadi tidak perlu dangerouslySetInnerHTML.
+  const cssVariables = brandCssVariables(
+    brand.palette,
+  ) as unknown as CSSProperties;
+
   return (
     <html
       lang="id"
+      style={cssVariables}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

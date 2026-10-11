@@ -11,6 +11,7 @@ export type RefundCompletedEmailData = {
 export function buildRefundCompletedEmail(
   order: RefundCompletedEmailData,
   orderUrl: string,
+  brandName: string,
 ): { subject: string; html: string } {
   const rows = [
     renderSummaryRow("Nomor pesanan", order.orderNumber),
@@ -34,11 +35,12 @@ export function buildRefundCompletedEmail(
     </p>`;
 
   return {
-    subject: `Refund Pesanan ${order.orderNumber} Selesai - FlexStore`,
+    subject: `Refund Pesanan ${order.orderNumber} Selesai - ${brandName}`,
     html: renderLayout({
       heading: "Refund Selesai",
       intro: "Dana refund sudah kami kirimkan.",
       bodyHtml,
+      footerHtml: brandName,
     }),
   };
 }

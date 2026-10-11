@@ -1,11 +1,15 @@
 # Product Requirements Document (PRD)
 # FlexStore — E-Commerce Platform
 
-**Versi:** 1.1 (Finalized)  
+**Versi:** 1.3 (Finalized)  
 **Tanggal:** 8 Oktober 2026  
 **Status:** Finalized — Siap untuk SDD
 
 **Revisi 1.1 (10 Oktober 2026):** model role = 4 (Guest, Customer, Store Admin, Site Admin): bagian 2.4 Site Admin ditambah; baris "3 role utama" (bagian 2) dan "no Site Admin role" (bagian 2.3) dicabut karena bertentangan dengan bagian 1, 3.1.K, 4.1, 4.12, dan kriteria sukses #10. Keputusan tercatat di `docs/04` bagian 10.
+
+**Revisi 1.2 (11 Oktober 2026):** kustomisasi brand (logo, warna, banner) dipindah dari Store Admin (bagian 2.3) ke Site Admin (bagian 2.4) — 1 deployment = 1 brand store, jadi identitas brand adalah urusan deployment, bukan operasional toko. Cakupan theme customization diperluas: favicon, tagline, teks footer, palet warna (input kode heksadesimal), banner homepage lengkap (gambar + judul + teks + tombol). Keputusan tercatat di `docs/04` bagian 10 dan 14.2; spek di `docs/03` SITE-05. Pada tanggal yang sama centang "Variant images" di bagian 3.1.A dan 7.4 dicabut menjadi belum selesai — input gambar varian belum ada di form admin (keputusan `docs/04` bagian 10).
+
+**Revisi 1.3 (11 Oktober 2026):** pusat notifikasi in-app ditambahkan ke bagian 3.1.I, 4.8, 4.9, dan 7.7 — ikon lonceng di navbar membuka dialog berisi daftar notifikasi (diturunkan dari data pesanan, tanpa tabel baru) dan pengaturan preferensi email; badge menandai notifikasi yang belum dilihat. Halaman alamat tersimpan dipisahkan agar fokus pada alamat (`/profile/addresses`), sedangkan `/profile` menjadi halaman akun mandiri (profil saja). Pada tanggal yang sama akses invoice dibatasi hanya untuk pesanan yang sudah lunas — tombol dan halaman invoice tidak tersedia untuk pesanan yang belum dibayar maupun yang dibatalkan sebelum bayar. Keputusan tercatat di `docs/04` bagian 10 dan 15; spek di `docs/03` CUST-01, CUST-02, CUST-03, dan NOTIF-02. Implementasi dijadwalkan pada fase **PH-10**.
 
 ---
 
@@ -71,7 +75,7 @@ Sistem memiliki **4 role** (single-store MVP):
 - **Voucher Management:** CRUD voucher/promosi, stacking rules, usage limits
 - **Shipping Management:** Melihat shipping status (tracking dihandle oleh provider API)
 - **Reporting:** Sales report, product performance, stock report, order/refund reports
-- **Store Configuration:** Store info (logo, banner, brand colors), cancellation templates
+- **Store Configuration:** Store info (nama toko, alamat, kontak, kebijakan), cancellation templates — identitas brand (logo, banner, warna) diatur **Site Admin**, lihat bagian 2.4
 
 **Karakteristik:**
 - Full admin access ke `/admin/*` routes
@@ -87,6 +91,7 @@ Sistem memiliki **4 role** (single-store MVP):
 - **Payment Gateway Configuration:** Konfigurasi Xendit
 - **Shipping Provider Configuration:** Konfigurasi RajaOngkir/Biteship
 - **User Management:** Mengelola akun Store Admin (buat, nonaktifkan, reset password)
+- **Brand Customization:** Identitas brand per deployment — nama brand, logo, favicon, tagline, palet warna (kode heksadesimal), teks footer, banner homepage (lihat `docs/03` SITE-05)
 
 **Karakteristik:**
 - Akses ke area konfigurasi platform, **terpisah** dari area operasional toko (`/admin/*` milik Store Admin)
@@ -111,7 +116,7 @@ Sistem memiliki **4 role** (single-store MVP):
 - ✅ Product status: Active, Inactive, Draft, Out of Stock, Discontinued
 - ✅ Product search dan filter (by name, category, price range, sort)
 - ✅ **Product images:** 1 gambar utama (wajib) + 3 gambar tambahan (opsional) = maksimal 4 gambar per produk
-- ✅ **Variant images:** Setiap variant bisa punya 1 gambar sendiri
+- **Variant images (belum selesai):** Setiap variant bisa punya 1 gambar sendiri; dukungan UI admin untuk unggah/pilih gambar belum tersedia.
 - ✅ **Size chart / Additional info image:** 1 gambar opsional untuk size chart, spec sheet, nutrition facts, dll
 - ✅ **Stock:** Dual tracking
   - Stock per variant (individual tracking per variant)
@@ -205,7 +210,7 @@ Sistem memiliki **4 role** (single-store MVP):
 - ✅ Customer bisa track shipping status (jika provider support)
 
 #### I. Invoice & Notification
-- ✅ Invoice yang bisa dilihat/dicetak/download PDF
+- ✅ Invoice yang bisa dilihat/dicetak/download PDF — hanya untuk pesanan yang sudah lunas (revisi 1.3)
 - ✅ **Email notification:**
   - Order created (order confirmation)
   - Payment successful
@@ -213,6 +218,7 @@ Sistem memiliki **4 role** (single-store MVP):
   - Set password link (untuk guest yang isi email)
   - Cancellation approved/rejected
   - Refund completed (jika approved)
+- ✅ **Notifikasi in-app (revisi 1.3):** ikon lonceng di navbar membuka dialog berisi daftar notifikasi pesanan (turunan data pesanan) + pengaturan preferensi email, dengan penanda belum dibaca
 - ✅ **OTP verification:** Twilio Verify, kanal **SMS**
   - SMS OTP (dev: Trial gratis — 40 verifikasi; production ~Rp450-600 per SMS)
   - Start dengan Twilio Verify di akun Trial untuk development
@@ -230,10 +236,12 @@ Sistem memiliki **4 role** (single-store MVP):
   - Warranty policy
   - Informasi pickup
   - Social media links (Instagram, Facebook, WhatsApp)
-- ✅ **Theme customization (MVP):**
-  - Logo upload
-  - Warna brand (primary color, secondary color)
-  - Banner/hero image di homepage
+- ✅ **Theme customization (MVP)** — diatur **Site Admin** (bagian 2.4, revisi 1.2):
+  - Nama brand + tagline
+  - Logo upload + favicon
+  - Palet warna (9 grup inti, input kode heksadesimal; berlaku seluruh aplikasi)
+  - Teks footer
+  - Banner/hero image di homepage (gambar + judul + teks + tombol + sakelar aktif)
 
 #### K. Admin & Reporting
 - ✅ **Admin panel framework:** shadcn/ui (React + Tailwind, modern component library)
@@ -355,10 +363,10 @@ Gambaran modul tanpa detail teknis (detail teknis masuk SDD):
 - Shipping status update
 
 ### 4.8 Customer Management
-- Customer profile
-- Address management (max 5)
+- Customer profile — halaman akun mandiri (`/profile`): nama, email, ubah password (revisi 1.3)
+- Address management (max 5) — halaman khusus alamat (`/profile/addresses`), tanpa info profil maupun preferensi notifikasi (revisi 1.3)
 - Order history
-- Notification preferences
+- Notification preferences — diakses lewat dialog yang dibuka dari ikon notifikasi di navbar (revisi 1.3)
 
 ### 4.9 Notification
 - Email notification
@@ -367,11 +375,13 @@ Gambaran modul tanpa detail teknis (detail teknis masuk SDD):
 - Shipping notification
 - Tracking link
 - Account creation (set password link)
+- Notifikasi in-app: ikon lonceng di navbar membuka dialog berisi daftar notifikasi pesanan + pengaturan preferensi email (revisi 1.3)
 
 ### 4.10 Invoice
 - Invoice generation
 - Invoice view
 - Invoice PDF download
+- Akses hanya setelah pembayaran berhasil; pesanan belum dibayar atau batal sebelum bayar tidak menampilkan invoice (revisi 1.3)
 
 ### 4.11 Reporting
 - Sales report
@@ -584,7 +594,7 @@ Keputusan teknis yang sudah ditetapkan untuk MVP:
 
 ### 7.4 Product Configuration
 - ✅ **Images:** 1 utama + 3 tambahan (max 4)
-- ✅ **Variant images:** 1 per variant
+- **Variant images (belum selesai):** 1 per variant; input gambar varian belum tersedia di form admin.
 - ✅ **Size chart:** 1 gambar opsional
 - ✅ **Stock:** Dual tracking (per variant + total)
 
@@ -593,11 +603,12 @@ Keputusan teknis yang sudah ditetapkan untuk MVP:
 - ✅ **Calculation:** Bertahap, seller-oriented
 
 ### 7.6 Theme Customization
-- ✅ **MVP scope:** Logo, warna brand, banner/hero image
+- ✅ **MVP scope:** Nama brand, logo, favicon, tagline, teks footer, palet warna (hex), banner/hero homepage — diatur Site Admin (revisi 1.2)
 - ✅ **Admin framework:** shadcn/ui (React + Tailwind)
 
 ### 7.7 Notification
 - ✅ **Email:** Order, payment, shipping, cancellation, refund, set password
+- ✅ **In-app (revisi 1.3):** daftar notifikasi pesanan dan pengaturan preferensi email lewat ikon lonceng di navbar, dengan penanda belum dibaca
 - ✅ **OTP:** SMS via Twilio Verify
 
 ### 7.8 Target Market

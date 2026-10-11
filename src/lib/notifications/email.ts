@@ -1,3 +1,4 @@
+import { getBrandSetting } from "@/lib/brand";
 import { getEmailFrom, getResendApiKey } from "./config";
 
 export type SendEmailInput = {
@@ -18,6 +19,9 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
   const apiKey = getResendApiKey();
   if (!apiKey) return { ok: false, reason: "NOT_CONFIGURED" };
 
+  // SITE-05 (PH-09): nama pengirim mengikuti identitas brand.
+  const brand = await getBrandSetting();
+
   try {
     const response = await fetch(RESEND_ENDPOINT, {
       method: "POST",
@@ -26,7 +30,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: getEmailFrom(),
+        from: getEmailFrom(brand.brandName),
         to: [input.to],
         subject: input.subject,
         html: input.html,

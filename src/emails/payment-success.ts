@@ -11,6 +11,7 @@ export type PaymentSuccessEmailData = {
 export function buildPaymentSuccessEmail(
   order: PaymentSuccessEmailData,
   orderUrl: string,
+  brandName: string,
 ): { subject: string; html: string } {
   const summary = [
     renderSummaryRow("Total dibayar", formatRupiah(Number(order.total)), {
@@ -33,11 +34,12 @@ export function buildPaymentSuccessEmail(
     </p>`;
 
   return {
-    subject: `Pembayaran Berhasil ${order.orderNumber} - FlexStore`,
+    subject: `Pembayaran Berhasil ${order.orderNumber} - ${brandName}`,
     html: renderLayout({
       heading: "Pembayaran Berhasil",
       intro: "Terima kasih, pembayaran Anda sudah terkonfirmasi.",
       bodyHtml,
+      footerHtml: brandName,
     }),
   };
 }

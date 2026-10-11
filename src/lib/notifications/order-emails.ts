@@ -4,6 +4,7 @@ import { buildOrderShippedEmail } from "@/emails/order-shipped";
 import { buildPaymentSuccessEmail } from "@/emails/payment-success";
 import { buildRefundCompletedEmail } from "@/emails/refund-completed";
 import { shouldSendNotification } from "@/lib/customers";
+import { getBrandSetting } from "@/lib/brand";
 import { prisma } from "@/lib/db/prisma";
 import { isEmailConfigured } from "./config";
 import { sendEmail } from "./email";
@@ -37,6 +38,9 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
     if (!to) return;
     if (!(await shouldSendNotification(order.userId, "orderConfirmation"))) return;
 
+    // SITE-05 (PH-09): subjek dan footer memakai identitas brand.
+    const brand = await getBrandSetting();
+
     const { subject, html } = buildOrderConfirmationEmail(
       {
         orderNumber: order.orderNumber,
@@ -56,6 +60,7 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
         })),
       },
       `${appUrl()}/orders/${order.id}`,
+      brand.brandName,
     );
 
     const result = await sendEmail({ to, subject, html });
@@ -83,6 +88,9 @@ export async function sendPaymentSuccessEmail(orderId: string): Promise<void> {
     if (!to) return;
     if (!(await shouldSendNotification(order.userId, "paymentConfirmation"))) return;
 
+    // SITE-05 (PH-09): subjek dan footer memakai identitas brand.
+    const brand = await getBrandSetting();
+
     const { subject, html } = buildPaymentSuccessEmail(
       {
         orderNumber: order.orderNumber,
@@ -90,6 +98,7 @@ export async function sendPaymentSuccessEmail(orderId: string): Promise<void> {
         paidAt: order.payment?.paidAt ?? null,
       },
       `${appUrl()}/orders/${order.id}`,
+      brand.brandName,
     );
 
     const result = await sendEmail({ to, subject, html });
@@ -125,6 +134,9 @@ export async function sendOrderShippedEmail(orderId: string): Promise<void> {
     if (!to) return;
     if (!(await shouldSendNotification(order.userId, "shippingUpdate"))) return;
 
+    // SITE-05 (PH-09): subjek dan footer memakai identitas brand.
+    const brand = await getBrandSetting();
+
     const { subject, html } = buildOrderShippedEmail(
       {
         orderNumber: order.orderNumber,
@@ -133,6 +145,7 @@ export async function sendOrderShippedEmail(orderId: string): Promise<void> {
         service: order.shippingService,
       },
       trackingUrlFor(order),
+      brand.brandName,
     );
 
     const result = await sendEmail({ to, subject, html });
@@ -163,6 +176,9 @@ export async function sendCancellationEmail(
     if (!to) return;
     if (!(await shouldSendNotification(order.userId, "cancellationUpdate"))) return;
 
+    // SITE-05 (PH-09): subjek dan footer memakai identitas brand.
+    const brand = await getBrandSetting();
+
     const { subject, html } = buildCancellationEmail(
       {
         orderNumber: order.orderNumber,
@@ -173,6 +189,7 @@ export async function sendCancellationEmail(
             : order.cancelRejectionReason,
       },
       `${appUrl()}/orders/${order.id}`,
+      brand.brandName,
     );
 
     const result = await sendEmail({ to, subject, html });
@@ -206,6 +223,9 @@ export async function sendRefundCompletedEmail(orderId: string): Promise<void> {
     const refund = order.refunds[0];
     if (!refund) return;
 
+    // SITE-05 (PH-09): subjek dan footer memakai identitas brand.
+    const brand = await getBrandSetting();
+
     const { subject, html } = buildRefundCompletedEmail(
       {
         orderNumber: order.orderNumber,
@@ -213,6 +233,7 @@ export async function sendRefundCompletedEmail(orderId: string): Promise<void> {
         note: refund.note,
       },
       `${appUrl()}/orders/${order.id}`,
+      brand.brandName,
     );
 
     const result = await sendEmail({ to, subject, html });

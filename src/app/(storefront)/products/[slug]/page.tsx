@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Badge } from "@/components/ui/badge";
 import { AddToCartForm } from "@/components/cart/AddToCartForm";
+import { getBrandSetting } from "@/lib/brand";
 import { getPublishedProductBySlug } from "@/lib/products";
 
 type DetailProps = PageProps<"/products/[slug]">;
@@ -34,14 +35,18 @@ export async function generateMetadata({
   params,
 }: DetailProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProduct(slug);
+  const [product, brand] = await Promise.all([
+    getProduct(slug),
+    getBrandSetting(),
+  ]);
 
   if (!product) return { title: "Produk tidak ditemukan" };
 
   return {
     title: product.name,
     description:
-      product.description?.slice(0, 160) ?? `Beli ${product.name} di FlexStore.`,
+      product.description?.slice(0, 160) ??
+      `Beli ${product.name} di ${brand.brandName}.`,
   };
 }
 
