@@ -9,11 +9,12 @@ import { formatDateTime, formatRupiah } from "@/lib/utils/format";
 type OrdersList = Awaited<ReturnType<typeof getOrdersForUser>>;
 export type OrderRow = OrdersList[number];
 
-// Tombol aksi masih placeholder (tanpa handler): "Lacak Pesanan" milik
-// ORDER-08 (PH-06) — nanti mengarah ke detail tracking per pesanan yang
-// session-scoped, bukan ke form /track-order; "Batalkan Pesanan" milik
-// ORDER-05 (PH-06, cancel/refund). Status tombol dibatasi supaya tidak muncul
-// di pesanan yang sudah selesai atau dibatalkan.
+// Tombol aksi status Pesanan: "Lacak Pesanan" milik ORDER-08 — mengarah ke
+// detail tracking per pesanan yang session-scoped, bukan ke form
+// /track-order (jalan hanya jalur guest); "Batalkan Pesanan" milik
+// ORDER-05 (PH-06, cancel/refund — masih placeholder: arah ke detail).
+// Status tombol dibatasi supaya tidak muncul di pesanan yang sudah selesai
+// atau dibatalkan.
 const TRACKABLE_STATUSES: OrderRow["status"][] = [
   "PROCESSING",
   "SHIPPED",

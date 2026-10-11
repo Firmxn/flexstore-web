@@ -1,14 +1,6 @@
 import { prisma } from "@/lib/db/prisma";
 import { hashPassword } from "./password";
 
-export function findUserByIdentifier(identifier: string) {
-  return prisma.user.findFirst({
-    where: {
-      OR: [{ email: identifier }, { phone: identifier }],
-    },
-  });
-}
-
 export function findUserByEmail(email: string) {
   return prisma.user.findUnique({ where: { email } });
 }

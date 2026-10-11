@@ -7,7 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 
@@ -224,14 +224,18 @@ export function AdminOrderActions({
             <div className="flex flex-col gap-2">
               <Label htmlFor="reject-mode">Sumber alasan</Label>
               <Select
-                id="reject-mode"
                 value={rejectMode}
-                onChange={(event) =>
-                  setRejectMode(event.target.value as "template" | "manual")
+                onValueChange={(value) =>
+                  setRejectMode(value as "template" | "manual")
                 }
               >
-                <option value="template">Pilih template</option>
-                <option value="manual">Isi manual</option>
+                <SelectTrigger id="reject-mode">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="template">Pilih template</SelectItem>
+                  <SelectItem value="manual">Isi manual</SelectItem>
+                </SelectContent>
               </Select>
             </div>
 
@@ -244,15 +248,19 @@ export function AdminOrderActions({
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="reject-template">Template alasan</Label>
                   <Select
-                    id="reject-template"
                     value={rejectTemplate}
-                    onChange={(event) => setRejectTemplate(event.target.value)}
+                    onValueChange={setRejectTemplate}
                   >
-                    {cancellationReasons.map((reason) => (
-                      <option key={reason.id} value={reason.text}>
-                        {reason.text}
-                      </option>
-                    ))}
+                    <SelectTrigger id="reject-template">
+                      <SelectValue placeholder="Pilih template alasan" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cancellationReasons.map((reason) => (
+                        <SelectItem key={reason.id} value={reason.text}>
+                          {reason.text}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
               )

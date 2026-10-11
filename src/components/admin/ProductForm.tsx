@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImageUploader } from "@/components/admin/ImageUploader";
+import { VariantImagePicker } from "@/components/admin/VariantImagePicker";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   PRODUCT_STATUSES,
@@ -23,6 +24,7 @@ export type VariantRow = {
   price: string;
   stock: string;
   weightGram: string;
+  imageUrl: string;
 };
 
 export type ProductFormValues = {
@@ -46,6 +48,7 @@ const EMPTY_VARIANT: VariantRow = {
   price: "",
   stock: "",
   weightGram: "1000",
+  imageUrl: "",
 };
 
 export function ProductForm({
@@ -120,6 +123,8 @@ export function ProductForm({
         price: Number(variant.price),
         stock: Number(variant.stock),
         weightGram: Number(variant.weightGram),
+        // URL kosong dikirim sebagai null supaya lolos validasi opsional.
+        imageUrl: variant.imageUrl.trim() || null,
       })),
     });
 
@@ -199,48 +204,63 @@ export function ProductForm({
           <div className="flex flex-col gap-2">
             <Label htmlFor="product-category">Kategori</Label>
             <Select
-              id="product-category"
-              required
-              value={values.categoryId}
-              onChange={(event) => setField("categoryId", event.target.value)}
+              value={values.categoryId || "__none__"}
+              onValueChange={(value) =>
+                setField("categoryId", value === "__none__" ? "" : value)
+              }
             >
-              <option value="">Pilih kategori</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
+              <SelectTrigger id="product-category">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Pilih kategori</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="product-brand">Brand (opsional)</Label>
             <Select
-              id="product-brand"
-              value={values.brandId}
-              onChange={(event) => setField("brandId", event.target.value)}
+              value={values.brandId || "__none__"}
+              onValueChange={(value) =>
+                setField("brandId", value === "__none__" ? "" : value)
+              }
             >
-              <option value="">Tanpa brand</option>
-              {brands.map((brand) => (
-                <option key={brand.id} value={brand.id}>
-                  {brand.name}
-                </option>
-              ))}
+              <SelectTrigger id="product-brand">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">Tanpa brand</SelectItem>
+                {brands.map((brand) => (
+                  <SelectItem key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="product-status">Status</Label>
             <Select
-              id="product-status"
               value={values.status}
-              onChange={(event) => setField("status", event.target.value)}
+              onValueChange={(value) => setField("status", value)}
             >
-              {PRODUCT_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {PRODUCT_STATUS_LABELS[status]}
-                </option>
-              ))}
+              <SelectTrigger id="product-status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRODUCT_STATUSES.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {PRODUCT_STATUS_LABELS[status]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
         </div>
@@ -391,6 +411,14 @@ export function ProductForm({
               >
                 Hapus
               </Button>
+
+              <div className="sm:col-span-6">
+                <VariantImagePicker
+                  id={`variant-image-${index}`}
+                  url={variant.imageUrl}
+                  onChange={(url) => updateVariant(index, { imageUrl: url })}
+                />
+              </div>
             </div>
           ))}
         </div>

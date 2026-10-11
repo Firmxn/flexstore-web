@@ -45,6 +45,9 @@ export async function HeaderUserMenu() {
       <Link href="/products" className={navLinkClass}>
         Produk
       </Link>
+      <Link href="/track-order" className={navLinkClass}>
+        Lacak
+      </Link>
 
       {/* Aksi akun (Pesanan, Panel admin, Keluar) hanya ada di menu akun,
           supaya tidak ada link ganda di navbar. */}

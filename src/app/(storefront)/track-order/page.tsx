@@ -9,8 +9,9 @@ import { formatDateTime } from "@/lib/utils/format";
 
 export const metadata = { title: "Lacak Pesanan" };
 
-// ORDER-08 (PH-06): customer melihat pesanan dalam perjalanan tanpa input data;
-// guest tetap memakai form nomor pesanan + nomor HP.
+// ORDER-08: customer melihat pesanan dalam perjalanan tanpa input data.
+// Guest tetap memakai form nomor pesanan + nomor HP (ORDER-04); form dan
+// petunjuk pengisiannya hanya dirender untuk guest.
 export const instant = false;
 
 export default async function TrackOrderPage() {
@@ -23,9 +24,11 @@ export default async function TrackOrderPage() {
     <PageContainer>
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight">Lacak Pesanan</h1>
-        <p className="text-sm text-muted-foreground">
-          Masukkan nomor pesanan dan nomor HP yang dipakai saat checkout.
-        </p>
+        {!user ? (
+          <p className="text-sm text-muted-foreground">
+            Masukkan nomor pesanan dan nomor HP yang dipakai saat checkout.
+          </p>
+        ) : null}
       </div>
 
       {user ? (
@@ -64,7 +67,7 @@ export default async function TrackOrderPage() {
         </section>
       ) : null}
 
-      <TrackOrderForm />
+      {user ? null : <TrackOrderForm />}
     </PageContainer>
   );
 }

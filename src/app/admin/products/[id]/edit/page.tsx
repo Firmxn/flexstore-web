@@ -60,6 +60,7 @@ export default async function EditProductPage({
             price: variant.price.toString(),
             stock: String(variant.stock),
             weightGram: String(variant.weightGram),
+            imageUrl: variant.imageUrl ?? "",
           })),
         }}
       />

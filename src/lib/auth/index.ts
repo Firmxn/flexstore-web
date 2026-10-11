@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
-import { findUserByIdentifier } from "./queries";
+import { findUserByEmail, findUserByPhone } from "./queries";
 import { loginSchema } from "./validation";
 import { verifyPassword, wasteTimeLikeVerify } from "./password";
 
@@ -18,7 +18,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { identifier, password } = parsed.data;
-        const user = await findUserByIdentifier(identifier);
+        // Identifier sudah disingkat bentuknya oleh loginSchema: email
+        // (lowercase) atau nomor HP (format +62) — biar pencocokan akun
+        // tepat kolomnya, bukan keduanya sekaligus.
+        const user =
+          identifier.kind === "email"
+            ? await findUserByEmail(identifier.value)
+            : await findUserByPhone(identifier.value);
 
         if (!user?.password) {
           await wasteTimeLikeVerify(password);

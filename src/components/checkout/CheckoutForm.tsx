@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { OtpVerificationForm } from "@/components/auth/OtpVerificationForm";
 import { CourierPicker } from "@/components/shipping/CourierPicker";
@@ -384,17 +384,23 @@ export function CheckoutForm({
             <div className="flex flex-col gap-2">
               <Label htmlFor="checkout-saved-address">Alamat tersimpan</Label>
               <Select
-                id="checkout-saved-address"
-                value={selectedAddressId}
-                onChange={(event) => handleSelectAddress(event.target.value)}
+                value={selectedAddressId || "__manual__"}
+                onValueChange={(value) =>
+                  handleSelectAddress(value === "__manual__" ? "" : value)
+                }
               >
-                <option value="">Isi manual</option>
-                {savedAddresses.map((address) => (
-                  <option key={address.id} value={address.id}>
-                    {address.label} - {address.recipientName} ({address.city})
-                    {address.isPrimary ? " - Utama" : ""}
-                  </option>
-                ))}
+                <SelectTrigger id="checkout-saved-address">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__manual__">Isi manual</SelectItem>
+                  {savedAddresses.map((address) => (
+                    <SelectItem key={address.id} value={address.id}>
+                      {address.label} - {address.recipientName} ({address.city})
+                      {address.isPrimary ? " - Utama" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
           ) : null}

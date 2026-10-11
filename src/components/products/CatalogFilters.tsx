@@ -4,6 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Terbaru" },
@@ -70,18 +77,18 @@ export function CatalogFilters({
         className="h-9 w-28"
       />
 
-      <select
-        value={sort}
-        onChange={(event) => push(min.trim(), max.trim(), event.target.value)}
-        aria-label="Urutkan produk"
-        className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-      >
-        {SORT_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <Select value={sort} onValueChange={(value) => push(min.trim(), max.trim(), value)}>
+        <SelectTrigger className="h-9 w-40" aria-label="Urutkan produk">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {SORT_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
       <Button type="submit" size="sm" variant="outline" className="h-9">
         Terapkan

@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   VOUCHER_TYPE_LABELS,
   VOUCHER_TYPES,
@@ -188,15 +188,19 @@ export function VoucherForm({
           <div className="flex flex-col gap-2">
             <Label htmlFor="voucher-type">Jenis</Label>
             <Select
-              id="voucher-type"
               value={values.type}
-              onChange={(event) => setField("type", event.target.value)}
+              onValueChange={(value) => setField("type", value)}
             >
-              {VOUCHER_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {VOUCHER_TYPE_LABELS[type]}
-                </option>
-              ))}
+              <SelectTrigger id="voucher-type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VOUCHER_TYPES.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {VOUCHER_TYPE_LABELS[type]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
 

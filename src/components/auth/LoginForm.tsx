@@ -58,7 +58,13 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    // Form login memakai autoComplete off + "new-password" di field password:
+    // password manager browser menyimpan kredensial dan mengisinya otomatis
+    // ketika balik ke halaman login setelah logout, sehingga form tampak
+    // "lengket" dengan akun sebelumnya. Mode new-password tidak memicu
+    // pengisian otomatis; pilihan akun tetap muncul saat user memfokuskan
+    // field (pilihan user, bukan prefill).
+    <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col gap-4">
       {error ? <Alert variant="destructive">{error}</Alert> : null}
 
       <div className="flex flex-col gap-2">
@@ -66,7 +72,7 @@ export function LoginForm() {
         <Input
           id="identifier"
           name="identifier"
-          autoComplete="username"
+          autoComplete="off"
           required
           maxLength={255}
           value={identifier}
@@ -80,7 +86,7 @@ export function LoginForm() {
           id="password"
           name="password"
           type="password"
-          autoComplete="current-password"
+          autoComplete="new-password"
           required
           value={password}
           onChange={(event) => setPassword(event.target.value)}

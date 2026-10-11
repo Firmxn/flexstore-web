@@ -262,6 +262,6 @@ export async function getTrackingOrderForUser(userId: string, orderId: string) {
   await releaseExpiredReservations();
   return prisma.order.findFirst({
     where: { id: orderId, userId },
-    include: { items: true },
+    include: { items: true, payment: true },
   });
 }

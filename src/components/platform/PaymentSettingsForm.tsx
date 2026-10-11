@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { paymentSettingsSchema } from "@/lib/platform/validation";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 
@@ -114,15 +114,19 @@ export function PaymentSettingsForm({
           <div className="flex flex-col gap-2">
             <Label htmlFor="payment-mode">Mode</Label>
             <Select
-              id="payment-mode"
               value={paymentMode}
-              onChange={(event) => {
-                setPaymentMode(event.target.value as "SANDBOX" | "PRODUCTION");
+              onValueChange={(value) => {
+                setPaymentMode(value as "SANDBOX" | "PRODUCTION");
                 setSaved(false);
               }}
             >
-              <option value="SANDBOX">Sandbox (uji coba)</option>
-              <option value="PRODUCTION">Production (produksi)</option>
+              <SelectTrigger id="payment-mode">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="SANDBOX">Sandbox (uji coba)</SelectItem>
+                <SelectItem value="PRODUCTION">Production (produksi)</SelectItem>
+              </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
               Label/jejak audit. Sandbox vs produksi tetap ditentukan oleh kunci

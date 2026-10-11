@@ -59,10 +59,12 @@
 
 @layer base {
   html {
-    /* Pesan ruang scrollbar selalu, supaya lebar konten sama di semua halaman.
-       Tanpa ini, halaman yang isinya pendek (tanpa scrollbar) tampak ~15px
-       lebih lebar/bergeser daripada halaman yang punya scrollbar. */
-    scrollbar-gutter: stable;
+    /* Scrollbar dirender permanen: lebar konten tidak berubah saat body
+       dikunci scroll (popup Select/Dialog Radix) maupun antar halaman yang
+       pendek vs panjang. `scrollbar-gutter: stable` saja tidak cukup karena
+       lock dari Radix men-set `overflow: hidden` di body — untuk overflow
+       hidden browser tidak mereserve gutter. */
+    overflow-y: scroll;
   }
 
   * {
@@ -73,5 +75,17 @@
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Kompensasi scrollbar dari react-remove-scroll (dipakai Radix Select/Dialog
+     ketika popup terbuka) menyuntik stylesheet runtime yang menambah
+     margin-right 15px di `body[data-scroll-locked]`, karena ia menganggap
+     scrollbar sudah dihapus oleh body lock — padahal scrollbar html kita
+     permanen (html overflow-y: scroll di atas), jadi kompensasinya berganda
+     dan menggeser konten ke kiri. Dinetralkan dengan selector lebih spesifik
+     agar menang atas stylesheet yang disuntikkan saat runtime. */
+  html body[data-scroll-locked] {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
   }
 }

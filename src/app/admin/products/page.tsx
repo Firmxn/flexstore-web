@@ -4,7 +4,7 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import { ProductStatusFilterSelect } from "@/components/admin/ProductStatusFilterSelect";
 import {
   Table,
   TableBody,
@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getBrandSetting } from "@/lib/brand";
 import { getProducts } from "@/lib/products";
 import { PRODUCT_STATUSES } from "@/lib/products/validation";
 import { PRODUCT_STATUS_LABELS, formatRupiah } from "@/lib/utils/format";
@@ -162,12 +163,14 @@ export default async function AdminProductsPage({
   const params = await searchParams;
   const search = typeof params.search === "string" ? params.search : "";
   const status = typeof params.status === "string" ? params.status : "";
+  // SITE-05 (PH-09): nama brand dari pengaturan Site Admin.
+  const brand = await getBrandSetting();
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Produk"
-        description="Kelola katalog produk FlexStore."
+        description={`Kelola katalog produk ${brand.brandName}.`}
         action={
           <Link
             href="/admin/products/new"
@@ -189,14 +192,13 @@ export default async function AdminProductsPage({
           maxLength={200}
           className="sm:max-w-64"
         />
-        <Select name="status" defaultValue={status} className="sm:max-w-44">
-          <option value="">Semua status</option>
-          {PRODUCT_STATUSES.map((value) => (
-            <option key={value} value={value}>
-              {PRODUCT_STATUS_LABELS[value]}
-            </option>
-          ))}
-        </Select>
+        <ProductStatusFilterSelect
+          defaultValue={status}
+          options={PRODUCT_STATUSES.map((value) => ({
+            value,
+            label: PRODUCT_STATUS_LABELS[value],
+          }))}
+        />
         <button
           type="submit"
           className="inline-flex h-10 shrink-0 items-center rounded-md border border-input px-4 text-sm hover:bg-accent"
