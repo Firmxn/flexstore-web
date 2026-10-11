@@ -23,7 +23,7 @@ const requiredText = (label: string, max: number) =>
 
 export const addressInputSchema = z.object({
   label: requiredText("Label alamat", 50),
-  recipientName: requiredText("Nama penerima", 100),
+  recipientName: personNameSchema,
   phone: phoneSchema,
   // Titik tujuan RajaOngkir (id kota/kecamatan). Wajib untuk menghitung ongkir;
   // disimpan sebagai string supaya tetap fleksibel antar provider.
