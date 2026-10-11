@@ -1,4 +1,4 @@
-# Spesifikasi Fitur — FlexStore
+﻿# Spesifikasi Fitur â€” FlexStore
 
 > Fungsi dokumen: menjelaskan perilaku setiap fitur secara terperinci, termasuk alur berhasil, validasi, hak akses, kondisi gagal, dan kriteria penerimaan. Task implementasi ditempatkan di Implementation Plan.
 
@@ -15,7 +15,7 @@
 - **Versi PRD / SDD:** PRD v1.5, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
-### Indeks Fitur (MVP) — Phase Bertahap
+### Indeks Fitur (MVP) â€” Phase Bertahap
 
 | Phase | Modul | ID Fitur | Nama Fitur | Status | Lokasi |
 | --- | --- | --- | --- | --- | --- |
@@ -52,7 +52,7 @@
 | | **MOD-CONFIG** | CONFIG-01 | Store Settings + template alasan penolakan | Terimplementasi (PH-06) | `docs/04` bagian 9 dan 10 |
 | **Phase 7** | **MOD-CUST** | CUST-01 | Alamat Tersimpan | Terimplementasi (PH-07); halaman dipindah ke `/profile/addresses` (alamat saja) di PH-10 | [CUST-01](#cust-01) |
 | | | CUST-02 | Preferensi Notifikasi | Terimplementasi (PH-07); formulir dipindah ke dialog notifikasi di PH-10 | [CUST-02](#cust-02) |
-| | **MOD-AUTH** | AUTH-04 | Set Password (Guest → Customer) | Terimplementasi | [AUTH-04](#auth-04) |
+| | **MOD-AUTH** | AUTH-04 | Set Password (Guest â†’ Customer) | Terimplementasi | [AUTH-04](#auth-04) |
 | | | AUTH-05 | Reset Password | Terimplementasi | [AUTH-05](#auth-05) |
 | | **MOD-ORDER** | ORDER-03B | Re-order (lanjutan ORDER-03) | Terimplementasi | [ORDER-03B](#order-03b) |
 | **Phase 8** | **MOD-AUTH** | SITE-00 | Akses Site Admin (role baru) | Terimplementasi | [SITE-00](#site-00) |
@@ -61,20 +61,20 @@
 | | | SITE-03 | Shipping Provider Configuration (RajaOngkir) | Terimplementasi | [SITE-03](#site-03) |
 | | | SITE-04 | User Management (Store Admin) | Terimplementasi | [SITE-04](#site-04) |
 | **Phase 9** | **MOD-CONFIG** | SITE-05 | Brand Customization (identitas, palet, banner) | Terimplementasi (PH-09, 2026-10-11) | [SITE-05](#site-05) |
-| **Phase 10** | **MOD-CUST** | CUST-03 | Profil Akun (halaman mandiri) | Terimplementasi (PH-10, siap direview; revisi 2026-10-11: ganti email wajib verifikasi) | [CUST-03](#cust-03) |
-| | **MOD-NOTIF** | NOTIF-02 | Pusat Notifikasi In-App (ikon navbar) | Terimplementasi (PH-10, siap direview) | [NOTIF-02](#notif-02) |
+| **Phase 10** | **MOD-CUST** | CUST-03 | Profil Akun (halaman mandiri) | Terimplementasi (PH-10, Disetujui; revisi 2026-10-11: ganti email wajib verifikasi) | [CUST-03](#cust-03) |
+| | **MOD-NOTIF** | NOTIF-02 | Pusat Notifikasi In-App (ikon navbar) | Terimplementasi (PH-10, Disetujui) | [NOTIF-02](#notif-02) |
 
 **Phase Checkpoint:**
-- **Phase 1:** Admin CRUD products, customer register/login/view products ✓ Foundation ready
-- **Phase 2:** Add to cart, calculate shipping ✓ Shopping flow ready
-- **Phase 3:** Create order, stock reservation ✓ Checkout ready (no payment)
-- **Phase 4:** Payment integration, webhook, stock deduction ✓ Payment flow complete
-- **Phase 5:** Voucher, email notification, invoice ✓ Core features complete
-- **Phase 6:** Shipping tracking, cancellation, refund, reports, settings ✓ MVP complete
-- **Phase 7:** Alamat tersimpan, re-order, set/reset password, preferensi notifikasi ✓ Customer management ready
-- **Phase 8:** Akses Site Admin, pengaturan platform, konfigurasi payment/shipping, kelola Store Admin ✓ platform configuration ready
-- **Phase 9:** Kustomisasi brand oleh Site Admin (identitas, palet warna, banner) ✓ terimplementasi dan disetujui (2026-10-11)
-- **Phase 10:** Halaman akun mandiri (`/profile`), halaman alamat khusus (`/profile/addresses`), pusat notifikasi in-app (daftar + pengaturan) lewat ikon navbar — spek selesai, implementasi menyusul
+- **Phase 1:** Admin CRUD products, customer register/login/view products âœ“ Foundation ready
+- **Phase 2:** Add to cart, calculate shipping âœ“ Shopping flow ready
+- **Phase 3:** Create order, stock reservation âœ“ Checkout ready (no payment)
+- **Phase 4:** Payment integration, webhook, stock deduction âœ“ Payment flow complete
+- **Phase 5:** Voucher, email notification, invoice âœ“ Core features complete
+- **Phase 6:** Shipping tracking, cancellation, refund, reports, settings âœ“ MVP complete
+- **Phase 7:** Alamat tersimpan, re-order, set/reset password, preferensi notifikasi âœ“ Customer management ready
+- **Phase 8:** Akses Site Admin, pengaturan platform, konfigurasi payment/shipping, kelola Store Admin âœ“ platform configuration ready
+- **Phase 9:** Kustomisasi brand oleh Site Admin (identitas, palet warna, banner) âœ“ terimplementasi dan disetujui (2026-10-11)
+- **Phase 10:** Halaman akun mandiri (`/profile`), halaman alamat khusus (`/profile/addresses`), pusat notifikasi in-app (daftar + pengaturan) lewat ikon navbar â€” spek selesai, implementasi menyusul
 
 **Catatan indeks:**
 - "Terimplementasi (PH-XX)" berarti fitur sudah jalan dan terverifikasi; buktinya ada di `docs/04`.
@@ -109,24 +109,24 @@ Aturan bersama untuk seluruh input pengguna (customer, Store Admin, Site Admin).
 | Telepon toko | angka + pemisah, minimal 7 angka (nomor rumah/kantor boleh) | `021-abc` |
 | Akun media sosial | handle/URL: `@ A-Z a-z 0-9 . _ - / :`; wajib ada huruf/angka | `flex store!` |
 | Catatan, deskripsi, tagline, teks footer, kebijakan, pesan pemeliharaan | bebas kecuali karakter kontrol | teks dengan karakter kontrol |
-| Email, password | aturan lama tidak berubah (email valid; password 8-72 karakter) | — |
+| Email, password | aturan lama tidak berubah (email valid; password 8-72 karakter) | â€” |
 
 Catatan pelaksanaan:
 
 - Sisi klien menambah `inputMode`, `pattern`, dan filter saat mengetik untuk field angka (nomor HP, kode pos, kode OTP) di `AddressManager`, `CheckoutForm`, `OtpVerificationForm`, dan `TrackOrderForm`. Ini kenyamanan saja; server tetap penentu akhir.
-- Semua pesan kesalahan form ditampilkan lewat `FormErrorAlert` (29 komponen form: alamat, checkout, profil, auth, keranjang, pembayaran, notifikasi, dan formulir admin) yang otomatis menggulir halaman ke tengah viewport tepat di pesan saat pesan muncul — tanpa scroll manual (permintaan pengguna 2026-10-11).
+- Semua pesan kesalahan form ditampilkan lewat `FormErrorAlert` (29 komponen form: alamat, checkout, profil, auth, keranjang, pembayaran, notifikasi, dan formulir admin) yang otomatis menggulir halaman ke tengah viewport tepat di pesan saat pesan muncul â€” tanpa scroll manual (permintaan pengguna 2026-10-11).
 - Data lama yang sudah tersimpan tidak divalidasi ulang; aturan berlaku saat tulis berikutnya.
-- Perubahan ini hasil permintaan pengguna 2026-10-11 ("semua field memperketat, nomor HP tidak boleh abjad") — dicatat di `docs/04` bagian 15.7.
+- Perubahan ini hasil permintaan pengguna 2026-10-11 ("semua field memperketat, nomor HP tidak boleh abjad") â€” dicatat di `docs/04` bagian 15.7.
 
 ---
 
-## <a name="auth-01"></a>AUTH-01 — Guest OTP Verification
+## <a name="auth-01"></a>AUTH-01 â€” Guest OTP Verification
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | AUTH-01 — Guest OTP Verification |
+| ID dan nama | AUTH-01 â€” Guest OTP Verification |
 | Modul | MOD-AUTH |
 | Tujuan | Guest verify phone saat checkout untuk mencegah spam/fake order |
 | Aktor utama | Guest (belum login) |
@@ -181,7 +181,7 @@ Catatan pelaksanaan:
 | Expired OTP (5 min) | Show "OTP expired, resend" | Must resend |
 | Cancel | Return to cart | No verification |
 
-Tidak berlaku — no status transition (single-step verification).
+Tidak berlaku â€” no status transition (single-step verification).
 
 ### 8. Kondisi gagal
 
@@ -231,21 +231,21 @@ Tidak berlaku — no status transition (single-step verification).
 
 - **Termasuk:** OTP send, verify, rate limit
 - **Tidak termasuk:** Phone number ownership verification (beyond OTP), customer login OTP (separate feature)
-- **Ketergantungan:** Twilio Verify (Trial gratis untuk dev — 40 verifikasi; production setelah upgrade akun)
+- **Ketergantungan:** Twilio Verify (Trial gratis untuk dev â€” 40 verifikasi; production setelah upgrade akun)
 
 ### 13. Pertanyaan terbuka
 
-Tidak ada — ready for implementation.
+Tidak ada â€” ready for implementation.
 
 ---
 
-## <a name="prod-01"></a>PROD-01 — Product CRUD (Store Admin)
+## <a name="prod-01"></a>PROD-01 â€” Product CRUD (Store Admin)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | PROD-01 — Product CRUD (Store Admin) |
+| ID dan nama | PROD-01 â€” Product CRUD (Store Admin) |
 | Modul | MOD-PROD |
 | Tujuan | Store Admin mengelola produk (create, read, update, delete) |
 | Aktor utama | Store Admin |
@@ -265,7 +265,7 @@ Tidak ada — ready for implementation.
 | Role | Tindakan | Cakupan | Respons jika tidak berhak |
 | --- | --- | --- | --- |
 | Store Admin | CRUD products | Own store only | N/A |
-| Site Admin | None — konfigurasi platform (PRD 2.4), bukan produk | None | 403 Forbidden |
+| Site Admin | None â€” konfigurasi platform (PRD 2.4), bukan produk | None | 403 Forbidden |
 | Customer/Guest | None | None | 403 Forbidden |
 
 ### 4. Input dan validasi
@@ -281,16 +281,16 @@ Tidak ada — ready for implementation.
 | images | URL[] | Ya (min 1) | Empty | Max 4 (`MAX_PRODUCT_IMAGES`), tiap item `{ url, sortOrder? }`, URL valid; berkas diunggah klien ke Uploadthing sebelum simpan (4MB per berkas) | "Minimal 1 gambar" |
 | sizeChartUrl | URL | Tidak | "" | URL valid, maks 500 karakter, maks 1 gambar | "URL bagan ukuran tidak valid" |
 | variants | Array | Ya | [] | Min 1, SKU unique, price > 0, stock >= 0 | "Minimal 1 variant" |
-| variants[].imageUrl | URL | Tidak | null | URL valid, opsional — 1 gambar per varian | "URL gambar tidak valid" |
+| variants[].imageUrl | URL | Tidak | null | URL valid, opsional â€” 1 gambar per varian | "URL gambar tidak valid" |
 
 **Catatan unggahan (Uploadthing):**
 
 - Alur: klien mengunggah lebih dulu lewat `useUploadThing` ke endpoint `productImage` di `/api/uploadthing`; server hanya menyimpan URL hasil unggah, bukan berkas. Tiga pemakai endpoint ini: galeri produk lewat `ImageUploader` (hingga 4 berkas), bagan ukuran lewat `ImageUploader max={1}`, dan gambar varian lewat `VariantImagePicker` (satu berkas per baris varian).
-- Batas endpoint: maksimal 4 berkas per permintaan unggah, 4MB per berkas, `accept="image/*"` di klien. Gerbang `STORE_ADMIN` — tanpa sesi atau role lain menjawab `403 FORBIDDEN` (`src/lib/uploadthing/core.ts`).
+- Batas endpoint: maksimal 4 berkas per permintaan unggah, 4MB per berkas, `accept="image/*"` di klien. Gerbang `STORE_ADMIN` â€” tanpa sesi atau role lain menjawab `403 FORBIDDEN` (`src/lib/uploadthing/core.ts`).
 - Batas 4MB menggantikan 5MB spesifikasi karena Uploadthing hanya menerima ukuran kelipatan pangkat dua (keputusan `docs/04` bagian 10, 2026-10-09).
 - Galat unggah di klien menampilkan "Gagal mengunggah gambar, coba lagi"; tombol unggah bisa dipakai ulang (bagian 8).
 - Endpoint terpisah `refundProof` (bukti refund manual, ORDER-06): gambar, maksimal 1 berkas 4MB, gerbang `STORE_ADMIN` sama.
-- Status uji: gerbang terverifikasi `403`/`200` sejak PH-01; unggah berkas nyata belum pernah diuji — `UPLOADTHING_TOKEN` sudah terisi (dicek 2026-10-11), pengujian menyusul.
+- Status uji: gerbang terverifikasi `403`/`200` sejak PH-01; unggah berkas nyata belum pernah diuji â€” `UPLOADTHING_TOKEN` sudah terisi (dicek 2026-10-11), pengujian menyusul.
 
 ### 5. Alur berhasil
 
@@ -330,7 +330,7 @@ Tidak ada — ready for implementation.
 
 - **Halaman:** Admin product form
 - **Elemen:** Name, slug, description, category, brand, status, images (4 max), size chart (opsional, maks 1), variants (dynamic)
-- **Gambar varian:** setiap baris varian punya pemilih satu gambar opsional (`VariantImagePicker`) — pratinjau 64px, tombol Unggah/Ganti, dan Hapus. Unggahan memakai endpoint `productImage` yang sama dengan galeri; bidang kosong dikirim sebagai `null` dan nilai tersimpan di `ProductVariant.imageUrl`. Gambar tampil di keranjang, dengan fallback ke gambar produk pertama bila varian tidak punya gambar. Ditambahkan sebagai revisi PH-01 (2026-10-11, `docs/04` bagian 4.8 dan 10).
+- **Gambar varian:** setiap baris varian punya pemilih satu gambar opsional (`VariantImagePicker`) â€” pratinjau 64px, tombol Unggah/Ganti, dan Hapus. Unggahan memakai endpoint `productImage` yang sama dengan galeri; bidang kosong dikirim sebagai `null` dan nilai tersimpan di `ProductVariant.imageUrl`. Gambar tampil di keranjang, dengan fallback ke gambar produk pertama bila varian tidak punya gambar. Ditambahkan sebagai revisi PH-01 (2026-10-11, `docs/04` bagian 4.8 dan 10).
 
 | Kondisi | Tampilan | Tindakan |
 | --- | --- | --- |
@@ -372,13 +372,13 @@ Tidak ada.
 
 ---
 
-## <a name="cart-01"></a>CART-01 — Add to Cart
+## <a name="cart-01"></a>CART-01 â€” Add to Cart
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | CART-01 — Add to Cart |
+| ID dan nama | CART-01 â€” Add to Cart |
 | Modul | MOD-CART |
 | Tujuan | Guest/Customer menambahkan produk ke cart |
 | Aktor utama | Guest, Customer |
@@ -484,13 +484,13 @@ Tidak ada.
 
 ---
 
-## <a name="cart-02"></a>CART-02 — Update Cart Item
+## <a name="cart-02"></a>CART-02 â€” Update Cart Item
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | CART-02 — Update Cart Item |
+| ID dan nama | CART-02 â€” Update Cart Item |
 | Modul | MOD-CART |
 | Tujuan | Guest/Customer mengubah jumlah item di cart dari halaman keranjang |
 | Aktor utama | Guest, Customer |
@@ -511,7 +511,7 @@ Tidak ada.
 | --- | --- | --- | --- |
 | Guest | Ubah jumlah | Own session cart (Redis) | N/A |
 | Customer | Ubah jumlah | Own cart (PostgreSQL) | N/A |
-| Bukan pemilik cart | Ubah jumlah | Tidak ada — identitas diambil dari sesi/cookie, bukan dari body | Cart milik orang lain tidak pernah tersentuh |
+| Bukan pemilik cart | Ubah jumlah | Tidak ada â€” identitas diambil dari sesi/cookie, bukan dari body | Cart milik orang lain tidak pernah tersentuh |
 
 ### 4. Input dan validasi
 
@@ -596,13 +596,13 @@ Tidak ada.
 
 ---
 
-## <a name="cart-03"></a>CART-03 — Remove from Cart
+## <a name="cart-03"></a>CART-03 â€” Remove from Cart
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | CART-03 — Remove from Cart |
+| ID dan nama | CART-03 â€” Remove from Cart |
 | Modul | MOD-CART |
 | Tujuan | Guest/Customer membuang satu item dari cart |
 | Aktor utama | Guest, Customer |
@@ -623,7 +623,7 @@ Tidak ada.
 | --- | --- | --- | --- |
 | Guest | Hapus item | Own session cart (Redis) | N/A |
 | Customer | Hapus item | Own cart (PostgreSQL) | N/A |
-| Bukan pemilik cart | Hapus item | Tidak ada — identitas diambil dari sesi/cookie, bukan dari body | Cart milik orang lain tidak pernah tersentuh |
+| Bukan pemilik cart | Hapus item | Tidak ada â€” identitas diambil dari sesi/cookie, bukan dari body | Cart milik orang lain tidak pernah tersentuh |
 
 ### 4. Input dan validasi
 
@@ -700,7 +700,7 @@ Tidak ada.
 
 ---
 
-## <a name="cart-04"></a>CART-04 — Merge Guest Cart on Login (tambahan)
+## <a name="cart-04"></a>CART-04 â€” Merge Guest Cart on Login (tambahan)
 
 > Fitur ini **tambahan di luar indeks PRD**. PRD tidak mencantumkannya sebagai fitur terpisah, tetapi
 > perilakunya wajib begitu keranjang guest disimpan di luar akun: tanpa penggabungan, item yang
@@ -710,12 +710,12 @@ Tidak ada.
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | CART-04 — Merge Guest Cart on Login |
+| ID dan nama | CART-04 â€” Merge Guest Cart on Login |
 | Modul | MOD-CART |
 | Tujuan | Isi keranjang guest dipindahkan ke keranjang customer setelah login/registrasi, tanpa kehilangan item |
 | Aktor utama | Guest yang baru login/registrasi |
 | Status | Terimplementasi (PH-02) |
-| Referensi PRD | PRD 3.1.B (Shopping Cart) — perilaku turunan |
+| Referensi PRD | PRD 3.1.B (Shopping Cart) â€” perilaku turunan |
 | Referensi SDD | SDD 4.3 (MOD-CART) |
 
 ### 2. Prasyarat dan pemicu
@@ -812,13 +812,13 @@ Tidak ada.
 
 ---
 
-## <a name="ship-01"></a>SHIP-01 — Calculate Shipping Cost
+## <a name="ship-01"></a>SHIP-01 â€” Calculate Shipping Cost
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | SHIP-01 — Calculate Shipping Cost |
+| ID dan nama | SHIP-01 â€” Calculate Shipping Cost |
 | Modul | MOD-SHIP |
 | Tujuan | Menghitung ongkos kirim dari lokasi toko ke kecamatan tujuan, berdasarkan berat paket |
 | Aktor utama | Guest, Customer |
@@ -839,7 +839,7 @@ Tidak ada.
 | --- | --- | --- | --- |
 | Guest | Hitung ongkir | Berat dari keranjang guest-nya sendiri | N/A |
 | Customer | Hitung ongkir | Berat dari keranjangnya sendiri | N/A |
-| Bukan pemilik | Hitung ongkir | Tidak bisa — berat dihitung server dari identitas pemanggil | Body `weight` dari klien diabaikan |
+| Bukan pemilik | Hitung ongkir | Tidak bisa â€” berat dihitung server dari identitas pemanggil | Body `weight` dari klien diabaikan |
 
 ### 4. Input dan validasi
 
@@ -860,7 +860,7 @@ Tidak ada.
 
 ### 6. Output dan perubahan data
 
-- **Hasil:** `{source, cached, options:[{courier,code,service,description,cost,etd}]}` — berat paket **tidak** ikut di respons supaya tidak terbaca customer/guest; berat tetap dipakai server sebagai kunci cache dan parameter RajaOngkir
+- **Hasil:** `{source, cached, options:[{courier,code,service,description,cost,etd}]}` â€” berat paket **tidak** ikut di respons supaya tidak terbaca customer/guest; berat tetap dipakai server sebagai kunci cache dan parameter RajaOngkir
 - **Data dibaca:** Keranjang (kuantitas per item), berat varian dari data produk, pengaturan env (origin, kurir)
 - **Data dibuat:** Cache Redis `ship:cost:*` (TTL 10 menit), `ship:search:v2:*` (TTL 5 menit; versi naik saat bentuk entri bertambah field)
 - **Kondisi akhir:** Ongkir terhitung; belum ada pesanan yang dibuat (itu PH-03)
@@ -929,7 +929,7 @@ Tidak ada.
 
 ---
 
-## <a name="order-01"></a>ORDER-01 — Create Order (Guest Checkout)
+## <a name="order-01"></a>ORDER-01 â€” Create Order (Guest Checkout)
 
 > **Cakupan PH-03:** pembuatan pesanan saja. Pembayaran (Xendit) ada di PH-04, voucher dan email
 > konfirmasi ada di PH-05. Karena itu `voucherCodes` dan AC yang bergantung padanya ditandai
@@ -939,7 +939,7 @@ Tidak ada.
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | ORDER-01 — Create Order (Guest Checkout) |
+| ID dan nama | ORDER-01 â€” Create Order (Guest Checkout) |
 | Modul | MOD-ORDER |
 | Tujuan | Guest checkout tanpa registrasi, dengan OTP verification |
 | Aktor utama | Guest |
@@ -951,8 +951,8 @@ Tidak ada.
 
 - **Prasyarat:** Keranjang berisi minimal satu item terpilih, nomor HP guest terverifikasi (AUTH-01)
 - **Pemicu:** Klik "Checkout" dari halaman keranjang
-- **Titik masuk:** Halaman keranjang `/cart` → `/checkout`
-- **Jika tidak terpenuhi:** Keranjang kosong atau tidak ada item terpilih → kembali ke `/cart`; nomor belum terverifikasi → tampilkan langkah OTP
+- **Titik masuk:** Halaman keranjang `/cart` â†’ `/checkout`
+- **Jika tidak terpenuhi:** Keranjang kosong atau tidak ada item terpilih â†’ kembali ke `/cart`; nomor belum terverifikasi â†’ tampilkan langkah OTP
 
 ### 3. Hak akses
 
@@ -1062,17 +1062,17 @@ Tidak ada.
 
 - Pelepasan reservasi 10 menit memakai **pelepasan malas**: diperiksa saat ada permintaan yang membaca pesanan, bukan lewat penjadwal. Alasan: Vercel Cron di paket Hobby hanya berjalan harian sehingga tidak cocok untuk batas 10 menit, sedangkan pelepasan malas tidak butuh infrastruktur tambahan dan tetap idempoten. Rincian: `docs/04` bagian 6.
 - **Selesai di PH-04:** batas reservasi kini sama dengan masa bayar invoice Xendit, diambil dari env `XENDIT_INVOICE_DURATION` (detik). Saat pembayaran dibuat, `stockReservedUntil` diselaraskan ke `expiry_date` invoice sehingga stok tidak dilepas saat pembeli masih bisa membayar.
-- Stok dikurangi saat pesanan dibuat lalu dikembalikan saat reservasi kedaluwarsa. PH-04 tidak perlu mengurangi stok lagi saat pembayaran berhasil — cukup mengubah status pesanan.
+- Stok dikurangi saat pesanan dibuat lalu dikembalikan saat reservasi kedaluwarsa. PH-04 tidak perlu mengurangi stok lagi saat pembayaran berhasil â€” cukup mengubah status pesanan.
 
 ---
 
-## <a name="order-02"></a>ORDER-02 — Create Order (Customer)
+## <a name="order-02"></a>ORDER-02 â€” Create Order (Customer)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | ORDER-02 — Create Order (Customer) |
+| ID dan nama | ORDER-02 â€” Create Order (Customer) |
 | Modul | MOD-ORDER |
 | Tujuan | Customer yang sudah login membuat pesanan tanpa verifikasi OTP (sudah terautentikasi) |
 | Aktor utama | Customer |
@@ -1084,8 +1084,8 @@ Tidak ada.
 
 - **Prasyarat:** Ada sesi login, keranjang berisi minimal satu item terpilih
 - **Pemicu:** Klik "Checkout" dari `/cart`
-- **Titik masuk:** `/cart` → `/checkout`
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; tidak ada item terpilih → kembali ke `/cart`
+- **Titik masuk:** `/cart` â†’ `/checkout`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`; tidak ada item terpilih â†’ kembali ke `/cart`
 
 ### 3. Hak akses
 
@@ -1181,17 +1181,17 @@ Tidak ada.
 
 ### 13. Pertanyaan terbuka
 
-- **Diperbarui 2026-10-10:** alamat tersimpan (maks 5, PRD 5.8) kini punya fase — **PH-07 Customer Management** (`docs/04` bagian 12). Sampai fase itu selesai, alamat tetap diisi per pesanan dan disimpan sebagai `shippingAddress` (JSON) di Order, sesuai SDD 6.2.
+- **Diperbarui 2026-10-10:** alamat tersimpan (maks 5, PRD 5.8) kini punya fase â€” **PH-07 Customer Management** (`docs/04` bagian 12). Sampai fase itu selesai, alamat tetap diisi per pesanan dan disimpan sebagai `shippingAddress` (JSON) di Order, sesuai SDD 6.2.
 
 ---
 
-## <a name="order-03"></a>ORDER-03 — Order History
+## <a name="order-03"></a>ORDER-03 â€” Order History
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | ORDER-03 — Order History |
+| ID dan nama | ORDER-03 â€” Order History |
 | Modul | MOD-ORDER |
 | Tujuan | Customer melihat daftar dan detail pesanannya sendiri |
 | Aktor utama | Customer |
@@ -1204,7 +1204,7 @@ Tidak ada.
 - **Prasyarat:** Ada sesi login
 - **Pemicu:** Buka `/orders` atau tautan "Pesanan Saya" di menu pengguna
 - **Titik masuk:** `/orders`, `/orders/[id]`
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`
 
 ### 3. Hak akses
 
@@ -1233,7 +1233,7 @@ Tidak ada.
 
 - **Hasil:** Daftar dan detail pesanan
 - **Data dibaca:** Order, OrderItem milik pemanggil
-- **Data diubah:** Status pesanan kedaluwarsa → CANCELED beserta pengembalian stok (pelepasan malas)
+- **Data diubah:** Status pesanan kedaluwarsa â†’ CANCELED beserta pengembalian stok (pelepasan malas)
 - **Kondisi akhir:** Tidak ada perubahan lain
 - **Setelah reload:** Data tetap sama
 
@@ -1291,13 +1291,13 @@ Tidak ada.
 
 ---
 
-## <a name="order-04"></a>ORDER-04 — Track Order (Public)
+## <a name="order-04"></a>ORDER-04 â€” Track Order (Public)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | ORDER-04 — Track Order (Public) |
+| ID dan nama | ORDER-04 â€” Track Order (Public) |
 | Modul | MOD-ORDER |
 | Tujuan | Guest melacak pesanannya tanpa akun, memakai nomor pesanan + nomor HP |
 | Aktor utama | Guest |
@@ -1339,7 +1339,7 @@ Tidak ada.
 
 - **Hasil:** Status pesanan dan ringkasannya
 - **Data dibaca:** Order, OrderItem
-- **Data diubah:** Status pesanan kedaluwarsa → CANCELED beserta pengembalian stok (pelepasan malas)
+- **Data diubah:** Status pesanan kedaluwarsa â†’ CANCELED beserta pengembalian stok (pelepasan malas)
 - **Kondisi akhir:** Tidak ada perubahan lain
 - **Setelah reload:** Hasil lacak tidak disimpan di klien; isi ulang bila perlu
 
@@ -1400,13 +1400,13 @@ Tidak ada.
 
 ---
 
-## <a name="pay-01"></a>PAY-01 — Create Payment (Xendit)
+## <a name="pay-01"></a>PAY-01 â€” Create Payment (Xendit)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | PAY-01 — Create Payment (Xendit) |
+| ID dan nama | PAY-01 â€” Create Payment (Xendit) |
 | Modul | MOD-PAY |
 | Tujuan | Generate payment invoice via Xendit untuk order |
 | Aktor utama | System (triggered after order creation) |
@@ -1514,13 +1514,13 @@ Jumlah (`amount`) tidak diterima dari klien; server memakai `Order.total` (AC-OR
 
 ---
 
-## <a name="pay-02"></a>PAY-02 — Webhook Handler (Xendit)
+## <a name="pay-02"></a>PAY-02 â€” Webhook Handler (Xendit)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | PAY-02 — Webhook Handler (Xendit) |
+| ID dan nama | PAY-02 â€” Webhook Handler (Xendit) |
 | Modul | MOD-PAY |
 | Tujuan | Process Xendit webhook untuk update payment/order status |
 | Aktor utama | Xendit (external) |
@@ -1591,7 +1591,7 @@ Catatan: **stok tidak dikurangi di sini.** Stok sudah dipotong saat pesanan dibu
 
 ### 9. Perilaku UI
 
-Tidak berlaku — background process.
+Tidak berlaku â€” background process.
 
 ### 10. Kriteria penerimaan
 
@@ -1623,13 +1623,13 @@ Tidak berlaku — background process.
 
 ---
 
-## <a name="cust-01"></a>CUST-01 — Alamat Tersimpan
+## <a name="cust-01"></a>CUST-01 â€” Alamat Tersimpan
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | CUST-01 — Alamat Tersimpan |
+| ID dan nama | CUST-01 â€” Alamat Tersimpan |
 | Modul | MOD-CUST |
 | Tujuan | Customer menyimpan alamat (maksimal 5) agar bisa dipilih saat checkout tanpa mengetik ulang |
 | Aktor utama | Customer |
@@ -1642,7 +1642,7 @@ Tidak berlaku — background process.
 - **Prasyarat:** Ada sesi login dengan role Customer
 - **Pemicu:** Buka `/profile`, atau memilih alamat tersimpan di `/checkout`
 - **Titik masuk:** `/profile`, `/checkout`, `/api/customer/addresses`, `/api/customer/addresses/[id]`
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; role non-customer → alihkan ke `/admin`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`; role non-customer â†’ alihkan ke `/admin`
 
 ### 3. Hak akses
 
@@ -1688,7 +1688,7 @@ Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian f
 
 - **Hasil:** Daftar alamat tersimpan; alamat terisi di form checkout
 - **Data dibaca:** Address milik pemanggil
-- **Data diubah:** Address (create/update/delete). `Order.shippingAddress` **tidak** berubah — pesanan lama tetap snapshot
+- **Data diubah:** Address (create/update/delete). `Order.shippingAddress` **tidak** berubah â€” pesanan lama tetap snapshot
 - **Kondisi akhir:** Maksimal 5 alamat, tepat satu `isPrimary` selama masih ada alamat
 - **Setelah reload:** Daftar alamat tetap sama
 
@@ -1758,17 +1758,17 @@ Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian f
 
 - Batas 5 alamat ditegakkan dengan `count` di dalam transaksi, bukan constraint unik di database (batas bersifat dinamis). Dua permintaan yang benar-benar bersamaan secara teoretis bisa lolos melewati batas; risiko dinilai rendah dan dicatat di sini.
 - Alamat utama tidak bisa "dikosongkan" (hanya penanda `true` yang dihormati) supaya selalu ada satu alamat utama.
-- **Direncanakan PH-10 (keputusan pengguna 2026-10-11):** halaman alamat berdiri sendiri di `/profile/addresses` dan hanya berisi alamat — tanpa info akun maupun preferensi notifikasi. Spesifikasi di atas tetap menggambarkan kondisi PH-07 sampai PH-10 dikerjakan; API `/api/customer/addresses` tidak berubah.
+- **Direncanakan PH-10 (keputusan pengguna 2026-10-11):** halaman alamat berdiri sendiri di `/profile/addresses` dan hanya berisi alamat â€” tanpa info akun maupun preferensi notifikasi. Spesifikasi di atas tetap menggambarkan kondisi PH-07 sampai PH-10 dikerjakan; API `/api/customer/addresses` tidak berubah.
 
 ---
 
-## <a name="cust-02"></a>CUST-02 — Preferensi Notifikasi
+## <a name="cust-02"></a>CUST-02 â€” Preferensi Notifikasi
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | CUST-02 — Preferensi Notifikasi |
+| ID dan nama | CUST-02 â€” Preferensi Notifikasi |
 | Modul | MOD-CUST |
 | Tujuan | Customer memilih jenis email yang ingin diterima |
 | Aktor utama | Customer |
@@ -1781,7 +1781,7 @@ Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian f
 - **Prasyarat:** Ada sesi login Customer
 - **Pemicu:** Buka `/profile` bagian "Preferensi Notifikasi"
 - **Titik masuk:** `/profile`, `/api/customer/notification-preferences`
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`
 
 ### 3. Hak akses
 
@@ -1875,13 +1875,13 @@ Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian f
 
 ---
 
-## <a name="auth-04"></a>AUTH-04 — Set Password (Guest → Customer)
+## <a name="auth-04"></a>AUTH-04 â€” Set Password (Guest â†’ Customer)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | AUTH-04 — Set Password (Guest → Customer) |
+| ID dan nama | AUTH-04 â€” Set Password (Guest â†’ Customer) |
 | Modul | MOD-AUTH |
 | Tujuan | Guest yang mengisi email saat checkout bisa membuat akun customer lewat tautan set password |
 | Aktor utama | Guest dengan email |
@@ -1892,9 +1892,9 @@ Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian f
 ### 2. Prasyarat dan pemicu
 
 - **Prasyarat:** Pesanan guest dibuat dengan `guestEmail` terisi dan email belum terdaftar
-- **Pemicu:** Pesanan guest selesai dibuat → server mengirim email "Buat Password"
+- **Pemicu:** Pesanan guest selesai dibuat â†’ server mengirim email "Buat Password"
 - **Titik masuk:** `/set-password?token=...`, `POST /api/auth/set-password`
-- **Jika tidak terpenuhi:** Email sudah terdaftar → email tidak dikirim
+- **Jika tidak terpenuhi:** Email sudah terdaftar â†’ email tidak dikirim
 
 ### 3. Hak akses
 
@@ -1988,13 +1988,13 @@ Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian f
 
 ---
 
-## <a name="auth-05"></a>AUTH-05 — Reset Password
+## <a name="auth-05"></a>AUTH-05 â€” Reset Password
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | AUTH-05 — Reset Password |
+| ID dan nama | AUTH-05 â€” Reset Password |
 | Modul | MOD-AUTH |
 | Tujuan | Customer yang lupa password bisa membuat password baru lewat tautan email |
 | Aktor utama | Customer |
@@ -2038,7 +2038,7 @@ Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian f
 ### 6. Output dan perubahan data
 
 - **Hasil:** Password akun diperbarui
-- **Data dibaca:** User (email → `id`, `role`), token (Redis)
+- **Data dibaca:** User (email â†’ `id`, `role`), token (Redis)
 - **Data diubah:** User.password (bcrypt), token dihapus
 - **Kondisi akhir:** Password baru berlaku, token tidak bisa dipakai lagi
 - **Setelah reload:** - (sesi lama tidak otomatis dibatalkan)
@@ -2102,13 +2102,13 @@ Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian f
 
 ---
 
-## <a name="order-03b"></a>ORDER-03B — Re-order (lanjutan ORDER-03)
+## <a name="order-03b"></a>ORDER-03B â€” Re-order (lanjutan ORDER-03)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | ORDER-03B — Re-order (lanjutan ORDER-03) |
+| ID dan nama | ORDER-03B â€” Re-order (lanjutan ORDER-03) |
 | Modul | MOD-ORDER |
 | Tujuan | Customer memesan lagi produk dari pesanan lama dengan satu klik |
 | Aktor utama | Customer |
@@ -2121,7 +2121,7 @@ Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian f
 - **Prasyarat:** Ada sesi login Customer dan pesanan miliknya punya item
 - **Pemicu:** Klik tombol "Pesan Lagi" di `/orders` atau `/orders/[id]`
 - **Titik masuk:** `/orders`, `/orders/[id]`, `POST /api/orders/[id]/reorder`
-- **Jika tidak terpenuhi:** Tanpa sesi → `401`; pesanan bukan miliknya → `404`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ `401`; pesanan bukan miliknya â†’ `404`
 
 ### 3. Hak akses
 
@@ -2218,13 +2218,13 @@ Tidak ada body. Kuantitas, harga, dan stok **selalu** diambil server dari data t
 
 ---
 
-## <a name="site-00"></a>SITE-00 — Akses Site Admin (role baru)
+## <a name="site-00"></a>SITE-00 â€” Akses Site Admin (role baru)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | SITE-00 — Akses Site Admin (role baru) |
+| ID dan nama | SITE-00 â€” Akses Site Admin (role baru) |
 | Modul | MOD-AUTH |
 | Tujuan | Memisahkan peran level platform (Site Admin) dari level operasional toko (Store Admin) sesuai PRD 2.4 |
 | Aktor utama | Site Admin |
@@ -2237,7 +2237,7 @@ Tidak ada body. Kuantitas, harga, dan stok **selalu** diambil server dari data t
 - **Prasyarat:** Akun ber-role `SITE_ADMIN` dibuat lewat seed (`SEED_SITE_ADMIN_EMAIL` / `SEED_SITE_ADMIN_PASSWORD`)
 - **Pemicu:** Login di `/login`
 - **Titik masuk:** `/site-admin`, `/api/site-admin/*`
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`
 
 ### 3. Hak akses
 
@@ -2328,13 +2328,13 @@ Tidak ada input. Role dan status aktif dibaca ulang dari database pada setiap pe
 
 ---
 
-## <a name="site-01"></a>SITE-01 — Platform Settings
+## <a name="site-01"></a>SITE-01 â€” Platform Settings
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | SITE-01 — Platform Settings |
+| ID dan nama | SITE-01 â€” Platform Settings |
 | Modul | MOD-CONFIG |
 | Tujuan | Site Admin mengatur perilaku level sistem: mode pemeliharaan dan status pendaftaran publik |
 | Aktor utama | Site Admin |
@@ -2347,7 +2347,7 @@ Tidak ada input. Role dan status aktif dibaca ulang dari database pada setiap pe
 - **Prasyarat:** Ada sesi login Site Admin
 - **Pemicu:** Buka `/site-admin/settings`
 - **Titik masuk:** `/site-admin/settings`, `GET`/`PATCH /api/site-admin/platform-settings`
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; role lain → `403`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`; role lain â†’ `403`
 
 ### 3. Hak akses
 
@@ -2440,13 +2440,13 @@ Tidak ada input. Role dan status aktif dibaca ulang dari database pada setiap pe
 
 ---
 
-## <a name="site-02"></a>SITE-02 — Payment Gateway Configuration (Xendit)
+## <a name="site-02"></a>SITE-02 â€” Payment Gateway Configuration (Xendit)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | SITE-02 — Payment Gateway Configuration (Xendit) |
+| ID dan nama | SITE-02 â€” Payment Gateway Configuration (Xendit) |
 | Modul | MOD-CONFIG |
 | Tujuan | Site Admin mengatur perilaku pembayaran Xendit tanpa menyimpan rahasia di database |
 | Aktor utama | Site Admin |
@@ -2459,7 +2459,7 @@ Tidak ada input. Role dan status aktif dibaca ulang dari database pada setiap pe
 - **Prasyarat:** Ada sesi login Site Admin
 - **Pemicu:** Buka `/site-admin/payment`
 - **Titik masuk:** `/site-admin/payment`, `GET`/`PATCH /api/site-admin/payment-settings`
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; role lain → `403`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`; role lain â†’ `403`
 
 ### 3. Hak akses
 
@@ -2493,7 +2493,7 @@ Kunci rahasia (`XENDIT_SECRET_KEY`, `XENDIT_WEBHOOK_TOKEN`) **tidak** bisa diuba
 - **Hasil:** Konfigurasi pembayaran tersimpan di `PlatformSetting`
 - **Data dibaca:** PlatformSetting, keberadaan env Xendit (bukan nilainya)
 - **Data diubah:** PlatformSetting (`paymentEnabled`, `paymentMode`, `invoiceDurationSeconds`)
-- **Kondisi akhir:** Durasi efektif = nilai database (bila baris ada) → env `XENDIT_INVOICE_DURATION` → bawaan 900 detik
+- **Kondisi akhir:** Durasi efektif = nilai database (bila baris ada) â†’ env `XENDIT_INVOICE_DURATION` â†’ bawaan 900 detik
 - **Setelah reload:** Nilai tetap sama
 
 ### 7. Alur alternatif
@@ -2554,13 +2554,13 @@ Kunci rahasia (`XENDIT_SECRET_KEY`, `XENDIT_WEBHOOK_TOKEN`) **tidak** bisa diuba
 
 ---
 
-## <a name="site-03"></a>SITE-03 — Shipping Provider Configuration (RajaOngkir)
+## <a name="site-03"></a>SITE-03 â€” Shipping Provider Configuration (RajaOngkir)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | SITE-03 — Shipping Provider Configuration (RajaOngkir) |
+| ID dan nama | SITE-03 â€” Shipping Provider Configuration (RajaOngkir) |
 | Modul | MOD-CONFIG |
 | Tujuan | Site Admin mengatur perilaku perhitungan ongkir tanpa menyimpan rahasia di database |
 | Aktor utama | Site Admin |
@@ -2573,7 +2573,7 @@ Kunci rahasia (`XENDIT_SECRET_KEY`, `XENDIT_WEBHOOK_TOKEN`) **tidak** bisa diuba
 - **Prasyarat:** Ada sesi login Site Admin
 - **Pemicu:** Buka `/site-admin/shipping`
 - **Titik masuk:** `/site-admin/shipping`, `GET`/`PATCH /api/site-admin/shipping-settings`
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; role lain → `403`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`; role lain â†’ `403`
 
 ### 3. Hak akses
 
@@ -2609,7 +2609,7 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 - **Hasil:** Konfigurasi ongkir tersimpan di `PlatformSetting`
 - **Data dibaca:** PlatformSetting, keberadaan env RajaOngkir
 - **Data diubah:** PlatformSetting (`shippingEnabled`, `originDistrictId`, `couriers`, `weightPerItemGram`, `flatRateIdr`)
-- **Kondisi akhir:** Nilai efektif = database (bila baris ada) → env → bawaan; cache tarif dibersihkan saat konfigurasi berubah
+- **Kondisi akhir:** Nilai efektif = database (bila baris ada) â†’ env â†’ bawaan; cache tarif dibersihkan saat konfigurasi berubah
 - **Setelah reload:** Nilai tetap sama
 
 ### 7. Alur alternatif
@@ -2670,13 +2670,13 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 
 ---
 
-## <a name="site-04"></a>SITE-04 — User Management (Store Admin)
+## <a name="site-04"></a>SITE-04 â€” User Management (Store Admin)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | SITE-04 — User Management (Store Admin) |
+| ID dan nama | SITE-04 â€” User Management (Store Admin) |
 | Modul | MOD-CONFIG |
 | Tujuan | Site Admin membuat, menonaktifkan/mengaktifkan, dan mereset password akun Store Admin |
 | Aktor utama | Site Admin |
@@ -2689,7 +2689,7 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 - **Prasyarat:** Ada sesi login Site Admin
 - **Pemicu:** Buka `/site-admin/users`
 - **Titik masuk:** `/site-admin/users`, `GET`/`POST /api/site-admin/users`, `PATCH /api/site-admin/users/[id]`
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; role lain → `403`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`; role lain â†’ `403`
 
 ### 3. Hak akses
 
@@ -2724,7 +2724,7 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 - **Hasil:** Akun Store Admin dikelola dari satu halaman
 - **Data dibaca:** User ber-role `STORE_ADMIN`
 - **Data diubah:** User (create; `deactivatedAt`; `password`)
-- **Kondisi akhir:** Penonaktifan berlaku segera — login gagal dan API/halaman Store Admin ditolak pada permintaan berikutnya
+- **Kondisi akhir:** Penonaktifan berlaku segera â€” login gagal dan API/halaman Store Admin ditolak pada permintaan berikutnya
 - **Setelah reload:** Daftar dan status tetap sama
 
 ### 7. Alur alternatif
@@ -2789,18 +2789,18 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 
 ---
 
-## <a name="site-05"></a>SITE-05 — Brand Customization (Identitas, Palet, Banner)
+## <a name="site-05"></a>SITE-05 â€” Brand Customization (Identitas, Palet, Banner)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | SITE-05 — Brand Customization (Identitas, Palet Warna, Banner) |
+| ID dan nama | SITE-05 â€” Brand Customization (Identitas, Palet Warna, Banner) |
 | Modul | MOD-CONFIG |
-| Tujuan | Site Admin mengkustomisasi identitas brand per deployment (1 deployment = 1 brand store): nama, logo, favicon, tagline, palet warna, teks footer, banner homepage — tanpa menyentuh kode |
+| Tujuan | Site Admin mengkustomisasi identitas brand per deployment (1 deployment = 1 brand store): nama, logo, favicon, tagline, palet warna, teks footer, banner homepage â€” tanpa menyentuh kode |
 | Aktor utama | Site Admin |
-| Status | Terimplementasi (PH-09, 2026-10-11) — bukti verifikasi di `docs/04` bagian 14.5, laporan 14.6 |
-| Referensi PRD | PRD 2.4 (Brand Customization), PRD 3.1.J (Theme customization MVP), PRD 7.6, PRD 4.12 — sesuai revisi PRD v1.2 |
+| Status | Terimplementasi (PH-09, 2026-10-11) â€” bukti verifikasi di `docs/04` bagian 14.5, laporan 14.6 |
+| Referensi PRD | PRD 2.4 (Brand Customization), PRD 3.1.J (Theme customization MVP), PRD 7.6, PRD 4.12 â€” sesuai revisi PRD v1.2 |
 | Referensi SDD | SDD 5 (struktur project), SDD 7 (MOD-CONFIG), SDD 10 (keamanan) |
 
 ### 2. Prasyarat dan pemicu
@@ -2808,7 +2808,7 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 - **Prasyarat:** Ada sesi login Site Admin; SITE-00 (role) dan area `/site-admin` dari PH-08 sudah tersedia
 - **Pemicu:** Buka `/site-admin/brand`
 - **Titik masuk:** `/site-admin/brand`, `GET`/`PATCH /api/site-admin/brand`, endpoint Uploadthing `brandAsset` dan `bannerImage`
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; role lain → `403`
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`; role lain â†’ `403`
 
 ### 3. Hak akses
 
@@ -2864,7 +2864,7 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 | --- | --- | --- | --- |
 | 1 | Site Admin buka `/site-admin/brand` | Baca baris `BrandSetting` (atau nilai bawaan bila belum ada) | Form tampil per bagian |
 | 2 | Ubah nama brand + warna primary, klik Simpan | `PATCH /api/site-admin/brand` | `200`; nama dan warna baru berlaku di seluruh rute setelah reload, tanpa rebuild |
-| 3 | Unggah logo lewat form | Uploadthing `brandAsset` → URL disuntikkan ke body PATCH | Header storefront menampilkan gambar (bila kosong: teks nama) |
+| 3 | Unggah logo lewat form | Uploadthing `brandAsset` â†’ URL disuntikkan ke body PATCH | Header storefront menampilkan gambar (bila kosong: teks nama) |
 | 4 | Aktifkan banner + isi gambar/judul/teks/tombol | Simpan | Homepage menampilkan banner lengkap |
 | 5 | Isi teks footer | Simpan | Footer menambah paragraf teks tersebut |
 
@@ -2885,7 +2885,7 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 | Banner aktif tapi tanpa gambar | Banner teks dengan latar muted | Banner tetap tampil |
 | Banner aktif tanpa judul | Judul bawaan memakai nama brand (`Selamat datang di {brandName}`) | Banner tidak pernah kosong |
 | Logo/favicon kosong | Teks nama di header / tanpa ikon tab | Perilaku sama seperti sebelum fitur ini ada |
-| footerText kosong | Footer = tampilan sekarang (nama + tagline + `©`) | Tidak ada baris tambahan |
+| footerText kosong | Footer = tampilan sekarang (nama + tagline + `Â©`) | Tidak ada baris tambahan |
 | Unggah gagal (Uploadthing) | Form menampilkan pesan galat | URL lama tidak berubah |
 
 ### 8. Kondisi gagal
@@ -2921,9 +2921,9 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 | AC-SITE-05-03 | Kirim hex tidak valid | `PATCH /api/site-admin/brand` | `400 VALIDATION_ERROR`, data lama tidak berubah |
 | AC-SITE-05-04 | Store Admin / tanpa sesi | `PATCH /api/site-admin/brand` | `403` / `401` |
 | AC-SITE-05-05 | Logo dikosongkan lalu diisi | Lihat header storefront | Teks nama muncul / gambar muncul |
-| AC-SITE-05-06 | Banner aktif + data lengkap | Buka homepage | Banner tampil; sakelar mati → hero default |
+| AC-SITE-05-06 | Banner aktif + data lengkap | Buka homepage | Banner tampil; sakelar mati â†’ hero default |
 | AC-SITE-05-07 | Nama brand diganti | Cek tab browser, halaman invoice, email berikutnya | Judul, kop, subjek memakai nama baru |
-| AC-SITE-05-08 | `faviconUrl` diisi | Buka tab halaman | Ikon tab berubah; dikosongkan → tanpa ikon |
+| AC-SITE-05-08 | `faviconUrl` diisi | Buka tab halaman | Ikon tab berubah; dikosongkan â†’ tanpa ikon |
 | AC-SITE-05-09 | Store Admin panggil endpoint unggah brand | Uploadthing | Ditolak `403` |
 | AC-SITE-05-10 | `footerText` diisi lalu dikosongkan | Lihat footer | Paragraf tambahan tampil / footer default |
 
@@ -2944,23 +2944,23 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 ### 13. Pertanyaan terbuka
 
 - Palet berlaku **seluruh aplikasi** termasuk `/admin` (keputusan pengguna 2026-10-11). Bila kelak area admin perlu netral, override dibatasi per route group tanpa mengubah penyimpanan.
-- Nama tampilan = `BrandSetting.brandName` **satu-satunya nama** — `StoreSetting.storeName` dihapus (keputusan 2026-10-11, `docs/04` bagian 10): 1 deployment = 1 brand = 1 store, dua nama tidak masuk akal. Label pickup di checkout memakai `brandName`.
+- Nama tampilan = `BrandSetting.brandName` **satu-satunya nama** â€” `StoreSetting.storeName` dihapus (keputusan 2026-10-11, `docs/04` bagian 10): 1 deployment = 1 brand = 1 store, dua nama tidak masuk akal. Label pickup di checkout memakai `brandName`.
 - Halaman bayar Xendit memakai domain Xendit sehingga tidak bisa ikut dikustom; yang bisa dikustom hanyalah kop invoice di deployment ini.
 - Email membaca nama brand saat pengiriman; email yang sudah terkirim memakai nama lama (jejak histori tidak diubah).
 
 ---
 
-## <a name="cust-03"></a>CUST-03 — Profil Akun (halaman mandiri)
+## <a name="cust-03"></a>CUST-03 â€” Profil Akun (halaman mandiri)
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | CUST-03 — Profil Akun |
+| ID dan nama | CUST-03 â€” Profil Akun |
 | Modul | MOD-CUST |
 | Tujuan | Customer melihat dan mengubah data akunnya (nama, email, password) pada halaman mandiri, terpisah dari alamat dan notifikasi |
 | Aktor utama | Customer |
-| Status | Terimplementasi (PH-10, siap direview); revisi 2026-10-11: perubahan email wajib verifikasi ulang lewat tautan ke email baru |
+| Status | Terimplementasi (PH-10, Disetujui); revisi 2026-10-11: perubahan email wajib verifikasi ulang lewat tautan ke email baru |
 | Referensi PRD | PRD 4.8 (Customer Management, revisi 1.4) |
 | Referensi SDD | SDD 4.8 (MOD-CUST), SDD 4.1 (MOD-AUTH) |
 
@@ -2969,7 +2969,7 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 - **Prasyarat:** Sesi login dengan role Customer
 - **Pemicu:** Buka `/profile` dari menu akun di navbar
 - **Titik masuk:** `/profile`, `/api/customer/profile` (rencana); tautan verifikasi email memakai `/verify-email` dan `/api/auth/verify-email` (rencana)
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; role non-customer → alihkan ke `/admin`. Halaman `/verify-email` boleh dibuka tanpa sesi karena otorisasinya memakai token sekali pakai
+- **Jika tidak terpenuhi:** Tanpa sesi â†’ alihkan ke `/login`; role non-customer â†’ alihkan ke `/admin`. Halaman `/verify-email` boleh dibuka tanpa sesi karena otorisasinya memakai token sekali pakai
 
 ### 3. Hak akses
 
@@ -3037,7 +3037,7 @@ Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password
 
 - **Halaman:** `/profile` (halaman mandiri) dan `/verify-email` (halaman verifikasi tautan)
 - **Elemen:** Kartu "Info Akun" (nama, email, tombol Simpan), kartu "Ubah Password" (password saat ini, password baru, tombol Simpan), tautan ke `/profile/addresses`; `/verify-email` memuat pesan status dan tombol "Verifikasi email"
-- **Tidak memuat:** daftar alamat (CUST-01) dan preferensi notifikasi (NOTIF-02) — keduanya dipisah
+- **Tidak memuat:** daftar alamat (CUST-01) dan preferensi notifikasi (NOTIF-02) â€” keduanya dipisah
 
 | Kondisi | Tampilan | Tindakan |
 | --- | --- | --- |
@@ -3086,22 +3086,22 @@ Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password
 - Panjang minimum password mengikuti aturan AUTH-02/AUTH-05 yang sudah berlaku (min 8, maks 72); angka final dicatat pada task PH-10.
 - Keputusan pengguna 2026-10-11: saat password diganti, **password lama langsung tidak berlaku**; sesi lain tidak dipaksa logout (di luar cakupan).
 - Keputusan pengguna 2026-10-11: setelah verifikasi email, **sesi diperbarui diam-diam** (tidak memaksa login ulang) karena penggantian email adalah keinginan pengguna sendiri.
-- Keputusan pengguna 2026-10-11: email verifikasi **selalu dikirim**, tidak tunduk pada preferensi email (CUST-02/NOTIF-02) — sama seperti email set/reset password.
-- Keputusan pengguna 2026-10-11: halaman profil isinya **info akun saja** — riwayat pesanan tetap di `/orders`, alamat di `/profile/addresses`, notifikasi di dialog NOTIF-02.
+- Keputusan pengguna 2026-10-11: email verifikasi **selalu dikirim**, tidak tunduk pada preferensi email (CUST-02/NOTIF-02) â€” sama seperti email set/reset password.
+- Keputusan pengguna 2026-10-11: halaman profil isinya **info akun saja** â€” riwayat pesanan tetap di `/orders`, alamat di `/profile/addresses`, notifikasi di dialog NOTIF-02.
 
 ---
 
-## <a name="notif-02"></a>NOTIF-02 — Pusat Notifikasi In-App
+## <a name="notif-02"></a>NOTIF-02 â€” Pusat Notifikasi In-App
 
 ### 1. Identitas dan tujuan
 
 | Isian | Jawaban |
 | --- | --- |
-| ID dan nama | NOTIF-02 — Pusat Notifikasi In-App |
+| ID dan nama | NOTIF-02 â€” Pusat Notifikasi In-App |
 | Modul | MOD-NOTIF |
 | Tujuan | Customer melihat aktivitas pesanannya dan mengatur preferensi email lewat dialog yang dibuka dari ikon notifikasi di navbar, dengan penanda belum dibaca |
 | Aktor utama | Customer login |
-| Status | Terimplementasi (PH-10, siap direview) |
+| Status | Terimplementasi (PH-10, Disetujui) |
 | Referensi PRD | PRD 3.1.I (revisi 1.3), PRD 4.9 (Notification), PRD 7.7 |
 | Referensi SDD | SDD 4.9 (MOD-NOTIF), SDD 4.8 (MOD-CUST, preferensi) |
 
@@ -3142,7 +3142,7 @@ Daftar notifikasi tidak menerima input dari klien; seluruh isinya diturunkan di 
 ### 6. Output dan perubahan data
 
 - **Hasil:** Daftar notifikasi (judul, deskripsi, waktu, tautan) + jumlah belum dibaca; preferensi terbaru
-- **Data dibaca:** `Order` (`createdAt`, `shippedAt`, `completedAt`, `canceledAt`, `status`), `Payment` (`status`, `paidAt`), `Refund` (`status`, `processedAt`) — hanya milik pemanggil
+- **Data dibaca:** `Order` (`createdAt`, `shippedAt`, `completedAt`, `canceledAt`, `status`), `Payment` (`status`, `paidAt`), `Refund` (`status`, `processedAt`) â€” hanya milik pemanggil
 - **Data diubah:** `NotificationPreference` (lima kolom, sama seperti CUST-02), penanda `notif:last-seen:{userId}` di Redis
 - **Setelah reload:** Daftar tetap sama sampai ada kejadian baru
 
@@ -3185,7 +3185,7 @@ Daftar notifikasi tidak menerima input dari klien; seluruh isinya diturunkan di 
 | Batal sebelum bayar | Pesanan Dibatalkan | Pesanan {nomor} dibatalkan sebelum dibayar. | `/orders/[id]` |
 | Refund selesai | Refund Selesai | Dana refund pesanan {nomor} sudah diproses. | `/orders/[id]` |
 
-Daftar dibatasi **20 entri terbaru** (urut terbaru dulu); entri yang lebih lama tidak ditampilkan — bukan dihapus, karena daftarnya diturunkan dari data pesanan.
+Daftar dibatasi **20 entri terbaru** (urut terbaru dulu); entri yang lebih lama tidak ditampilkan â€” bukan dihapus, karena daftarnya diturunkan dari data pesanan.
 
 ### 10. Kriteria penerimaan
 
@@ -3222,12 +3222,12 @@ Daftar dibatasi **20 entri terbaru** (urut terbaru dulu); entri yang lebih lama 
 - Lima jenis kejadian (keputusan pengguna 2026-10-11): pesanan dibuat dan belum dibayar, pesanan terkirim pertama kali, pesanan sudah tiba, pesanan dibatalkan sebelum bayar, refund selesai (batal setelah bayar). Kejadian di luar daftar ini tidak memunculkan notifikasi.
 - Karena tanpa tabel `Notification`, "belum dibaca" bersifat semua-atau-tidak (satu penanda waktu), bukan per entri; konsekuensinya dijelaskan di bagian 12.
 - Perhitungan badge dilakukan saat layout storefront dirender (request-time, `await connection()` pola `CartBadge`); pembaruan mengikuti reload halaman, tanpa polling.
-- Judul dan deskripsi tiap kejadian memakai diksi paling lumrah (keputusan pengguna 2026-10-11) dan boleh diganti kapan saja — teks acuan di bagian 9. Daftar dibatasi 20 entri terbaru. Sumber waktu memakai kolom yang sudah ada (tanpa migrasi).
+- Judul dan deskripsi tiap kejadian memakai diksi paling lumrah (keputusan pengguna 2026-10-11) dan boleh diganti kapan saja â€” teks acuan di bagian 9. Daftar dibatasi 20 entri terbaru. Sumber waktu memakai kolom yang sudah ada (tanpa migrasi).
 - Keputusan pengguna 2026-10-11: email verifikasi perubahan email (CUST-03) **selalu dikirim** dan tidak tunduk pada preferensi di dialog ini (sama seperti email set/reset password).
 
 ---
 
-**Status:** Spesifikasi Fitur v2.0 — PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) **terimplementasi** (2026-10-11, siap direview — bukti `docs/04` bagian 15.5) beserta revisi UI CUST-01/CUST-02. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`).
+**Status:** Spesifikasi Fitur v2.1 - PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) **terimplementasi dan Disetujui** (2026-10-11, pengguna: "approve" - bukti `docs/04` bagian 15.5) beserta revisi UI CUST-01/CUST-02. Bagian 1A (aturan karakter input semua field, v2.1) terimplementasi di commit `40dcb41`. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`).
 
 **Next steps:**
 1. Tulis bagian rinci fitur yang belum berspesifikasi (utang dokumentasi; daftar di catatan indeks bagian 1 dan `docs/04` bagian 10)
