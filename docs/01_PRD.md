@@ -1,7 +1,7 @@
 # Product Requirements Document (PRD)
 # FlexStore — E-Commerce Platform
 
-**Versi:** 1.3 (Finalized)  
+**Versi:** 1.4 (Finalized)  
 **Tanggal:** 8 Oktober 2026  
 **Status:** Finalized — Siap untuk SDD
 
@@ -10,6 +10,8 @@
 **Revisi 1.2 (11 Oktober 2026):** kustomisasi brand (logo, warna, banner) dipindah dari Store Admin (bagian 2.3) ke Site Admin (bagian 2.4) — 1 deployment = 1 brand store, jadi identitas brand adalah urusan deployment, bukan operasional toko. Cakupan theme customization diperluas: favicon, tagline, teks footer, palet warna (input kode heksadesimal), banner homepage lengkap (gambar + judul + teks + tombol). Keputusan tercatat di `docs/04` bagian 10 dan 14.2; spek di `docs/03` SITE-05. Pada tanggal yang sama centang "Variant images" di bagian 3.1.A dan 7.4 dicabut menjadi belum selesai — input gambar varian belum ada di form admin (keputusan `docs/04` bagian 10).
 
 **Revisi 1.3 (11 Oktober 2026):** pusat notifikasi in-app ditambahkan ke bagian 3.1.I, 4.8, 4.9, dan 7.7 — ikon lonceng di navbar membuka dialog berisi daftar notifikasi (diturunkan dari data pesanan, tanpa tabel baru) dan pengaturan preferensi email; badge menandai notifikasi yang belum dilihat. Halaman alamat tersimpan dipisahkan agar fokus pada alamat (`/profile/addresses`), sedangkan `/profile` menjadi halaman akun mandiri (profil saja). Pada tanggal yang sama akses invoice dibatasi hanya untuk pesanan yang sudah lunas — tombol dan halaman invoice tidak tersedia untuk pesanan yang belum dibayar maupun yang dibatalkan sebelum bayar. Keputusan tercatat di `docs/04` bagian 10 dan 15; spek di `docs/03` CUST-01, CUST-02, CUST-03, dan NOTIF-02. Implementasi dijadwalkan pada fase **PH-10**.
+
+**Revisi 1.4 (11 Oktober 2026):** perubahan email customer wajib verifikasi ulang. Saat customer mengganti email di `/profile`, sistem mengirim tautan verifikasi sekali pakai ke email baru, dan `User.email` baru berubah setelah tautan itu dibuka; email lama tetap aktif sampai verifikasi selesai, dan permintaan baru membatalkan tautan sebelumnya. Keputusan tercatat di `docs/04` bagian 10 dan 15; spek di `docs/03` CUST-03. Implementasi dijadwalkan pada fase **PH-10**.
 
 ---
 
@@ -363,7 +365,7 @@ Gambaran modul tanpa detail teknis (detail teknis masuk SDD):
 - Shipping status update
 
 ### 4.8 Customer Management
-- Customer profile — halaman akun mandiri (`/profile`): nama, email, ubah password (revisi 1.3)
+- Customer profile — halaman akun mandiri (`/profile`): nama, email, ubah password; perubahan email wajib verifikasi ulang lewat tautan ke email baru (revisi 1.4)
 - Address management (max 5) — halaman khusus alamat (`/profile/addresses`), tanpa info profil maupun preferensi notifikasi (revisi 1.3)
 - Order history
 - Notification preferences — diakses lewat dialog yang dibuka dari ikon notifikasi di navbar (revisi 1.3)

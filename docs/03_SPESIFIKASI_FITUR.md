@@ -11,8 +11,8 @@
 
 ## 1. Identitas dan indeks fitur
 
-- **Versi / tanggal:** v1.6 / 2026-10-11
-- **Versi PRD / SDD:** PRD v1.2, SDD v1.0
+- **Versi / tanggal:** v1.8 / 2026-10-11
+- **Versi PRD / SDD:** PRD v1.4, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
 ### Indeks Fitur (MVP) — Phase Bertahap
@@ -61,7 +61,7 @@
 | | | SITE-03 | Shipping Provider Configuration (RajaOngkir) | Terimplementasi | [SITE-03](#site-03) |
 | | | SITE-04 | User Management (Store Admin) | Terimplementasi | [SITE-04](#site-04) |
 | **Phase 9** | **MOD-CONFIG** | SITE-05 | Brand Customization (identitas, palet, banner) | Terimplementasi (PH-09, 2026-10-11) | [SITE-05](#site-05) |
-| **Phase 10** | **MOD-CUST** | CUST-03 | Profil Akun (halaman mandiri) | Draft (spek ditulis, PH-10) | [CUST-03](#cust-03) |
+| **Phase 10** | **MOD-CUST** | CUST-03 | Profil Akun (halaman mandiri) | Draft (spek ditulis, PH-10; revisi 2026-10-11: ganti email wajib verifikasi) | [CUST-03](#cust-03) |
 | | **MOD-NOTIF** | NOTIF-02 | Pusat Notifikasi In-App (ikon navbar) | Draft (spek ditulis, PH-10) | [NOTIF-02](#notif-02) |
 
 **Phase Checkpoint:**
@@ -2928,22 +2928,23 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 | Modul | MOD-CUST |
 | Tujuan | Customer melihat dan mengubah data akunnya (nama, email, password) pada halaman mandiri, terpisah dari alamat dan notifikasi |
 | Aktor utama | Customer |
-| Status | Draft (spek ditulis, PH-10) |
-| Referensi PRD | PRD 4.8 (Customer Management, revisi 1.3) |
+| Status | Draft (spek ditulis, PH-10); revisi 2026-10-11: perubahan email wajib verifikasi ulang lewat tautan ke email baru |
+| Referensi PRD | PRD 4.8 (Customer Management, revisi 1.4) |
 | Referensi SDD | SDD 4.8 (MOD-CUST), SDD 4.1 (MOD-AUTH) |
 
 ### 2. Prasyarat dan pemicu
 
 - **Prasyarat:** Sesi login dengan role Customer
 - **Pemicu:** Buka `/profile` dari menu akun di navbar
-- **Titik masuk:** `/profile`, `/api/customer/profile` (rencana)
-- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; role non-customer → alihkan ke `/admin`
+- **Titik masuk:** `/profile`, `/api/customer/profile` (rencana); tautan verifikasi email memakai `/verify-email` dan `/api/auth/verify-email` (rencana)
+- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; role non-customer → alihkan ke `/admin`. Halaman `/verify-email` boleh dibuka tanpa sesi karena otorisasinya memakai token sekali pakai
 
 ### 3. Hak akses
 
 | Role | Tindakan | Cakupan | Respons |
 | --- | --- | --- | --- |
 | Customer login | Baca/ubah data akun sendiri | Miliknya sendiri (selalu dari sesi) | - |
+| Pemilik tautan verifikasi (boleh tanpa sesi) | Menyelesaikan verifikasi email baru | Hanya token valid dan belum terpakai | `400 TOKEN_INVALID` bila token salah atau kedaluwarsa |
 | Store Admin / Site Admin | Akses halaman/API | - | Alihkan ke `/admin`; API `403 FORBIDDEN` |
 | Guest tanpa sesi | Akses halaman/API | - | Alihkan ke `/login`; API `401 UNAUTHORIZED` |
 
@@ -2952,35 +2953,40 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 | Input | Tipe | Wajib | Validasi | Pesan error |
 | --- | --- | --- | --- | --- |
 | name | string | Ya | 1-100 karakter | `Nama wajib diisi` |
-| email | string | Ya | Format email, unik antar-akun | `Email sudah digunakan` |
+| email | string | Ya | Format email, unik antar-akun; perubahan email tidak langsung tersimpan (wajib verifikasi) | `Email sudah digunakan` |
+| token (tautan verifikasi) | string | Ya (hanya di `/verify-email`) | Token sekali pakai dari Redis, belum kedaluwarsa | `Tautan verifikasi tidak valid atau sudah kedaluwarsa` |
 | currentPassword | string | Ya (hanya saat ubah password) | Mengikuti aturan password AUTH-02 | `Password saat ini salah` |
 | newPassword | string | Ya (hanya saat ubah password) | Mengikuti aturan password AUTH-02 | `Password tidak memenuhi syarat` |
 
-Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password mengikuti skema AUTH-02/AUTH-05 yang sudah berlaku (dicatat saat PH-10 dirinci).
+Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password mengikuti skema AUTH-02/AUTH-05 yang sudah berlaku (dicatat saat PH-10 dirinci). Token verifikasi email diverifikasi di server lewat Redis: sekali pakai, TTL 24 jam, dan hanya satu tautan aktif per akun.
 
 ### 5. Alur berhasil
 
 | Langkah | Tindakan | Respons | Hasil |
 | --- | --- | --- | --- |
 | 1 | Customer buka `/profile` | Baca data akun dari sesi | Kartu "Info Akun" tampil |
-| 2 | Ubah nama/email lalu Simpan | `PATCH /api/customer/profile` | `200`, data tersimpan |
-| 3 | Isi password saat ini + password baru lalu Simpan | `PATCH` yang sama | `200`, password berubah |
-| 4 | Buka `/profile/addresses` lewat tautan | - | Halaman alamat terbuka; info akun tetap utuh |
+| 2 | Ubah nama lalu Simpan | `PATCH /api/customer/profile` | `200`, nama tersimpan |
+| 3 | Ubah email lalu Simpan | `PATCH` yang sama | `200` + `emailVerificationSent`, tautan verifikasi dikirim ke email baru; email akun belum berubah |
+| 4 | Buka tautan di email baru lalu klik Verifikasi | `POST /api/auth/verify-email` | `200`, email akun menjadi email baru |
+| 5 | Isi password saat ini + password baru lalu Simpan | `PATCH` yang sama | `200`, password berubah |
+| 6 | Buka `/profile/addresses` lewat tautan | - | Halaman alamat terbuka; info akun tetap utuh |
 
 ### 6. Output dan perubahan data
 
-- **Hasil:** Data akun terbaru; password baru bila diubah
-- **Data dibaca:** `User` milik pemanggil
-- **Data diubah:** `User.name`, `User.email`, `User.passwordHash`
-- **Setelah reload:** Perubahan tetap ada
+- **Hasil:** Data akun terbaru; password baru bila diubah; email baru baru berlaku setelah verifikasi selesai
+- **Data dibaca:** `User` milik pemanggil; payload token verifikasi di Redis (`{ userId, newEmail }`)
+- **Data diubah:** `User.name` dan `User.passwordHash` (langsung); `User.email` (setelah verifikasi); token verifikasi di Redis (sekali pakai, TTL 24 jam)
+- **Setelah reload:** Perubahan tetap ada; selama verifikasi belum selesai, email lama tetap dipakai untuk login
 
 ### 7. Alur alternatif
 
 | Kondisi | Perilaku | Hasil |
 | --- | --- | --- |
-| Email tidak diubah | Dianggap sama dengan milik sendiri, bukan bentrok | `200` |
+| Email tidak diubah | Dianggap sama dengan milik sendiri, bukan bentrok; tanpa kirim tautan | `200` |
 | Hanya mengubah nama | Email dan password tidak disentuh | `200` |
 | Bagian password dibiarkan kosong | Password tidak berubah | `200` |
+| Minta ubah email lagi sebelum verifikasi selesai | Permintaan baru membatalkan tautan sebelumnya (hanya satu tautan aktif per akun) | Hanya tautan terbaru yang berlaku |
+| Tautan verifikasi dibuka berkali-kali | Token sudah terpakai dan dihapus | `400 TOKEN_INVALID` |
 
 ### 8. Kondisi gagal
 
@@ -2989,18 +2995,24 @@ Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password
 | Tanpa sesi | `401 UNAUTHORIZED` / alihkan ke `/login` | - |
 | Role bukan customer | `403 FORBIDDEN` / alihkan ke `/admin` | - |
 | Input tidak valid | `400 VALIDATION_ERROR` + `field` | Perbaiki isian |
-| Email sudah dipakai akun lain | `409 EMAIL_IN_USE` | Pakai email lain |
+| Email baru sudah dipakai akun lain (saat mengajukan) | `409 EMAIL_IN_USE` | Pakai email lain |
+| Email baru sudah dipakai akun lain (saat verifikasi) | `409 EMAIL_IN_USE` | Email tidak berubah; ajukan email lain |
+| Tautan verifikasi salah atau kedaluwarsa | `400 TOKEN_INVALID` | Minta tautan baru dari `/profile` |
 | Password saat ini salah | `400 INVALID_PASSWORD` | Ulangi |
 
 ### 9. Perilaku UI
 
-- **Halaman:** `/profile` (halaman mandiri)
-- **Elemen:** Kartu "Info Akun" (nama, email, tombol Simpan), kartu "Ubah Password" (password saat ini, password baru, tombol Simpan), tautan ke `/profile/addresses`
+- **Halaman:** `/profile` (halaman mandiri) dan `/verify-email` (halaman verifikasi tautan)
+- **Elemen:** Kartu "Info Akun" (nama, email, tombol Simpan), kartu "Ubah Password" (password saat ini, password baru, tombol Simpan), tautan ke `/profile/addresses`; `/verify-email` memuat pesan status dan tombol "Verifikasi email"
 - **Tidak memuat:** daftar alamat (CUST-01) dan preferensi notifikasi (NOTIF-02) — keduanya dipisah
 
 | Kondisi | Tampilan | Tindakan |
 | --- | --- | --- |
-| Berhasil simpan | Pesan "Perubahan disimpan." | - |
+| Berhasil simpan nama | Pesan "Perubahan disimpan." | - |
+| Email diubah, menunggu verifikasi | Pesan "Cek email baru untuk menyelesaikan verifikasi." | Buka tautan di email baru |
+| Tautan verifikasi dibuka | Halaman `/verify-email` dengan tombol "Verifikasi email" | Klik tombol |
+| Verifikasi berhasil | Pesan "Email berhasil diverifikasi." | Login memakai email baru |
+| Token tidak valid | Pesan "Tautan verifikasi tidak valid atau sudah kedaluwarsa." + tautan ke `/profile` | Minta tautan baru |
 | Gagal | Pesan galat pada field terkait | Perbaiki isian |
 
 ### 10. Kriteria penerimaan
@@ -3009,11 +3021,14 @@ Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password
 | --- | --- | --- | --- |
 | AC-CUST-03-01 | Customer login | Buka `/profile` | Hanya info akun tampil; alamat dan preferensi tidak ada |
 | AC-CUST-03-02 | Customer login | Ubah nama lalu simpan | `200`, nama berubah setelah reload |
-| AC-CUST-03-03 | Email sudah dipakai akun lain | Simpan email | `409 EMAIL_IN_USE` |
+| AC-CUST-03-03 | Email baru sudah dipakai akun lain | Simpan email baru | `409 EMAIL_IN_USE`, email akun tidak berubah |
 | AC-CUST-03-04 | Password saat ini benar | Ubah password | `200`, login dengan password baru berhasil |
 | AC-CUST-03-05 | Password saat ini salah | Ubah password | `400 INVALID_PASSWORD` |
 | AC-CUST-03-06 | Store Admin | Akses `/api/customer/profile` | `403` |
 | AC-CUST-03-07 | Guest tanpa sesi | Buka `/profile` | Dialihkan ke `/login` |
+| AC-CUST-03-08 | Customer login | Ubah email lalu simpan | `200` + `emailVerificationSent`; tautan verifikasi terkirim ke email baru; email akun belum berubah |
+| AC-CUST-03-09 | Token verifikasi valid | Klik "Verifikasi email" | `200`, email akun menjadi email baru; login dengan email baru berhasil |
+| AC-CUST-03-10 | Token kedaluwarsa atau sudah terpakai | Klik "Verifikasi email" | `400 TOKEN_INVALID`, email akun tidak berubah |
 
 ### 11. Contoh data
 
@@ -3021,17 +3036,20 @@ Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password
 | --- | --- | --- | --- |
 | Ubah nama | `name: "Budi"` | Tersimpan | AC-CUST-03-02 |
 | Email bentrok | `email` milik akun lain | `409` | AC-CUST-03-03 |
+| Ubah email | `email: "baru@contoh.com"` (bebas) | Tautan verifikasi terkirim; email lama tetap berlaku | AC-CUST-03-08 |
+| Verifikasi email | token valid dari email baru | `User.email` berubah ke email baru | AC-CUST-03-09 |
+| Token kedaluwarsa | token lebih dari 24 jam | `400 TOKEN_INVALID` | AC-CUST-03-10 |
 | Ubah password | `currentPassword` benar + `newPassword` | Login dengan password baru berhasil | AC-CUST-03-04 |
 
 ### 12. Batas fitur
 
-- **Termasuk:** Lihat/ubah nama dan email, ubah password, tautan ke halaman alamat
-- **Tidak termasuk:** Alamat tersimpan (CUST-01), preferensi notifikasi (CUST-02/NOTIF-02), riwayat pesanan (ORDER-03, tetap di `/orders`), hapus akun, foto profil, verifikasi ulang email setelah ganti email
-- **Ketergantungan:** MOD-AUTH (sesi), Prisma
+- **Termasuk:** Lihat/ubah nama, ubah email (wajib verifikasi lewat tautan ke email baru), ubah password, tautan ke halaman alamat
+- **Tidak termasuk:** Alamat tersimpan (CUST-01), preferensi notifikasi (CUST-02/NOTIF-02), riwayat pesanan (ORDER-03, tetap di `/orders`), hapus akun, foto profil, verifikasi berjenjang/2FA, perubahan email tanpa verifikasi
+- **Ketergantungan:** MOD-AUTH (sesi + token Redis), MOD-NOTIF (email verifikasi lewat Resend), Prisma
 
 ### 13. Pertanyaan terbuka
 
-- Apakah ganti email perlu verifikasi ulang lewat token ke email baru? Sementara tidak; ditetapkan saat PH-10 dirinci.
+- Keputusan pengguna 2026-10-11: **perubahan email wajib verifikasi ulang** lewat tautan sekali pakai ke email baru. Email lama tetap aktif sampai verifikasi selesai; permintaan baru membatalkan tautan sebelumnya. Token disimpan di Redis (pola set/reset password), TTL 24 jam, dan dibatasi 3 permintaan per jam per akun.
 - Panjang minimum password mengikuti aturan AUTH-02/AUTH-05 yang sudah berlaku; angka final dicatat pada task PH-10.
 - Keputusan pengguna 2026-10-11: halaman profil isinya **info akun saja** — riwayat pesanan tetap di `/orders`, alamat di `/profile/addresses`, notifikasi di dialog NOTIF-02.
 
@@ -3160,7 +3178,7 @@ Daftar notifikasi tidak menerima input dari klien; seluruh isinya diturunkan di 
 
 ---
 
-**Status:** Spesifikasi Fitur v1.7 — PH-07 dan PH-08 (SITE-00..SITE-04) terimplementasi; SITE-05 (Phase 9) dan CUST-03 + NOTIF-02 (Phase 10) speknya selesai, menunggu implementasi PH-09 dan PH-10. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11.
+**Status:** Spesifikasi Fitur v1.8 — PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi; CUST-03 + NOTIF-02 (Phase 10) speknya selesai, menunggu implementasi PH-10. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`).
 
 **Next steps:**
 1. Tulis bagian rinci fitur yang belum berspesifikasi (utang dokumentasi; daftar di catatan indeks bagian 1 dan `docs/04` bagian 10)
