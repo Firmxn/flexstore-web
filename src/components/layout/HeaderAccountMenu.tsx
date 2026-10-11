@@ -84,7 +84,7 @@ export function HeaderAccountMenu({
                 )}
               >
                 <User className="h-4 w-4 text-muted-foreground" />
-                Profil saya
+                Profil
               </Link>
 
               <Link
@@ -96,7 +96,7 @@ export function HeaderAccountMenu({
                 )}
               >
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                Alamat saya
+                Alamat
               </Link>
 
               <Link
@@ -108,7 +108,7 @@ export function HeaderAccountMenu({
                 )}
               >
                 <Package className="h-4 w-4 text-muted-foreground" />
-                Pesanan saya
+                Pesanan
               </Link>
             </>
           ) : null}
