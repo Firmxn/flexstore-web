@@ -1,65 +1,62 @@
+import Link from "next/link";
 import { connection } from "next/server";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { AddressManager } from "@/components/customer/AddressManager";
-import { NotificationPreferencesForm } from "@/components/customer/NotificationPreferencesForm";
+import { AccountProfileForm } from "@/components/customer/AccountProfileForm";
+import { ChangePasswordForm } from "@/components/customer/ChangePasswordForm";
 import { requireCustomerPage } from "@/lib/auth/session";
-import {
-  MAX_ADDRESSES,
-  getAddresses,
-  getNotificationPreferences,
-  toSavedAddress,
-} from "@/lib/customers";
-import { isShippingApiConfigured } from "@/lib/shipping";
+import { getAccountProfile } from "@/lib/customers";
 
 export const metadata = { title: "Profil Saya" };
 
-// CUST-01/CUST-02 (PH-07): alamat tersimpan + preferensi notifikasi. Membaca
-// sesi, jadi request-time.
+// CUST-03 (PH-10): halaman akun mandiri — info akun dan ubah password saja.
+// Alamat ada di /profile/addresses; preferensi notifikasi pindah ke dialog
+// navbar (NOTIF-02). Membaca sesi, jadi request-time.
 export const instant = false;
 
 export default async function ProfilePage() {
   await connection();
 
   const user = await requireCustomerPage();
-
-  const [addresses, preferences] = await Promise.all([
-    getAddresses(user.id),
-    getNotificationPreferences(user.id),
-  ]);
+  const profile = await getAccountProfile(user.id);
 
   return (
     <PageContainer>
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight">Profil Saya</h1>
         <p className="text-sm text-muted-foreground">
-          {user.name}
-          {user.email ? ` - ${user.email}` : ""}
+          Kelola informasi akun dan password Anda.
         </p>
       </div>
 
       <section className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1">
-          <h2 className="font-semibold">Alamat Tersimpan</h2>
-          <p className="text-sm text-muted-foreground">
-            Simpan alamat supaya bisa dipilih saat checkout (maksimal{" "}
-            {MAX_ADDRESSES}).
-          </p>
-        </div>
-        <AddressManager
-          addresses={addresses.map(toSavedAddress)}
-          shippingConfigured={await isShippingApiConfigured()}
-          maxAddresses={MAX_ADDRESSES}
+        <h2 className="font-semibold">Info Akun</h2>
+        <AccountProfileForm
+          defaultName={profile?.name ?? user.name ?? ""}
+          defaultEmail={profile?.email ?? ""}
         />
       </section>
 
       <section className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
-          <h2 className="font-semibold">Preferensi Notifikasi</h2>
+          <h2 className="font-semibold">Ubah Password</h2>
           <p className="text-sm text-muted-foreground">
-            Pilih email yang ingin Anda terima.
+            Gunakan password yang kuat dan mudah Anda ingat.
           </p>
         </div>
-        <NotificationPreferencesForm preferences={preferences} />
+        <ChangePasswordForm />
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="font-semibold">Alamat Saya</h2>
+        <p className="text-sm text-muted-foreground">
+          Simpan alamat supaya bisa dipilih saat checkout.
+        </p>
+        <Link
+          href="/profile/addresses"
+          className="w-fit text-sm font-medium underline"
+        >
+          Kelola alamat
+        </Link>
       </section>
     </PageContainer>
   );

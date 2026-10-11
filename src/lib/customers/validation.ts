@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { phoneSchema } from "@/lib/auth/validation";
+import { newPasswordSchema, personNameSchema, phoneSchema } from "@/lib/auth/validation";
 
 // CUST-01 (PRD 5.8 butir 1): maksimal 5 alamat tersimpan per customer. Batas
 // ditegakkan di server (mutasi), bukan hanya di UI.
@@ -59,3 +59,30 @@ export type AddressUpdateInput = z.infer<typeof addressUpdateSchema>;
 export type NotificationPreferenceInput = z.infer<
   typeof notificationPreferenceSchema
 >;
+
+// CUST-03 (PH-10): skema PATCH /api/customer/profile. Semua field opsional
+// (klien mengirim hanya yang berubah); minimal satu field supaya body kosong
+// tidak lolos. Ganti email memakai aturan email registrasi, dan ganti password
+// wajib menyertakan password saat ini (aturan panjang mengikuti AUTH-02/AUTH-05).
+export const profileUpdateSchema = z
+  .object({
+    name: personNameSchema.optional(),
+    email: z
+      .string({ invalid_type_error: "Email tidak valid" })
+      .trim()
+      .toLowerCase()
+      .email("Email tidak valid")
+      .max(255, "Email maksimal 255 karakter")
+      .optional(),
+    currentPassword: z.string().optional(),
+    newPassword: newPasswordSchema.optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "Tidak ada perubahan",
+  })
+  .refine((value) => !value.newPassword || Boolean(value.currentPassword), {
+    message: "Password saat ini wajib diisi",
+    path: ["currentPassword"],
+  });
+
+export type ProfileUpdateInput = z.infer<typeof profileUpdateSchema>;

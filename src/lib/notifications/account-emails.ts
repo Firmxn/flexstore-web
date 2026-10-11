@@ -1,8 +1,10 @@
 import { buildPasswordResetEmail } from "@/emails/password-reset";
 import { buildSetPasswordEmail } from "@/emails/set-password";
+import { buildEmailChangeEmail } from "@/emails/verify-email-change";
 import { getBrandSetting } from "@/lib/brand";
 import { prisma } from "@/lib/db/prisma";
 import {
+  createEmailChangeToken,
   createPasswordResetToken,
   createSetPasswordToken,
 } from "@/lib/auth/tokens";
@@ -102,5 +104,36 @@ export async function sendPasswordResetEmail(
     }
   } catch (error) {
     console.error("[notifications] gagal mengirim email reset password", error);
+  }
+}
+
+// CUST-03 (PH-10): kirim tautan verifikasi ke alamat email BARU. Selalu dikirim
+// (tidak tunduk preferensi CUST-02), sama seperti email set/reset password.
+// Token dibuat di sini supaya route pemanggil tidak perlu tahu detailnya.
+export async function sendEmailChangeVerification(
+  userId: string,
+  newEmail: string,
+): Promise<void> {
+  try {
+    if (!isEmailConfigured()) return;
+
+    const token = await createEmailChangeToken(userId, newEmail);
+
+    // SITE-05 (PH-09): subjek dan footer memakai identitas brand.
+    const brand = await getBrandSetting();
+
+    const { subject, html } = buildEmailChangeEmail(
+      `${appUrl()}/verify-email?token=${token}`,
+      brand.brandName,
+    );
+
+    const result = await sendEmail({ to: newEmail, subject, html });
+    if (!result.ok) {
+      console.error(
+        `[notifications] email verifikasi ${newEmail} gagal: ${result.reason}`,
+      );
+    }
+  } catch (error) {
+    console.error("[notifications] gagal mengirim email verifikasi", error);
   }
 }

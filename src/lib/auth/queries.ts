@@ -19,6 +19,15 @@ export function findUserByPhone(phone: string) {
   return prisma.user.findUnique({ where: { phone } });
 }
 
+// CUST-03 (PH-10): data kontak terbaru untuk menyegarkan sesi (jwt callback
+// `trigger === "update"`) tanpa membaca kolom sensitif seperti password.
+export function findUserContactById(id: string) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: { name: true, email: true },
+  });
+}
+
 export async function createCustomer(input: {
   name: string;
   email: string;

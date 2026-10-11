@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getBrandSetting } from "@/lib/brand";
 import { CartBadge } from "./CartBadge";
 import { HeaderUserMenu } from "./HeaderUserMenu";
+import { NotificationBell } from "./NotificationBell";
 
 // SITE-05 (PH-09): nama brand dan logo mengikuti pengaturan Site Admin.
 export async function Header() {
@@ -27,6 +28,11 @@ export async function Header() {
         </Link>
 
         <div className="flex items-center gap-3">
+          <Suspense
+            fallback={<div className="h-9 w-9 animate-pulse rounded-md bg-muted" />}
+          >
+            <NotificationBell />
+          </Suspense>
           <Suspense
             fallback={<div className="h-9 w-24 animate-pulse rounded-md bg-muted" />}
           >

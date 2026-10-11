@@ -61,8 +61,8 @@
 | | | SITE-03 | Shipping Provider Configuration (RajaOngkir) | Terimplementasi | [SITE-03](#site-03) |
 | | | SITE-04 | User Management (Store Admin) | Terimplementasi | [SITE-04](#site-04) |
 | **Phase 9** | **MOD-CONFIG** | SITE-05 | Brand Customization (identitas, palet, banner) | Terimplementasi (PH-09, 2026-10-11) | [SITE-05](#site-05) |
-| **Phase 10** | **MOD-CUST** | CUST-03 | Profil Akun (halaman mandiri) | Draft (spek ditulis, PH-10; revisi 2026-10-11: ganti email wajib verifikasi) | [CUST-03](#cust-03) |
-| | **MOD-NOTIF** | NOTIF-02 | Pusat Notifikasi In-App (ikon navbar) | Draft (spek ditulis, PH-10) | [NOTIF-02](#notif-02) |
+| **Phase 10** | **MOD-CUST** | CUST-03 | Profil Akun (halaman mandiri) | Terimplementasi (PH-10, siap direview; revisi 2026-10-11: ganti email wajib verifikasi) | [CUST-03](#cust-03) |
+| | **MOD-NOTIF** | NOTIF-02 | Pusat Notifikasi In-App (ikon navbar) | Terimplementasi (PH-10, siap direview) | [NOTIF-02](#notif-02) |
 
 **Phase Checkpoint:**
 - **Phase 1:** Admin CRUD products, customer register/login/view products ✓ Foundation ready
@@ -1602,7 +1602,7 @@ Tidak berlaku — background process.
 | Modul | MOD-CUST |
 | Tujuan | Customer menyimpan alamat (maksimal 5) agar bisa dipilih saat checkout tanpa mengetik ulang |
 | Aktor utama | Customer |
-| Status | Terimplementasi (PH-07) |
+| Status | Terimplementasi (PH-07); UI dipisah ke `/profile/addresses` (alamat saja) di PH-10 |
 | Referensi PRD | PRD 2.2 (Customer), PRD 4.8 (Customer Management), PRD 5.8 (Customer Address) |
 | Referensi SDD | SDD 4.8 (MOD-CUST), SDD 6.2 (`shippingAddress`) |
 
@@ -1741,7 +1741,7 @@ Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian f
 | Modul | MOD-CUST |
 | Tujuan | Customer memilih jenis email yang ingin diterima |
 | Aktor utama | Customer |
-| Status | Terimplementasi (PH-07) |
+| Status | Terimplementasi (PH-07); formulir dipindah ke dialog notifikasi di PH-10 |
 | Referensi PRD | PRD 4.8 (Customer Management), PRD 4.9 (Notification) |
 | Referensi SDD | SDD 4.8 (MOD-CUST), SDD 4.9 (MOD-NOTIF) |
 
@@ -2913,7 +2913,7 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 ### 13. Pertanyaan terbuka
 
 - Palet berlaku **seluruh aplikasi** termasuk `/admin` (keputusan pengguna 2026-10-11). Bila kelak area admin perlu netral, override dibatasi per route group tanpa mengubah penyimpanan.
-- Nama tampilan = `BrandSetting.brandName`; `StoreSetting.storeName` (Store Admin, PRD 4.12) tetap ada dan tidak digantikan — keduanya sengaja terpisah (identitas brand per deployment vs info toko operasional).
+- Nama tampilan = `BrandSetting.brandName` **satu-satunya nama** — `StoreSetting.storeName` dihapus (keputusan 2026-10-11, `docs/04` bagian 10): 1 deployment = 1 brand = 1 store, dua nama tidak masuk akal. Label pickup di checkout memakai `brandName`.
 - Halaman bayar Xendit memakai domain Xendit sehingga tidak bisa ikut dikustom; yang bisa dikustom hanyalah kop invoice di deployment ini.
 - Email membaca nama brand saat pengiriman; email yang sudah terkirim memakai nama lama (jejak histori tidak diubah).
 
@@ -2929,7 +2929,7 @@ Kunci `RAJAONGKIR_API_KEY` **tidak** bisa diubah dari UI; hanya statusnya ditamp
 | Modul | MOD-CUST |
 | Tujuan | Customer melihat dan mengubah data akunnya (nama, email, password) pada halaman mandiri, terpisah dari alamat dan notifikasi |
 | Aktor utama | Customer |
-| Status | Draft (spek ditulis, PH-10); revisi 2026-10-11: perubahan email wajib verifikasi ulang lewat tautan ke email baru |
+| Status | Terimplementasi (PH-10, siap direview); revisi 2026-10-11: perubahan email wajib verifikasi ulang lewat tautan ke email baru |
 | Referensi PRD | PRD 4.8 (Customer Management, revisi 1.4) |
 | Referensi SDD | SDD 4.8 (MOD-CUST), SDD 4.1 (MOD-AUTH) |
 
@@ -3000,6 +3000,7 @@ Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password
 | Email baru sudah dipakai akun lain (saat verifikasi) | `409 EMAIL_IN_USE` | Email tidak berubah; ajukan email lain |
 | Tautan verifikasi salah atau kedaluwarsa | `400 TOKEN_INVALID` | Minta tautan baru dari `/profile` |
 | Password saat ini salah | `400 INVALID_PASSWORD` | Ulangi |
+| Terlalu banyak permintaan ganti email (lebih dari 3 dalam 1 jam per akun) | `429 RATE_LIMITED` | Tunggu lalu ajukan lagi |
 
 ### 9. Perilaku UI
 
@@ -3069,7 +3070,7 @@ Semua input divalidasi Zod **sebelum** query Prisma. Angka final aturan password
 | Modul | MOD-NOTIF |
 | Tujuan | Customer melihat aktivitas pesanannya dan mengatur preferensi email lewat dialog yang dibuka dari ikon notifikasi di navbar, dengan penanda belum dibaca |
 | Aktor utama | Customer login |
-| Status | Draft (spek ditulis, PH-10) |
+| Status | Terimplementasi (PH-10, siap direview) |
 | Referensi PRD | PRD 3.1.I (revisi 1.3), PRD 4.9 (Notification), PRD 7.7 |
 | Referensi SDD | SDD 4.9 (MOD-NOTIF), SDD 4.8 (MOD-CUST, preferensi) |
 
@@ -3195,7 +3196,7 @@ Daftar dibatasi **20 entri terbaru** (urut terbaru dulu); entri yang lebih lama 
 
 ---
 
-**Status:** Spesifikasi Fitur v1.9 — PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) speknya selesai dan keputusan lanjutannya tercatat, menunggu implementasi PH-10. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`).
+**Status:** Spesifikasi Fitur v2.0 — PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) **terimplementasi** (2026-10-11, siap direview — bukti `docs/04` bagian 15.5) beserta revisi UI CUST-01/CUST-02. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`).
 
 **Next steps:**
 1. Tulis bagian rinci fitur yang belum berspesifikasi (utang dokumentasi; daftar di catatan indeks bagian 1 dan `docs/04` bagian 10)

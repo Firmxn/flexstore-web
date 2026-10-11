@@ -41,23 +41,20 @@ export const otpCodeSchema = z
   .trim()
   .regex(/^\d{6}$/, "Kode OTP tidak valid");
 
+// Nama orang dipakai registrasi (AUTH-02) dan ubah profil (CUST-03): maksimal
+// huruf (termasuk berdiakritik), spasi, dan koneksi umum (koma titik strip
+// apostrof). Angka gk wajar untuk nama lengkap ("12345", "0812xxxx") — ditolak,
+// bukan hanya di-minim-kan.
+export const personNameSchema = z
+  .string({ required_error: "Nama wajib diisi", invalid_type_error: "Nama wajib diisi" })
+  .trim()
+  .min(1, "Nama wajib diisi")
+  .max(100, "Nama maksimal 100 karakter")
+  .regex(/^[A-Za-z\u00C0-\u024F' .-]+$/, "Nama hanya boleh berisi huruf")
+  .regex(/[A-Za-z\u00C0-\u024F]/, "Nama harus mengandung huruf");
+
 export const registerSchema = z.object({
-  name: z
-    .string({ required_error: "Nama wajib diisi", invalid_type_error: "Nama wajib diisi" })
-    .trim()
-    .min(1, "Nama wajib diisi")
-    .max(100, "Nama maksimal 100 karakter")
-    // Nama orang: maksimal huruf (termasuk berdiakritik), spasi, dan koneksi
-    // umum (koma titik strip apostrof). Angka gk wajar untuk nama lengkap
-    // ("12345", "0812xxxx") — ditolak, bukan hanya di-minim-kan.
-    .regex(
-      /^[A-Za-z\u00C0-\u024F' .-]+$/,
-      "Nama hanya boleh berisi huruf",
-    )
-    .regex(
-      /[A-Za-z\u00C0-\u024F]/,
-      "Nama harus mengandung huruf",
-    ),
+  name: personNameSchema,
   email: z
     .string({
       required_error: "Email wajib diisi",
@@ -161,6 +158,13 @@ export const resetPasswordSchema = z.object({
   password: newPasswordSchema,
 });
 
+// CUST-03 (PH-10): tautan verifikasi email baru. Token sekali pakai dari Redis
+// (pola set/reset password), dibawa lewat query ke halaman /verify-email.
+export const verifyEmailSchema = z.object({
+  token: z.string().trim().min(1, "Token tidak valid").max(256),
+});
+
 export type SetPasswordInput = z.infer<typeof setPasswordSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;

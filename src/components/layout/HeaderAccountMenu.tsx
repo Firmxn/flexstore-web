@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, LogOut, MapPin, Package, ShieldCheck } from "lucide-react";
+import { ChevronDown, LogOut, MapPin, Package, ShieldCheck, User } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { initialsOf } from "@/lib/utils/initials";
 import { useDismiss } from "@/lib/hooks/useDismiss";
@@ -83,8 +83,20 @@ export function HeaderAccountMenu({
                   "hover:bg-accent hover:text-accent-foreground",
                 )}
               >
+                <User className="h-4 w-4 text-muted-foreground" />
+                Profil saya
+              </Link>
+
+              <Link
+                href="/profile/addresses"
+                onClick={() => setOpen(false)}
+                className={cn(
+                  menuItemClass,
+                  "hover:bg-accent hover:text-accent-foreground",
+                )}
+              >
                 <MapPin className="h-4 w-4 text-muted-foreground" />
-                Alamat & Profil
+                Alamat saya
               </Link>
 
               <Link

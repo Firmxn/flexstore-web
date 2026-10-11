@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { AuthProvider } from "@/components/providers/AuthProvider";
 import { brandTagline, getBrandSetting } from "@/lib/brand";
 import { brandCssVariables } from "@/lib/brand/palette";
 import "./globals.css";
@@ -45,7 +46,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       style={cssVariables}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
