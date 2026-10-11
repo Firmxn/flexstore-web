@@ -13,6 +13,7 @@ import {
   voucherSchema,
 } from "@/lib/vouchers/validation";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 export type VoucherOption = {
   id: string;
@@ -165,7 +166,7 @@ export function VoucherForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
         <h2 className="font-semibold">Voucher</h2>

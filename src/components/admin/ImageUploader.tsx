@@ -5,6 +5,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { MAX_PRODUCT_IMAGES } from "@/lib/products/validation";
 import { useUploadThing } from "@/lib/uploadthing/client";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 type ImageUploaderProps = {
   urls: string[];
@@ -48,7 +49,7 @@ export function ImageUploader({
 
   return (
     <div className="flex flex-col gap-3">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       {urls.length > 0 ? (
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">

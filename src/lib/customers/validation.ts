@@ -1,16 +1,26 @@
 import { z } from "zod";
 import { newPasswordSchema, personNameSchema, phoneSchema } from "@/lib/auth/validation";
+import {
+  ADDRESS_LABEL_REGEX,
+  STREET_REGEX,
+  isControlCharFree,
+  optionalRegionNameSchema,
+  postalCodeSchema,
+  regionNameSchema,
+} from "@/lib/utils/validation";
 
 // CUST-01 (PRD 5.8 butir 1): maksimal 5 alamat tersimpan per customer. Batas
 // ditegakkan di server (mutasi), bukan hanya di UI.
 export const MAX_ADDRESSES = 5;
 
-// Teks opsional: string kosong dari form dianggap tidak diisi.
+// Teks opsional: string kosong dari form dianggap tidak diisi. Karakter kontrol
+// selalu ditolak karena tidak pernah berguna di input manusia.
 const optionalText = (max: number) =>
   z
     .string()
     .trim()
     .max(max, `Maksimal ${max} karakter`)
+    .refine(isControlCharFree, "Isi tidak boleh memuat karakter kontrol")
     .optional()
     .transform((value) => (value ? value : undefined));
 
@@ -22,18 +32,24 @@ const requiredText = (label: string, max: number) =>
     .max(max, `${label} maksimal ${max} karakter`);
 
 export const addressInputSchema = z.object({
-  label: requiredText("Label alamat", 50),
+  label: requiredText("Label alamat", 50)
+    .regex(ADDRESS_LABEL_REGEX, "Label alamat hanya boleh huruf, angka, dan tanda baca umum")
+    .regex(/[A-Za-z0-9]/, "Label alamat harus mengandung huruf atau angka")
+    .refine(isControlCharFree, "Label alamat memuat karakter yang tidak diizinkan"),
   recipientName: personNameSchema,
   phone: phoneSchema,
   // Titik tujuan RajaOngkir (id kota/kecamatan). Wajib untuk menghitung ongkir;
   // disimpan sebagai string supaya tetap fleksibel antar provider.
   destinationId: optionalText(64),
-  province: requiredText("Provinsi", 100),
-  city: requiredText("Kota/Kabupaten", 100),
-  district: optionalText(100),
-  subdistrict: optionalText(100),
-  postalCode: optionalText(10),
-  street: requiredText("Alamat lengkap", 500),
+  province: regionNameSchema("Provinsi"),
+  city: regionNameSchema("Kota/Kabupaten"),
+  district: optionalRegionNameSchema("Kecamatan"),
+  subdistrict: optionalRegionNameSchema("Kelurahan"),
+  postalCode: postalCodeSchema(),
+  street: requiredText("Alamat lengkap", 500)
+    .regex(STREET_REGEX, "Alamat lengkap memuat karakter yang tidak diizinkan")
+    .regex(/[A-Za-z0-9]/, "Alamat lengkap harus mengandung huruf atau angka")
+    .refine(isControlCharFree, "Alamat lengkap memuat karakter yang tidak diizinkan"),
   note: optionalText(500),
   isPrimary: z.boolean().optional().default(false),
 });

@@ -21,6 +21,7 @@ import type {
 import { cn } from "@/lib/utils/cn";
 import { formatDateTime } from "@/lib/utils/format";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // NOTIF-02 (PH-10): lonceng + dialog dua bagian (daftar notifikasi dan
 // pengaturan preferensi email). Daftar diambil saat dialog dibuka, lalu penanda
@@ -125,7 +126,7 @@ export function NotificationDialog({
             {loading ? (
               <p className="text-sm text-muted-foreground">Memuat...</p>
             ) : null}
-            {error ? <Alert variant="destructive">{error}</Alert> : null}
+            <FormErrorAlert message={error} />
             {!loading && !error && feed && feed.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Belum ada notifikasi.

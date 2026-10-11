@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // ORDER-05 (PH-06): pengajuan pembatalan oleh pembeli (PRD 5.5). Hanya seluruh
 // pesanan, dan hanya selama belum dikirim.
@@ -57,7 +58,7 @@ export function CancelOrderForm({ orderId }: { orderId: string }) {
           onChange={(event) => setReason(event.target.value)}
         />
       </div>
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       <div className="flex items-center gap-2">
         <Button type="submit" disabled={submitting}>
           {submitting ? "Mengirim..." : "Kirim Pengajuan"}

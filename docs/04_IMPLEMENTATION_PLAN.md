@@ -1536,7 +1536,29 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
 
 ---
 
-**Status:** Implementation Plan v1.0 — **PH-08 Disetujui** (2026-10-11; commit `f01a6d2`), **PH-09 Disetujui** (2026-10-11; commit `1da2b3a`), dan **PH-10 siap direview** (2026-10-11: implementasi TASK-104..110 + verifikasi klik-through selesai — bukti 15.5, laporan 15.6). PH-01 sampai PH-07
+### 15.7. Perketat aturan karakter input (permintaan pengguna 2026-10-11)
+
+Permintaan pengguna: "semua field memperketat, misalnya nomor HP tidak boleh memasukkan abjad, begitupula lainnya". Sebelumnya beberapa field longgar: nomor HP **membuang** karakter non-angka lalu tetap lolos (`0812abc345` → `+62812345`), kode pos menerima abjad, nama penerima checkout menerima angka, dan seterusnya.
+
+Yang dikerjakan:
+
+- **Modul aturan bersama baru:** `src/lib/utils/validation.ts` — `phoneSchema`/`normalizePhone`, `personNameSchema`, `regionNameSchema(label)`/`optionalRegionNameSchema(label)`, `postalCodeSchema()`, regex `ADDRESS_LABEL_REGEX`, `STREET_REGEX`, `SKU_REGEX`, `COURIER_CODE_REGEX`, `COURIER_SERVICE_REGEX`, `VOUCHER_CODE_REGEX`, `CONTACT_PHONE_REGEX`, `SOCIAL_HANDLE_REGEX`, `PRODUCT_NAME_REGEX`, `CATEGORY_NAME_REGEX`, `CONTROL_CHARS_REGEX`/`isControlCharFree`, plus filter input klien (`PHONE_INPUT_FILTER`, `POSTAL_CODE_INPUT_FILTER`, `OTP_CODE_INPUT_FILTER`).
+- **`src/lib/auth/validation.ts`** tidak lagi mendefinisikan `phoneSchema`/`normalizePhone`/`personNameSchema`; nilainya di-re-export dari modul bersama supaya pemanggil lama (`orders`, `vouchers`, `payments`, `customers`) tidak berubah.
+- **Dipasang ke seluruh schema:** alamat customer (label, nama penerima, wilayah, kode pos, jalan), alamat pengiriman + order (nama, kurir, layanan, kode voucher), profil, produk/varian (SKU, nama), kategori, brand, voucher, Store Admin, pengaturan toko (telepon, media sosial, teks), pengaturan platform (nama Store Admin, pesan pemeliharaan), pengaturan brand (nama brand, teks), alasan pembatalan, dan pencarian (produk/voucher/kota). Aturan lengkap: `docs/03` bagian 1A.
+- **Sisi klien:** `inputMode` + `pattern` + filter saat mengetik untuk nomor HP/kode pos/kode OTP di `AddressManager`, `CheckoutForm`, `OtpVerificationForm`, `TrackOrderForm`; server tetap penentu akhir (OWASP A03).
+
+Bukti verifikasi (2026-10-11):
+
+- `pnpm exec tsc --noEmit` exit 0; `eslint` pada seluruh berkas validasi yang disentuh bersih (0 error).
+- Skrip uji sementara `_tmp-validasi.ts` (dihapus setelah dipakai): **65 kasus lulus / 0 gagal** — menerima nilai wajar (`08123456789`, `0812-3456-789`, `+62 812 3456 7890`, `Budi Santoso`, `DKI Jakarta`, kode pos `40135`, SKU `KAOS-1_2.3`, `Kaos Polos 30s`, `100% Cotton`, `3M Indonesia`, `HEMAT10`, `021-1234567`, `@flexstore.id`, `https://instagram.com/flexstore`) dan menolak nilai tidak wajar (`0812abc345`, `abcdefghij`, `Budi 2`, `12345`, `Jakarta 2`, kode pos `4013`/`ABCDE`, label `@@@`, `Jl. <b>X</b>`, SKU `KAOS 1`, `jne<script>`, `HEMAT 10`, `Kaos <b>`, kategori `123`, `Brand@X`, Store Admin `Admin 1`, telepon `021-abc`, `flex store!`, teks berkarakter kontrol).
+- Uji lewat API dengan sesi customer uji: `POST /api/customer/addresses` dengan `phone: "0812abc345"` → `400 VALIDATION_ERROR` field `phone` "Nomor HP hanya boleh berisi angka"; `postalCode: "ABCDE"` → `400` field `postalCode` "Kode pos harus 5 angka"; `city: "Jakarta 2"` → `400` field `city` "Kota/Kabupaten hanya boleh berisi huruf"; alamat valid → `201`. Data uji dihapus setelahnya (0 alamat tersisa).
+- Uji di browser: mengetik `0812abc345xy` di field nomor HP alamat menghasilkan nilai `0812345`; mengetik `40A1B35` di kode pos menghasilkan `40135`.
+
+**Sambungan (2026-10-11, permintaan pengguna): pesan kesalahan form langsung digulir ke pandangan.** Pengguna menemukan pesan "Nama hanya boleh berisi huruf" jauh dari tombol Simpan di form Ubah Alamat sehingga harus scroll manual. Solusi: komponen bersama `src/components/ui/form-error-alert.tsx` (`FormErrorAlert`) — begitu pesan muncul/berubah, kontainernya `scrollIntoView` ke tengah viewport (gerak instan). Masukregated ke 29 komponen form yang menampilkan `{error ? <Alert variant="destructive">{error}</Alert> : null}` (alamat, checkout, profil, auth/login/register/OTP, keranjang, pembayaran, notifikasi, dan seluruh formulir admin). Diverifikasi di browser: submit form Ubah Alamat dari posisi bawah halaman → scroll langsung ke tengah dengan pesan di tengah viewport.
+
+Batasan: data lama yang sudah tersimpan tidak divalidasi ulang (aturan berlaku saat tulis berikutnya); nama produk/kategori/brand sengaja tetap mengizinkan angka (mis. "Kaos 30s", "3M") selama mengandung huruf; catatan/deskripsi/tagline/kebijakan hanya dilarang memuat karakter kontrol.
+
+
 disetujui (PH-07 commit `c20f525`). Spek PH-08 (SITE-00..SITE-04) dan PH-09 (SITE-05) ditulis lebih dulu di `docs/03` v1.5
 atas permintaan pengguna, baru diimplementasikan.
 

@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +11,11 @@ import { DestinationPicker } from "@/components/shipping/DestinationPicker";
 import type { ShippingDestination } from "@/components/shipping/types";
 import type { SavedAddress } from "@/lib/customers/view";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import {
+  PHONE_INPUT_FILTER,
+  POSTAL_CODE_INPUT_FILTER,
+} from "@/lib/utils/validation";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // CUST-01 (PH-07): kelola alamat tersimpan customer. Daftar + form tambah/ubah
 // dalam satu komponen supaya alur tetap ringkas; semua penegakan aturan (batas 5,
@@ -47,8 +51,52 @@ export function AddressManager({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Daftar lokal: disinkronkan dari props server, lalu ditimpa optimis begitu
+  // API simpan sukses â€” pengguna melihat data baru begitu tombol "Menyimpan..."
+  // selesai, tanpa menunggu render ulang server (router.refresh tetap jalan
+  // di background sebagai kebenaran final). Sinkronisasi memakai pola "adjust
+  // state during render" (React-endorsed), bukan setState di effect.
+  const [localAddresses, setLocalAddresses] = useState(addresses);
+  const [prevAddresses, setPrevAddresses] = useState(addresses);
+  if (addresses !== prevAddresses) {
+    setPrevAddresses(addresses);
+    setLocalAddresses(addresses);
+  }
+  // Anchor form "Tambah Alamat" supaya bisa di-scroll ke layar saat dibuka:
+  // form ada di bawah daftar, jadi tanpa scroll user bisa melewatkannya.
+  const createFormRef = useRef<HTMLDivElement>(null);
 
-  const limitReached = addresses.length >= maxAddresses;
+  useEffect(() => {
+    if (formOpen && !editing) {
+      createFormRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [formOpen, editing]);
+
+  // Terapkan hasil simpan optimis ke daftar lokal: alamat yang diubah
+  // disesuaikan isinya; bila dijadikan utama, lencana utama pindah dari
+  // alamat lain. Urutan dan aturan lain dikoreksi oleh refresh server.
+  function applySaved(updated: SavedAddress) {
+    setLocalAddresses((prev) => {
+      const exists = prev.some((item) => item.id === updated.id);
+      const base = exists
+        ? prev.map((item) =>
+            item.id === updated.id ? updated : { ...item },
+          )
+        : [...prev, updated];
+      return updated.isPrimary
+        ? base.map((item) =>
+            item.id === updated.id ? item : { ...item, isPrimary: false },
+          )
+        : base;
+    });
+    closeForm();
+    router.refresh();
+  }
+
+  const limitReached = localAddresses.length >= maxAddresses;
 
   function openCreate() {
     setEditing(null);
@@ -101,15 +149,15 @@ export function AddressManager({
 
   return (
     <div className="flex flex-col gap-4">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
-      {addresses.length === 0 ? (
+      {localAddresses.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Belum ada alamat tersimpan.
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
-          {addresses.map((address) => (
+          {localAddresses.map((address) => (
             <li
               key={address.id}
               className="flex flex-col gap-2 rounded-xl border border-border bg-background p-4 text-sm"
@@ -150,7 +198,7 @@ export function AddressManager({
                     Batal
                   </Button>
                 </div>
-              ) : (
+              ) : editing?.id === address.id ? null : (
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
@@ -182,22 +230,34 @@ export function AddressManager({
                   </Button>
                 </div>
               )}
+
+              {/* Form ubah dirender inline di kartu alamat yang sedang
+                  diubah â€” user tidak perlu scroll ke bawah halaman untuk
+                  melihat form (form bawah khusus tambah alamat). */}
+              {editing?.id === address.id ? (
+                <AddressForm
+                  key={address.id}
+                  address={editing}
+                  shippingConfigured={shippingConfigured}
+                  onCancel={closeForm}
+                  onSaved={applySaved}
+                />
+              ) : null}
             </li>
           ))}
         </ul>
       )}
 
-      {formOpen ? (
-        <AddressForm
-          key={editing?.id ?? "new"}
-          address={editing}
-          shippingConfigured={shippingConfigured}
-          onCancel={closeForm}
-          onSaved={() => {
-            closeForm();
-            router.refresh();
-          }}
-        />
+      {formOpen && !editing ? (
+        <div ref={createFormRef} className="scroll-mt-24">
+          <AddressForm
+            key="new"
+            address={null}
+            shippingConfigured={shippingConfigured}
+            onCancel={closeForm}
+            onSaved={applySaved}
+          />
+        </div>
       ) : (
         <div className="flex flex-col items-start gap-1">
           <Button
@@ -224,7 +284,10 @@ type AddressFormProps = {
   address: SavedAddress | null;
   shippingConfigured: boolean;
   onCancel: () => void;
-  onSaved: () => void;
+  // Menerima data yang baru disimpan (lengkap, siap tampil) supaya manager
+  // bisa menampilkannya optimis seketika â€” tanpa jeda "sudah disimpan tapi
+  // daftar masih basi".
+  onSaved: (saved: SavedAddress) => void | Promise<void>;
 };
 
 function AddressForm({
@@ -312,16 +375,43 @@ function AddressForm({
     };
 
     try {
-      await apiRequest(
-        address
-          ? `/api/customer/addresses/${address.id}`
-          : "/api/customer/addresses",
-        {
-          method: address ? "PATCH" : "POST",
-          body: JSON.stringify(payload),
-        },
-      );
-      onSaved();
+      // Bentuk data yang baru disimpan dari isi form; ID dari respons POST
+      // untuk tambah (alamat lama sudah punya ID).
+      const saved: SavedAddress = {
+        id: address?.id ?? "",
+        label,
+        recipientName,
+        phone,
+        destinationId: destination?.id ?? null,
+        province,
+        city,
+        district: district || null,
+        subdistrict: subdistrict || null,
+        postalCode: postalCode || null,
+        street,
+        note: note || null,
+        isPrimary,
+      };
+
+      const savedId = address
+        ? address.id
+        : (
+            await apiRequest<{ id: string }>("/api/customer/addresses", {
+              method: "POST",
+              body: JSON.stringify(payload),
+            })
+          ).id;
+
+      if (!address) {
+        await onSaved({ ...saved, id: savedId });
+        return;
+      }
+
+      await apiRequest(`/api/customer/addresses/${address.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+      await onSaved({ ...saved, id: savedId });
     } catch (caught) {
       setError(toErrorMessage(caught));
     } finally {
@@ -338,7 +428,7 @@ function AddressForm({
         {address ? "Ubah Alamat" : "Tambah Alamat"}
       </h3>
 
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2">
@@ -346,6 +436,7 @@ function AddressForm({
           <Input
             id="address-label"
             required
+            autoFocus
             maxLength={50}
             placeholder="Contoh: Rumah"
             value={label}
@@ -368,9 +459,13 @@ function AddressForm({
             id="address-phone"
             required
             inputMode="tel"
+            pattern="[0-9+()\-. ]*"
+            title="Nomor HP hanya boleh berisi angka"
             placeholder="08123456789"
             value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            onChange={(event) =>
+              setPhone(event.target.value.replace(PHONE_INPUT_FILTER, ""))
+            }
           />
         </div>
 
@@ -436,12 +531,16 @@ function AddressForm({
             id="address-postal"
             required
             inputMode="numeric"
-            maxLength={10}
+            pattern="[0-9]{5}"
+            title="Kode pos harus 5 angka"
+            maxLength={5}
             disabled={regionLocked}
             readOnly={autoPostal}
             className={autoPostal ? "bg-muted" : undefined}
             value={postalCode}
-            onChange={(event) => setPostalCode(event.target.value)}
+            onChange={(event) =>
+              setPostalCode(event.target.value.replace(POSTAL_CODE_INPUT_FILTER, ""))
+            }
           />
         </div>
         <div className="flex flex-col gap-2 sm:col-span-2">

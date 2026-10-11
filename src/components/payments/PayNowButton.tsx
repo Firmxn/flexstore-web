@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 type PayNowButtonProps = {
   orderId: string;
@@ -40,7 +41,7 @@ export function PayNowButton({ orderId, phone }: PayNowButtonProps) {
       <Button type="button" onClick={handlePay} disabled={loading} className="w-full">
         {loading ? "Mengalihkan ke pembayaran..." : "Bayar Sekarang"}
       </Button>
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
     </div>
   );
 }

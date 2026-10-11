@@ -1,5 +1,10 @@
 import { z } from "zod";
 import { slugSchema } from "@/lib/categories/validation";
+import {
+  PRODUCT_NAME_REGEX,
+  SKU_REGEX,
+  isControlCharFree,
+} from "@/lib/utils/validation";
 
 export const PRODUCT_STATUSES = [
   "ACTIVE",
@@ -27,7 +32,8 @@ export const productVariantSchema = z.object({
     .string({ required_error: "SKU wajib diisi", invalid_type_error: "SKU wajib diisi" })
     .trim()
     .min(1, "SKU wajib diisi")
-    .max(64, "SKU maksimal 64 karakter"),
+    .max(64, "SKU maksimal 64 karakter")
+    .regex(SKU_REGEX, "SKU hanya boleh huruf, angka, titik, minus, dan garis bawah"),
   name: z
     .string({
       required_error: "Nama variant wajib diisi",
@@ -35,7 +41,9 @@ export const productVariantSchema = z.object({
     })
     .trim()
     .min(1, "Nama variant wajib diisi")
-    .max(200, "Nama variant maksimal 200 karakter"),
+    .max(200, "Nama variant maksimal 200 karakter")
+    .regex(PRODUCT_NAME_REGEX, "Nama variant memuat karakter yang tidak diizinkan")
+    .regex(/[A-Za-z0-9]/, "Nama variant harus mengandung huruf atau angka"),
   price: z
     .number({ invalid_type_error: "Harga harus berupa angka" })
     .positive("Harga harus lebih dari 0")
@@ -62,12 +70,15 @@ export const productSchema = z.object({
     })
     .trim()
     .min(1, "Nama produk wajib diisi")
-    .max(200, "Nama maksimal 200 karakter"),
+    .max(200, "Nama maksimal 200 karakter")
+    .regex(PRODUCT_NAME_REGEX, "Nama produk memuat karakter yang tidak diizinkan")
+    .regex(/[A-Za-z0-9]/, "Nama produk harus mengandung huruf atau angka"),
   slug: slugSchema,
   description: z
     .string()
     .trim()
     .max(5000, "Deskripsi maksimal 5000 karakter")
+    .refine(isControlCharFree, "Deskripsi memuat karakter yang tidak diizinkan")
     .optional()
     .or(z.literal("")),
   categoryId: z
@@ -106,7 +117,12 @@ export const productListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   status: z.enum(PRODUCT_STATUSES).optional(),
-  search: z.string().trim().max(200).optional(),
+  search: z
+    .string()
+    .trim()
+    .max(200)
+    .refine(isControlCharFree, "Kata kunci tidak valid")
+    .optional(),
 });
 
 // Urutan katalog storefront (PRD 3.1.A: filter by name, category, price range, sort).
@@ -126,7 +142,13 @@ export const MAX_PRICE_FILTER = 100_000_000;
 // Filter katalog dibaca dari query string, jadi setiap field dibuat toleran:
 // nilai rusak jatuh ke default, bukan menggagalkan seluruh permintaan.
 export const catalogFilterSchema = z.object({
-  search: z.string().trim().max(200).optional().catch(undefined),
+  search: z
+    .string()
+    .trim()
+    .max(200)
+    .refine(isControlCharFree, "Kata kunci tidak valid")
+    .optional()
+    .catch(undefined),
   category: z.string().trim().max(200).optional().catch(undefined),
   minPrice: z.coerce
     .number()

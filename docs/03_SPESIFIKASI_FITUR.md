@@ -11,7 +11,7 @@
 
 ## 1. Identitas dan indeks fitur
 
-- **Versi / tanggal:** v1.9 / 2026-10-11
+- **Versi / tanggal:** v2.1 / 2026-10-11
 - **Versi PRD / SDD:** PRD v1.5, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
@@ -86,6 +86,37 @@
 - CUST-01 dan CUST-02 tetap berstatus "Terimplementasi (PH-07)"; pemindahan UI-nya (alamat ke
   `/profile/addresses`, preferensi ke dialog notifikasi) bersama fitur baru CUST-03 dan NOTIF-02
   dijadwalkan di **PH-10** (keputusan `docs/04` bagian 10 dan 15).
+
+---
+
+## 1A. Aturan karakter input (berlaku semua fitur)
+
+Aturan bersama untuk seluruh input pengguna (customer, Store Admin, Site Admin). Ditegakkan di server lewat Zod (`src/lib/utils/validation.ts`) sebelum menyentuh Prisma (OWASP A03). Karakter yang tidak wajar untuk jenis field-nya **ditolak dengan pesan jelas**, bukan diam-diam dibuang.
+
+| Jenis field | Yang diterima | Contoh ditolak |
+| --- | --- | --- |
+| Nomor HP | angka + pemisah `+ ( ) - . spasi`; dinormalkan ke +62 + 8-11 angka | `0812abc345` ("Nomor HP hanya boleh berisi angka"), `abcdefghij` |
+| Nama orang (registrasi, profil, nama penerima alamat, nama penerima checkout, nama Store Admin) | huruf (termasuk berdiakritik), spasi, `' . -`; wajib ada huruf | `12345`, `Budi 2` |
+| Wilayah (provinsi, kota, kecamatan, kelurahan) | huruf, spasi, `' . ( ) / , -`; wajib ada huruf | `Jakarta 2` |
+| Kode pos | tepat 5 angka | `4013`, `ABCDE` |
+| Label alamat | huruf/angka + `' . / , -`; wajib ada huruf/angka | `@@@` |
+| Alamat lengkap | huruf/angka + `' . , / ( ) # & : -` dan baris baru; wajib ada huruf/angka | `Jl. <b>X</b>` |
+| SKU varian | huruf/angka + `. _ -` | `KAOS 1` (spasi) |
+| Kode kurir / layanan | kode kurir: huruf/angka + `. _ -`; layanan: huruf/angka + spasi `._-<>+=()` | `jne<script>` |
+| Kode voucher | huruf/angka + `_ -` | `HEMAT 10`, `HEMAT@10` |
+| Nama produk / varian | huruf/angka + `& . , ' ( ) + - / % : !` dan spasi | `Kaos <b>` |
+| Nama kategori / brand / nama brand toko | huruf/angka + `& . , ' ( ) -` dan spasi; wajib ada huruf | `123`, `Brand@X` |
+| Telepon toko | angka + pemisah, minimal 7 angka (nomor rumah/kantor boleh) | `021-abc` |
+| Akun media sosial | handle/URL: `@ A-Z a-z 0-9 . _ - / :`; wajib ada huruf/angka | `flex store!` |
+| Catatan, deskripsi, tagline, teks footer, kebijakan, pesan pemeliharaan | bebas kecuali karakter kontrol | teks dengan karakter kontrol |
+| Email, password | aturan lama tidak berubah (email valid; password 8-72 karakter) | — |
+
+Catatan pelaksanaan:
+
+- Sisi klien menambah `inputMode`, `pattern`, dan filter saat mengetik untuk field angka (nomor HP, kode pos, kode OTP) di `AddressManager`, `CheckoutForm`, `OtpVerificationForm`, dan `TrackOrderForm`. Ini kenyamanan saja; server tetap penentu akhir.
+- Semua pesan kesalahan form ditampilkan lewat `FormErrorAlert` (29 komponen form: alamat, checkout, profil, auth, keranjang, pembayaran, notifikasi, dan formulir admin) yang otomatis menggulir halaman ke tengah viewport tepat di pesan saat pesan muncul — tanpa scroll manual (permintaan pengguna 2026-10-11).
+- Data lama yang sudah tersimpan tidak divalidasi ulang; aturan berlaku saat tulis berikutnya.
+- Perubahan ini hasil permintaan pengguna 2026-10-11 ("semua field memperketat, nomor HP tidak boleh abjad") — dicatat di `docs/04` bagian 15.7.
 
 ---
 

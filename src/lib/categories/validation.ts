@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CATEGORY_NAME_REGEX } from "@/lib/utils/validation";
 
 // Pesan error selalu berbahasa Indonesia, termasuk saat field tidak dikirim
 // (Zod default-nya "Required" / "Expected string, received ...").
@@ -19,7 +20,9 @@ export const categorySchema = z.object({
   name: requiredString("Nama kategori wajib diisi")
     .trim()
     .min(1, "Nama kategori wajib diisi")
-    .max(100, "Nama maksimal 100 karakter"),
+    .max(100, "Nama maksimal 100 karakter")
+    .regex(CATEGORY_NAME_REGEX, "Nama kategori memuat karakter yang tidak diizinkan")
+    .regex(/[A-Za-z]/, "Nama kategori harus mengandung huruf"),
   slug: slugSchema,
 });
 

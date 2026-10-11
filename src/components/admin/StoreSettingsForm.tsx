@@ -10,12 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import type { StoreSettings } from "@/lib/config";
 import { storeSettingsSchema } from "@/lib/config";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // CONFIG-01 (PH-06): form pengaturan toko. Data kosong dikirim sebagai undefined
 // supaya validator menganggapnya "tidak diisi".
 
 type FormValues = {
-  storeName: string;
   storeEmail: string;
   storePhone: string;
   storeAddress: string;
@@ -30,7 +30,6 @@ type FormValues = {
 };
 
 const toForm = (settings: StoreSettings): FormValues => ({
-  storeName: settings.storeName,
   storeEmail: settings.storeEmail ?? "",
   storePhone: settings.storePhone ?? "",
   storeAddress: settings.storeAddress ?? "",
@@ -64,7 +63,6 @@ export function StoreSettingsForm({ initial }: { initial: StoreSettings }) {
     setError(null);
 
     const parsed = storeSettingsSchema.safeParse({
-      storeName: values.storeName,
       storeEmail: orUndefined(values.storeEmail),
       storePhone: orUndefined(values.storePhone),
       storeAddress: orUndefined(values.storeAddress),
@@ -100,22 +98,15 @@ export function StoreSettingsForm({ initial }: { initial: StoreSettings }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       {saved ? <Alert variant="success">Pengaturan tersimpan.</Alert> : null}
 
+      {/* CONFIG-01: nama identitas toko = brandName (SITE-05, Site Admin).
+          Pengaturan toko hanya menampung kontak operasional, kebijakan, dan
+          pickup — tidak ada field "nama toko" untuk menghindari dua nama. */}
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
         <h2 className="font-semibold">Informasi Toko</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="store-name">Nama toko</Label>
-            <Input
-              id="store-name"
-              required
-              maxLength={100}
-              value={values.storeName}
-              onChange={(event) => setField("storeName", event.target.value)}
-            />
-          </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="store-email">Email toko</Label>
             <Input

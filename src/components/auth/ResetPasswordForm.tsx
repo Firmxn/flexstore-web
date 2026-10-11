@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // AUTH-05 (PH-07): set password baru lewat token reset.
 export function ResetPasswordForm({ token }: { token: string }) {
@@ -52,7 +53,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="reset-password">Password baru</Label>

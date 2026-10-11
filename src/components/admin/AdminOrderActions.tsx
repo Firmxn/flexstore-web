@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // Aksi admin atas satu pesanan (ORDER-05/06/07): kirim, selesaikan, tinjau
 // pembatalan, dan selesaikan refund dengan bukti. Semua permintaan menuju
@@ -111,7 +112,7 @@ function RefundCompleteForm({
           onChange={(event) => setNote(event.target.value)}
         />
       </div>
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       <Button
         type="button"
         disabled={submitting || isUploading}
@@ -160,7 +161,7 @@ export function AdminOrderActions({
 
   return (
     <div className="flex flex-col gap-4">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       {status === "PROCESSING" ? (
         <form

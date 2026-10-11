@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cancellationReasonSchema } from "@/lib/config";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // CONFIG-01 (PH-06): kelola template alasan penolakan pembatalan (PRD 5.5).
 
@@ -63,7 +64,7 @@ export function CancellationReasonManager({
 
   return (
     <div className="flex flex-col gap-6">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       <form
         onSubmit={handleAdd}
@@ -189,7 +190,7 @@ function ReasonRow({
           </Button>
         </div>
       </div>
-      {localError ? <Alert variant="destructive">{localError}</Alert> : null}
+      <FormErrorAlert message={localError} />
     </li>
   );
 }

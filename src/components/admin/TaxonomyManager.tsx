@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { slugSchema } from "@/lib/categories/validation";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { slugify } from "@/lib/utils/slug";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 export type TaxonomyItem = {
   id: string;
@@ -131,7 +132,7 @@ export function TaxonomyManager({
 
   return (
     <div className="flex flex-col gap-6">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       <form
         onSubmit={handleCreate}

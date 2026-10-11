@@ -18,6 +18,11 @@ import type {
 import type { SavedAddress } from "@/lib/customers/view";
 import { ApiError, apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { formatRupiah } from "@/lib/utils/format";
+import {
+  PHONE_INPUT_FILTER,
+  POSTAL_CODE_INPUT_FILTER,
+} from "@/lib/utils/validation";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 export type CheckoutItem = {
   variantId: string;
@@ -38,7 +43,9 @@ type CheckoutFormProps = {
   pickup: {
     enabled: boolean;
     info: string | null;
-    storeName: string;
+    // Nama dari brand (SITE-05): 1 deployment = 1 brand = 1 store, label pickup
+    // memakai brandName — tidak ada field nama toko terpisah.
+    brandName: string;
     storeAddress: string | null;
     storePhone: string | null;
   };
@@ -449,9 +456,13 @@ export function CheckoutForm({
                 id="checkout-phone"
                 required
                 inputMode="tel"
+                pattern="[0-9+()\-. ]*"
+                title="Nomor HP hanya boleh berisi angka"
                 placeholder="08123456789"
                 value={phone}
-                onChange={(event) => setPhone(event.target.value)}
+                onChange={(event) =>
+                  setPhone(event.target.value.replace(PHONE_INPUT_FILTER, ""))
+                }
               />
             </div>
 
@@ -531,8 +542,15 @@ export function CheckoutForm({
                     readOnly={autoPostal}
                     className={autoPostal ? "bg-muted" : undefined}
                     inputMode="numeric"
+                    pattern="[0-9]{5}"
+                    title="Kode pos harus 5 angka"
+                    maxLength={5}
                     value={postalCode}
-                    onChange={(event) => setPostalCode(event.target.value)}
+                    onChange={(event) =>
+                      setPostalCode(
+                        event.target.value.replace(POSTAL_CODE_INPUT_FILTER, ""),
+                      )
+                    }
                   />
                 </div>
                 <div className="flex flex-col gap-2 sm:col-span-2">
@@ -549,7 +567,7 @@ export function CheckoutForm({
               </>
             ) : (
               <div className="flex flex-col gap-1 rounded-lg border border-border bg-muted/40 p-3 text-sm sm:col-span-2">
-                <p className="font-medium">Ambil di {pickup.storeName}</p>
+                <p className="font-medium">Ambil di {pickup.brandName}</p>
                 {pickup.storeAddress ? (
                   <p className="text-muted-foreground">{pickup.storeAddress}</p>
                 ) : null}
@@ -719,7 +737,7 @@ export function CheckoutForm({
           </div>
         </dl>
 
-        {error ? <Alert variant="destructive">{error}</Alert> : null}
+        <FormErrorAlert message={error} />
 
         <Button type="submit" disabled={submitting} className="w-full">
           {submitting ? "Membuat pesanan..." : "Buat Pesanan"}

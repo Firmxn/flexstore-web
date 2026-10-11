@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { platformSettingsSchema } from "@/lib/platform/validation";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // SITE-01 (PH-08): mode pemeliharaan + status pendaftaran publik.
 
@@ -72,7 +73,7 @@ export function PlatformSettingsForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       {saved ? <Alert variant="success">Pengaturan tersimpan.</Alert> : null}
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">

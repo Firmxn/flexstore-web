@@ -6,7 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { otpCodeSchema, phoneSchema } from "@/lib/auth/validation";
+import {
+  OTP_CODE_INPUT_FILTER,
+  PHONE_INPUT_FILTER,
+} from "@/lib/utils/validation";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 type Step = "phone" | "code" | "verified";
 
@@ -90,7 +95,7 @@ export function OtpVerificationForm({ onVerified }: OtpVerificationFormProps = {
   if (step === "code") {
     return (
       <form onSubmit={handleVerify} className="flex flex-col gap-4">
-        {error ? <Alert variant="destructive">{error}</Alert> : null}
+        <FormErrorAlert message={error} />
         {notice ? <Alert>{notice}</Alert> : null}
 
         <div className="flex flex-col gap-2">
@@ -98,11 +103,15 @@ export function OtpVerificationForm({ onVerified }: OtpVerificationFormProps = {
           <Input
             id="otp-code"
             inputMode="numeric"
+            pattern="[0-9]{6}"
+            title="Kode OTP harus 6 angka"
             autoComplete="one-time-code"
             maxLength={6}
             required
             value={code}
-            onChange={(event) => setCode(event.target.value)}
+            onChange={(event) =>
+              setCode(event.target.value.replace(OTP_CODE_INPUT_FILTER, ""))
+            }
           />
         </div>
 
@@ -130,18 +139,22 @@ export function OtpVerificationForm({ onVerified }: OtpVerificationFormProps = {
 
   return (
     <form onSubmit={handleSend} className="flex flex-col gap-4">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="otp-phone">Nomor HP</Label>
         <Input
           id="otp-phone"
           inputMode="tel"
+          pattern="[0-9+()\-. ]*"
+          title="Nomor HP hanya boleh berisi angka"
           autoComplete="tel"
           placeholder="08123456789"
           required
           value={phone}
-          onChange={(event) => setPhone(event.target.value)}
+          onChange={(event) =>
+            setPhone(event.target.value.replace(PHONE_INPUT_FILTER, ""))
+          }
         />
       </div>
 

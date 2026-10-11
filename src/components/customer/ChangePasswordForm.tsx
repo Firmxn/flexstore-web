@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // CUST-03 (PH-10): ubah password. Password saat ini wajib benar; password lama
 // langsung tidak berlaku setelah berhasil (docs/03 CUST-03 bagian 13).
@@ -46,7 +47,7 @@ export function ChangePasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       {notice ? <Alert variant="success">{notice}</Alert> : null}
 
       <div className="flex flex-col gap-2">

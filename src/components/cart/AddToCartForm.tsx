@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { formatRupiah } from "@/lib/utils/format";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 type VariantOption = {
   id: string;
@@ -140,7 +141,7 @@ export function AddToCartForm({ variants }: { variants: VariantOption[] }) {
         </p>
       ) : null}
 
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       {success ? (
         <Alert variant="success">
           Ditambahkan ke keranjang. Lihat halaman keranjang untuk checkout.

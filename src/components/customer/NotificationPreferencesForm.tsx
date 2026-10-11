@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { NotificationPreferences } from "@/lib/customers/queries";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // CUST-02 (PH-07, PRD 4.8): pilih jenis email yang diterima. Preferensi
 // ditegakkan di server saat email dikirim (order-emails).
@@ -75,7 +76,7 @@ export function NotificationPreferencesForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       {saved ? <Alert>Preferensi disimpan.</Alert> : null}
 
       <ul className="flex flex-col gap-3">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // AUTH-04 (PH-07): guest yang mengisi email saat checkout membuat akun lewat
 // tautan set password. Token dikirim di query dan diteruskan ke API.
@@ -58,7 +59,7 @@ export function SetPasswordForm({ token }: { token: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="set-password">Password baru</Label>

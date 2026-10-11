@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { shippingSettingsSchema } from "@/lib/platform/validation";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // SITE-03 (PH-08): konfigurasi shipping provider RajaOngkir. Kunci API tetap di
 // env; panel di bawah hanya menampilkan statusnya.
@@ -80,7 +81,7 @@ export function ShippingSettingsForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       {saved ? <Alert variant="success">Konfigurasi tersimpan.</Alert> : null}
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">

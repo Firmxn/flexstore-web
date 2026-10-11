@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 export function LoginForm() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export function LoginForm() {
     // pengisian otomatis; pilihan akun tetap muncul saat user memfokuskan
     // field (pilihan user, bukan prefill).
     <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col gap-4">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="identifier">Email atau Nomor HP</Label>

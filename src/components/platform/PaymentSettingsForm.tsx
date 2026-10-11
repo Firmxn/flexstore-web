@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { paymentSettingsSchema } from "@/lib/platform/validation";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // SITE-02 (PH-08): konfigurasi payment gateway Xendit. Kunci API tidak bisa
 // diubah dari sini (tetap di env); panel di bawah hanya menampilkan statusnya.
@@ -88,7 +89,7 @@ export function PaymentSettingsForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       {saved ? <Alert variant="success">Konfigurasi tersimpan.</Alert> : null}
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">

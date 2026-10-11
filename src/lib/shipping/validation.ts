@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isControlCharFree } from "@/lib/utils/validation";
 
 export const shippingCalculateSchema = z.object({
   // Opsional: kalau API ongkir belum dikonfigurasi, tujuan tidak dibutuhkan
@@ -23,7 +24,9 @@ export const citySearchSchema = z.object({
     .string({ required_error: "Kata kunci wajib diisi" })
     .trim()
     .min(3, "Ketik minimal 3 karakter")
-    .max(100, "Kata kunci terlalu panjang"),
+    .max(100, "Kata kunci terlalu panjang")
+    .regex(/[A-Za-z0-9]/, "Kata kunci harus mengandung huruf atau angka")
+    .refine(isControlCharFree, "Kata kunci memuat karakter yang tidak diizinkan"),
 });
 
 export type ShippingCalculateInput = z.infer<typeof shippingCalculateSchema>;

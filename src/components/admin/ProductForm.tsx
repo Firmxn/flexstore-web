@@ -17,6 +17,7 @@ import {
 import { PRODUCT_STATUS_LABELS } from "@/lib/utils/format";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { slugify } from "@/lib/utils/slug";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 export type VariantRow = {
   sku: string;
@@ -157,7 +158,7 @@ export function ProductForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
         <h2 className="font-semibold">Informasi Produk</h2>

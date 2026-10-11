@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { CATEGORY_NAME_REGEX, isControlCharFree } from "@/lib/utils/validation";
 
 // SITE-05 (PH-09). Semua input divalidasi di server sebelum menyentuh Prisma
 // (OWASP A03). Kode warna dibatasi hex `#RRGGBB` supaya nilai yang disuntikkan
@@ -13,6 +14,7 @@ const optionalText = (max: number, label: string) =>
     .string({ invalid_type_error: `${label} tidak valid` })
     .trim()
     .max(max, `${label} maksimal ${max} karakter`)
+    .refine(isControlCharFree, `${label} memuat karakter yang tidak diizinkan`)
     .optional()
     .transform((value) => (value ? value : undefined));
 
@@ -67,7 +69,9 @@ export const brandSettingsSchema = z.object({
     })
     .trim()
     .min(1, "Nama brand wajib diisi")
-    .max(50, "Nama brand maksimal 50 karakter"),
+    .max(50, "Nama brand maksimal 50 karakter")
+    .regex(CATEGORY_NAME_REGEX, "Nama brand memuat karakter yang tidak diizinkan")
+    .regex(/[A-Za-z]/, "Nama brand harus mengandung huruf"),
   tagline: optionalText(160, "Tagline"),
   logoUrl: optionalUploadthingUrl,
   faviconUrl: optionalUploadthingUrl,

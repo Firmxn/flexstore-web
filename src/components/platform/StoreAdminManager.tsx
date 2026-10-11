@@ -18,6 +18,7 @@ import {
 import { createStoreAdminSchema } from "@/lib/platform/validation";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { formatDateTime } from "@/lib/utils/format";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // SITE-04 (PH-08): kelola akun Store Admin — buat, aktif/nonaktif, reset
 // password. Kredensial dibagikan manual oleh Site Admin (tanpa email).
@@ -114,7 +115,7 @@ export function StoreAdminManager({ initial }: { initial: StoreAdminRow[] }) {
 
   return (
     <div className="flex flex-col gap-6">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       {notice ? <Alert variant="success">{notice}</Alert> : null}
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">

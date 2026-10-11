@@ -1,14 +1,15 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import type { OrderStatus } from "@prisma/client";
-import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { formatDateTime, formatRupiah } from "@/lib/utils/format";
+import { PHONE_INPUT_FILTER } from "@/lib/utils/validation";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 type TrackedOrder = {
   orderNumber: string;
@@ -75,7 +76,7 @@ export function TrackOrderForm() {
         onSubmit={handleSubmit}
         className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6"
       >
-        {error ? <Alert variant="destructive">{error}</Alert> : null}
+        <FormErrorAlert message={error} />
 
         <div className="flex flex-col gap-2">
           <Label htmlFor="track-order-number">Nomor pesanan</Label>
@@ -94,9 +95,13 @@ export function TrackOrderForm() {
             id="track-phone"
             required
             inputMode="tel"
+            pattern="[0-9+()\-. ]*"
+            title="Nomor HP hanya boleh berisi angka"
             placeholder="08123456789"
             value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            onChange={(event) =>
+              setPhone(event.target.value.replace(PHONE_INPUT_FILTER, ""))
+            }
           />
         </div>
 

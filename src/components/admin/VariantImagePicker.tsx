@@ -5,6 +5,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useUploadThing } from "@/lib/uploadthing/client";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // Gambar varian opsional (PRD 3.1.A/7.4). Memakai endpoint `productImage` yang
 // sama dengan galeri produk, tetapi hanya satu berkas per varian sehingga
@@ -92,7 +93,7 @@ export function VariantImagePicker({
         </div>
       </div>
 
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
     </div>
   );
 }

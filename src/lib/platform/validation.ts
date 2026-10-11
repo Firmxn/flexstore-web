@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isControlCharFree, personNameSchema } from "@/lib/utils/validation";
 
 // SITE-01..SITE-04 (PH-08). Semua input divalidasi di server sebelum menyentuh
 // Prisma (OWASP A03). Rahasia (kunci Xendit/RajaOngkir) tidak pernah masuk ke
@@ -9,6 +10,7 @@ const optionalText = (max: number, label: string) =>
     .string({ invalid_type_error: `${label} tidak valid` })
     .trim()
     .max(max, `${label} maksimal ${max} karakter`)
+    .refine(isControlCharFree, `${label} memuat karakter yang tidak diizinkan`)
     .optional()
     .transform((value) => (value ? value : undefined));
 
@@ -66,14 +68,7 @@ export const shippingSettingsSchema = z.object({
 });
 
 export const createStoreAdminSchema = z.object({
-  name: z
-    .string({
-      required_error: "Nama wajib diisi",
-      invalid_type_error: "Nama tidak valid",
-    })
-    .trim()
-    .min(1, "Nama wajib diisi")
-    .max(100, "Nama maksimal 100 karakter"),
+  name: personNameSchema,
   email: z
     .string({
       required_error: "Email wajib diisi",

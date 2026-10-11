@@ -13,6 +13,7 @@ import type { BrandFormValues } from "@/lib/brand/view";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { AssetPicker } from "./AssetPicker";
+import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 // SITE-05 (PH-09): identitas brand per deployment. Empat bagian: Identitas,
 // Palet Warna, Banner Homepage, Teks Footer.
@@ -113,7 +114,7 @@ export function BrandSettingsForm({ initial }: { initial: BrandFormValues }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-      {error ? <Alert variant="destructive">{error}</Alert> : null}
+      <FormErrorAlert message={error} />
       {saved ? <Alert variant="success">Identitas brand tersimpan.</Alert> : null}
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
