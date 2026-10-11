@@ -1,8 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronDown, ChevronRight, Package } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { OrderStatusBadge } from "./OrderStatusBadge";
+import { ReorderButton } from "./ReorderButton";
 import type { getOrdersForUser } from "@/lib/orders";
 import { formatDateTime, formatRupiah } from "@/lib/utils/format";
 
@@ -131,21 +131,27 @@ export function OrderListItem({ order }: { order: OrderRow }) {
         {canTrack || canCancel ? (
           <div className="flex flex-wrap items-center justify-end gap-2">
             {canTrack ? (
-              <Button variant="outline" size="sm">
+              <Link
+                href={`/orders/${order.id}/tracking`}
+                className="inline-flex h-9 items-center rounded-md border border-input px-3 text-sm font-medium hover:bg-accent"
+              >
                 Lacak Pesanan
-              </Button>
+              </Link>
             ) : null}
             {canCancel ? (
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-destructive hover:text-destructive"
+              <Link
+                href={`/orders/${order.id}`}
+                className="inline-flex h-9 items-center rounded-md border border-input px-3 text-sm font-medium text-destructive hover:bg-destructive/10 hover:text-destructive"
               >
                 Batalkan Pesanan
-              </Button>
+              </Link>
             ) : null}
           </div>
         ) : null}
+
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <ReorderButton orderId={order.id} />
+        </div>
       </div>
     </li>
   );

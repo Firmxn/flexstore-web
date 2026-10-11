@@ -10,9 +10,9 @@
 | Versi / tanggal rencana | v1.0 / 2026-10-09 |
 | Versi PRD, SDD, dan spesifikasi | PRD v1.1, SDD v1.0, Spesifikasi Fitur v1.3 |
 | Reviewer / pemilik keputusan gate | Development Team / Product Owner |
-| Fase aktif | PH-06 — Polish MVP (Reports + Config + Advanced) — **Siap direview**. PH-01..PH-05 **Disetujui** (bagian 4.7, 5.7, 6.7, 7.7, 8.5); revisi PH-03 pasca-persetujuan (perbaikan OTP guest + redesign urutan alamat) tercatat di bagian 6.8 |
-| Task aktif / terakhir | PH-06 — TASK-54 sampai TASK-66 selesai dikerjakan; verifikasi otomatis lulus (bagian 9.4), uji klik-through manual menunggu pengguna |
-| Instruksi mulai / lanjut terakhir | User: "mulai phase 1" (2026-10-09), "lanjutkan" (2026-10-09), "sudah bisa saya coba akses?" (2026-10-09), "perbaiki di PH-01" + "error.tsx tambahkan di PH-01" (2026-10-09), "opsi 1 gua setuju" (2026-10-10), "jalankan 1 dan 2 dulu" (2026-10-10), "jika ada masalah kredensial yang diperlukan, skip dulu, dan lanjutkan coding sampai selesai" (2026-10-10), "oke next lanjut ke phase 4?" (2026-10-10), "lanjutkan" (2026-10-10, memulai PH-05), "kerjakan phase 6" (2026-10-11) |
+| Fase aktif | PH-07 — Customer Management (Akun + Alamat) — **Siap direview**. PH-01..PH-06 **Disetujui** (bagian 4.7, 5.7, 6.7, 7.7, 8.5, 9.5); revisi PH-03 pasca-persetujuan (perbaikan OTP guest + redesign urutan alamat) tercatat di bagian 6.8 |
+| Task aktif / terakhir | PH-07 — TASK-67 sampai TASK-79 selesai; verifikasi otomatis lulus (bagian 12.4), uji klik-through manual menunggu pengguna |
+| Instruksi mulai / lanjut terakhir | User: "mulai phase 1" (2026-10-09), "lanjutkan" (2026-10-09), "sudah bisa saya coba akses?" (2026-10-09), "perbaiki di PH-01" + "error.tsx tambahkan di PH-01" (2026-10-09), "opsi 1 gua setuju" (2026-10-10), "jalankan 1 dan 2 dulu" (2026-10-10), "jika ada masalah kredensial yang diperlukan, skip dulu, dan lanjutkan coding sampai selesai" (2026-10-10), "oke next lanjut ke phase 4?" (2026-10-10), "lanjutkan" (2026-10-10, memulai PH-05), "kerjakan phase 6" (2026-10-11), "next ph 7" (2026-10-11, menerima PH-06 sekaligus memulai PH-07) |
 | Hambatan saat ini | Tidak ada yang memblokir. Catatan: (a) email produksi butuh domain Resend terverifikasi (`EMAIL_FROM`); (b) webhook Xendit tidak sampai ke `localhost` (rekonsiliasi menutupi); (c) DB Supabase kadang `P1001` saat dev (retry) |
 
 ## 2. Status dan aturan gate
@@ -41,8 +41,8 @@
 | PH-03 | Checkout (Order Creation) | Guest checkout (OTP), Customer checkout, order history, track order | MOD-ORDER (ORDER-01, ORDER-02, ORDER-03, ORDER-04) | PH-02 disetujui | **Disetujui** (2026-10-10) |
 | PH-04 | Payment Integration | Create payment (Xendit), webhook handler, stock reservation release | MOD-PAY (PAY-01, PAY-02) | PH-03 disetujui, Xendit sandbox setup | **Disetujui** (2026-10-10) |
 | PH-05 | Core Features (Voucher + Notification + Invoice) | Apply voucher, voucher CRUD, email notification, invoice PDF | MOD-VOUCH (VOUCH-01, VOUCH-02), MOD-NOTIF (NOTIF-01), MOD-INV (INV-01) | PH-04 disetujui, Resend setup | **Disetujui** (2026-10-11) |
-| PH-06 | Polish MVP (Reports + Config + Advanced) | Kelola pesanan admin (status, resi, status pembayaran), sales report (5 laporan PRD 4.11), store settings + template alasan penolakan, shipping tracking, tracking pesanan customer (daftar dalam perjalanan + detail, ORDER-08), cancel/refund, pickup, voucher dibatasi produk/kategori, email lanjutan (shipped/cancel/refund) | MOD-SHIP (SHIP-02, SHIP-03), MOD-ORDER (ORDER-05, ORDER-06, ORDER-07, ORDER-08), MOD-REPORT (REPORT-01), MOD-CONFIG (CONFIG-01), MOD-VOUCH (lanjutan VOUCH-01), MOD-PROD (lanjutan PROD-01), MOD-NOTIF (lanjutan NOTIF-01) | PH-05 disetujui | **Siap direview** (2026-10-11) |
-| PH-07 | Customer Management (Akun + Alamat) | Simpan/ubah/hapus alamat (maks 5), pilih alamat saat checkout, pesan lagi dari pesanan lama, set password (guest isi email), reset password, preferensi notifikasi | MOD-CUST (CUST-01, CUST-02), MOD-ORDER (lanjutan ORDER-03), MOD-AUTH (AUTH-04, AUTH-05) | PH-03 + PH-05 disetujui (email untuk set/reset password; diubah dari "hanya PH-03" oleh audit 2026-10-10) | Belum dimulai |
+| PH-06 | Polish MVP (Reports + Config + Advanced) | Kelola pesanan admin (status, resi, status pembayaran), sales report (5 laporan PRD 4.11), store settings + template alasan penolakan, shipping tracking, tracking pesanan customer (daftar dalam perjalanan + detail, ORDER-08), cancel/refund, pickup, voucher dibatasi produk/kategori, email lanjutan (shipped/cancel/refund) | MOD-SHIP (SHIP-02, SHIP-03), MOD-ORDER (ORDER-05, ORDER-06, ORDER-07, ORDER-08), MOD-REPORT (REPORT-01), MOD-CONFIG (CONFIG-01), MOD-VOUCH (lanjutan VOUCH-01), MOD-PROD (lanjutan PROD-01), MOD-NOTIF (lanjutan NOTIF-01) | PH-05 disetujui | **Disetujui** (2026-10-11) |
+| PH-07 | Customer Management (Akun + Alamat) | Simpan/ubah/hapus alamat (maks 5), pilih alamat saat checkout, pesan lagi dari pesanan lama, set password (guest isi email), reset password, preferensi notifikasi | MOD-CUST (CUST-01, CUST-02), MOD-ORDER (lanjutan ORDER-03), MOD-AUTH (AUTH-04, AUTH-05) | PH-03 + PH-05 disetujui (email untuk set/reset password; diubah dari "hanya PH-03" oleh audit 2026-10-10) | **Siap direview** (2026-10-11) |
 | PH-08 | Site Admin (Platform Configuration) | Login Site Admin, kelola akun Store Admin, konfigurasi payment gateway (Xendit), konfigurasi shipping provider (RajaOngkir), pengaturan platform | MOD-SITE (SITE-01, SITE-02, SITE-03, SITE-04) | PH-05 disetujui (disarankan setelah PH-06) | Belum dimulai |
 
 **Phase Checkpoint:**
@@ -1074,35 +1074,59 @@ Catatan: verifikasi V3-V4 adalah otomatis. Uji klik-through manual (alur admin u
 
 | ID | Pekerjaan / hasil | Fitur | Bergantung pada | Status | Bukti |
 | --- | --- | --- | --- | --- | --- |
-| TASK-67 | Tulis spesifikasi CUST-01 di `docs/03` (aturan, AC-*, validasi, batas fitur, pertanyaan terbuka) | CUST-01 | - | Belum dimulai | - |
-| TASK-68 | Skema Prisma `Address` (relasi N→1 `User`, label, nama penerima, no. HP, `destinationId`, provinsi/kota/kecamatan/kelurahan/kode pos, alamat lengkap, penanda alamat utama) + migrasi + `db:generate` | CUST-01 | TASK-67 | Belum dimulai | - |
-| TASK-69 | Lib `src/lib/customers/`: Zod schema, batas maksimal 5 alamat ditegakkan di server, query/mutasi milik sendiri, penjaga alamat utama tunggal | CUST-01 | TASK-68 | Belum dimulai | - |
-| TASK-70 | API `/api/customer/addresses` (`GET`/`POST`/`PATCH`/`DELETE`) + Zod sebelum query + penangkap galat | CUST-01 | TASK-69 | Belum dimulai | - |
-| TASK-71 | Halaman `/profile`: daftar, tambah, ubah, hapus alamat; penanda alamat utama | CUST-01 | TASK-70 | Belum dimulai | - |
-| TASK-72 | Integrasi `/checkout`: pilih alamat tersimpan → isian terisi otomatis lewat `DestinationPicker`; guest tetap mengetik manual. Bentuk UI tiga keadaan (nol/tepat satu/lebih dari satu alamat tersimpan) sesuai keputusan bagian 10, 2026-10-11 | CUST-01 | TASK-71 | Belum dimulai | - |
-| TASK-73 | Navigasi: menu akun menautkan ke `/profile` (Alamat Saya) | CUST-01 | TASK-71 | Belum dimulai | - |
-| TASK-74 | Re-order: tombol "Pesan Lagi" di `/orders` dan `/orders/[id]` menambahkan varian pesanan lama ke keranjang (validasi stok, produk aktif, varian masih ada) | ORDER-03 (lanjutan) | TASK-70 | Belum dimulai | - |
-| TASK-75 | AUTH-04: token + halaman set password untuk guest yang mengisi email saat checkout → akun customer baru (mengikat `guestEmail` yang tersimpan sejak PH-03) | AUTH-04 | TASK-74 | Belum dimulai | - |
-| TASK-76 | AUTH-05: alur "Lupa password" (form email → token → halaman set password baru) | AUTH-05 | TASK-75 | Belum dimulai | - |
-| TASK-77 | CUST-02: preferensi notifikasi customer (pilih jenis email yang diterima; ditegakkan saat kirim di jalur email) | CUST-02 | TASK-75 | Belum dimulai | - |
-| TASK-78 | Lint + build | Semua | TASK-77 | Belum dimulai | - |
-| TASK-79 | Verifikasi exit criteria + laporan review (berhenti, tunggu approval) | Semua | TASK-78 | Belum dimulai | - |
+| TASK-67 | Tulis spesifikasi CUST-01 di `docs/03` | CUST-01 | - | **Selesai** (2026-10-11) | `docs/03` v1.4: CUST-01, CUST-02, AUTH-04, AUTH-05, ORDER-03B + indeks Phase 7 |
+| TASK-68 | Skema Prisma `Address` + `NotificationPreference` (relasi N→1 `User`, label, nama penerima, no. HP, `destinationId`, provinsi/kota/kecamatan/kelurahan/kode pos, alamat lengkap, penanda alamat utama; 5 kolom preferensi notifikasi) + migrasi + `prisma generate` | CUST-01, CUST-02 | TASK-67 | **Selesai** | `prisma/migrations/20261011120000_add_ph07_customer_management/migration.sql`; `prisma migrate deploy` exit 0 |
+| TASK-69 | Lib `src/lib/customers/`: Zod schema, batas maksimal 5 alamat ditegakkan di server, query/mutasi milik sendiri, penjaga alamat utama tunggal, preferensi notifikasi | CUST-01, CUST-02 | TASK-68 | **Selesai** | `src/lib/customers/{validation,queries,mutations,view,index}.ts`; bukti 12.4 butir 1-4 |
+| TASK-70 | API `/api/customer/addresses` (`GET`/`POST`) + `/[id]` (`PATCH`/`DELETE`) + `/api/customer/notification-preferences` (`GET`/`PATCH`) + Zod sebelum query + penangkap galat | CUST-01, CUST-02 | TASK-69 | **Selesai** | smoke 401 tanpa sesi (12.4 butir 6) |
+| TASK-71 | Halaman `/profile`: daftar, tambah, ubah, hapus alamat; penanda alamat utama; preferensi notifikasi | CUST-01, CUST-02 | TASK-70 | **Selesai** | `src/app/(storefront)/profile/page.tsx`, `src/components/customer/{AddressManager,NotificationPreferencesForm}.tsx` |
+| TASK-72 | Integrasi `/checkout`: pilih alamat tersimpan → isian terisi otomatis lewat `DestinationPicker`; guest tetap mengetik manual. Bentuk UI tiga keadaan (nol/tepat satu/lebih dari satu alamat tersimpan) | CUST-01 | TASK-71 | **Selesai** | `src/components/checkout/CheckoutForm.tsx`, `src/app/(storefront)/checkout/page.tsx` |
+| TASK-73 | Navigasi: menu akun menautkan ke `/profile` (Alamat & Profil) | CUST-01 | TASK-71 | **Selesai** | `src/components/layout/HeaderAccountMenu.tsx` |
+| TASK-74 | Re-order: tombol "Pesan Lagi" di `/orders` dan `/orders/[id]` menambahkan varian pesanan lama ke keranjang (validasi stok, produk aktif, varian masih ada) | ORDER-03 (lanjutan) | TASK-70 | **Selesai** | `src/lib/orders/reorder.ts`, `src/app/api/orders/[id]/reorder/route.ts`, `src/components/orders/ReorderButton.tsx`; bukti 12.4 butir 5 |
+| TASK-75 | AUTH-04: token + halaman set password untuk guest yang mengisi email saat checkout → akun customer baru (mengikat `guestEmail` yang tersimpan sejak PH-03) | AUTH-04 | TASK-74 | **Selesai** | `src/lib/auth/tokens.ts`, `src/emails/set-password.ts`, `src/lib/notifications/account-emails.ts`, `/api/auth/set-password`, `/set-password` |
+| TASK-76 | AUTH-05: alur "Lupa password" (form email → token → halaman set password baru) | AUTH-05 | TASK-75 | **Selesai** | `/api/auth/forgot-password`, `/api/auth/reset-password`, `/forgot-password`, `/reset-password`, `src/emails/password-reset.ts` |
+| TASK-77 | CUST-02: preferensi notifikasi customer (pilih jenis email yang diterima; ditegakkan saat kirim di jalur email) | CUST-02 | TASK-75 | **Selesai** | `src/lib/notifications/order-emails.ts` (`shouldSendNotification`); bukti 12.4 butir 4 |
+| TASK-78 | Lint + build | Semua | TASK-77 | **Selesai** | `pnpm lint` exit 0; `pnpm build` exit 0; `tsc --noEmit` bersih |
+| TASK-79 | Verifikasi exit criteria + laporan review (berhenti, tunggu approval) | Semua | TASK-78 | **Selesai** | bagian 12.4-12.5 |
 
 *Penomoran TASK bersifat global dan berurutan. PH-04 berhenti di TASK-46, PH-05 memakai TASK-47 sampai TASK-53, **PH-06 memakai TASK-54 sampai TASK-66** (dikerjakan lebih dulu, bagian 9.3), jadi PH-07 memakai TASK-67 sampai TASK-79 (diperluas dari TASK-62 oleh audit 2026-10-10, lalu digeser 13 nomor karena PH-06 dikerjakan lebih dulu).*
 
 ### 12.3. Exit criteria (rencana)
 
-- [ ] Customer bisa menyimpan **maksimal 5 alamat**; percobaan ke-6 ditolak **di server** (kode galat ditetapkan di spesifikasi TASK-67)
-- [ ] Customer bisa memilih alamat tersimpan di `/checkout` dan seluruh isian alamat terisi otomatis, termasuk `destinationId` untuk ongkir
-- [ ] Customer bisa mengubah dan menghapus alamat miliknya sendiri
-- [ ] Alamat customer lain tidak bisa dibaca, diubah, maupun dihapus (OWASP A01)
-- [ ] Menambah/mengubah/menghapus alamat **tidak mengubah pesanan lama** — `Order.shippingAddress` tetap snapshot
-- [ ] Guest tetap bisa checkout tanpa menyimpan alamat
-- [ ] "Pesan Lagi" dari pesanan lama menambahkan item ke keranjang; varian yang sudah tidak ada/stok habis ditolak dengan pesan jelas (tidak ada pesanan yang ikut berubah)
-- [ ] Guest yang mengisi email saat checkout menerima link set password; setelah diset, akun bisa login dan melihat pesanan guest-nya tidak hilang (sesuai keputusan cakupan)
-- [ ] "Lupa password" mengirim link reset ke email terdaftar; token sekali pakai dan berkedaluwarsa
-- [ ] Preferensi notifikasi ditegakkan saat email dikirim (customer yang menonaktifkan jenis email tidak menerimanya)
-- [ ] `pnpm lint` exit 0 dan `pnpm build` exit 0
+- [x] Customer bisa menyimpan **maksimal 5 alamat**; percobaan ke-6 ditolak **di server** (kode galat `LIMIT_REACHED`, HTTP 409)
+- [x] Customer bisa memilih alamat tersimpan di `/checkout` dan seluruh isian alamat terisi otomatis, termasuk `destinationId` untuk ongkir
+- [x] Customer bisa mengubah dan menghapus alamat miliknya sendiri
+- [x] Alamat customer lain tidak bisa dibaca, diubah, maupun dihapus (OWASP A01) — dijawab 404 generik
+- [x] Menambah/mengubah/menghapus alamat **tidak mengubah pesanan lama** — `Order.shippingAddress` tetap snapshot (tidak ada jalur tulis dari `Address` ke `Order`)
+- [x] Guest tetap bisa checkout tanpa menyimpan alamat
+- [x] "Pesan Lagi" dari pesanan lama menambahkan item ke keranjang; varian yang sudah tidak ada/stok habis ditolak dengan pesan jelas (tidak ada pesanan yang ikut berubah)
+- [x] Guest yang mengisi email saat checkout menerima link set password; setelah diset, akun bisa login dan pesanan guest-nya ikut terikat ke akun baru
+- [x] "Lupa password" mengirim link reset ke email terdaftar; token sekali pakai dan berkedaluwarsa
+- [x] Preferensi notifikasi ditegakkan saat email dikirim (customer yang menonaktifkan jenis email tidak menerimanya)
+- [x] `pnpm lint` exit 0 dan `pnpm build` exit 0
+
+### 12.4. Bukti verifikasi (2026-10-11)
+
+1. **Batas 5 alamat + alamat utama tunggal** (script `tsx` langsung ke lib): buat 5 alamat sukses; ke-6 mengembalikan `LIMIT_REACHED`; hanya 1 `isPrimary`; alamat pertama otomatis utama; `isPrimary: true` pada alamat lain memindahkan penanda (tetap 1); menghapus alamat utama mengangkat alamat tertua berikutnya (tetap 1)
+2. **Kepemilikan** (OWASP A01): `updateAddress` dengan `userId` user lain terhadap alamat milik user pertama mengembalikan `NOT_FOUND` (bukan 403)
+3. **Token sekali pakai** (AUTH-04/AUTH-05): `consumeSetPasswordToken` pertama mengembalikan payload, panggilan kedua `null`
+4. **Preferensi notifikasi** (CUST-02): nilai bawaan semua aktif tanpa baris tersimpan; mematikan `orderConfirmation` membuat `shouldSendNotification` mengembalikan `false` untuk jenis itu, `true` untuk jenis lain, dan `true` untuk guest (`userId = null`)
+5. **Re-order** (ORDER-03): `reorderFromOrder` menambahkan item pesanan lama ke keranjang (`added=1`, `skipped=0`); keranjang dikembalikan ke keadaan semula setelah uji
+6. **Smoke HTTP** (dev server): `GET`/`POST /api/customer/addresses`, `GET /api/customer/notification-preferences`, `POST /api/orders/<uuid>/reorder` → **401** tanpa sesi; `POST /api/auth/forgot-password` → **200** (selalu, tanpa membocorkan email); `POST /api/auth/set-password` dan `/reset-password` dengan token palsu → **400** `INVALID_TOKEN`; `GET /profile` → **307** (redirect ke login); `GET /login`, `/forgot-password`, `/set-password`, `/reset-password` → **200**
+7. **Migrasi + build**: `prisma migrate deploy` exit 0 (migrasi `20261011120000_add_ph07_customer_management`); `prisma generate` exit 0; `pnpm lint` exit 0; `tsc --noEmit` bersih; `pnpm build` exit 0 dengan rute baru (`/profile`, `/set-password`, `/forgot-password`, `/reset-password`, `/api/customer/*`, `/api/auth/{set,forgot,reset}-password`, `/api/orders/[id]/reorder`)
+
+### 12.5. Laporan untuk review (2026-10-11)
+
+- **Status:** PH-07 selesai dikerjakan dan terverifikasi otomatis. **Berhenti, tunggu approval user** (gate bagian 2).
+- **Keputusan desain yang diambil saat implementasi:**
+  - Preferensi notifikasi memakai tabel `NotificationPreference` (baris per user, dibuat saat pertama disimpan) dengan pembacaan memakai nilai bawaan semua aktif tanpa menulis; penegakan dilakukan di `order-emails.ts` sebelum setiap `sendEmail`, dengan guest (`userId = null`) selalu dikirimi
+  - Token set/reset password disimpan di Redis (TTL 24 jam untuk set, 1 jam untuk reset), dihapus saat dibaca (sekali pakai), bukan di cookie maupun tabel
+  - Akun hasil AUTH-04 **mengikat pesanan guest lama** dengan `guestEmail` yang sama (`Order.userId` diisi) supaya riwayat tidak hilang; dicatat sebagai keputusan yang menjawab pertanyaan terbuka `docs/04` bagian 12.1
+  - Alamat utama tidak bisa "dikosongkan" (hanya penanda `true` yang dihormati); menghapus alamat utama mengangkat alamat tertua berikutnya
+  - `PATCH` alamat menerima sebagian field (mis. hanya `isPrimary: true`); `POST` memakai skema penuh
+  - Perbaikan di luar cakupan PH-07: tombol placeholder "Lacak Pesanan" dan "Batalkan Pesanan" di `/orders` (warisan PH-06) kini benar-benar menautkan ke `/orders/[id]/tracking` dan `/orders/[id]`
+- **Dokumen:** TASK-67 selesai 2026-10-11 — `docs/03` v1.4 memuat CUST-01, CUST-02, AUTH-04, AUTH-05, ORDER-03B (plus revisi bagian batas fitur ORDER-03 soal tombol daftar). `docs/01` dan `docs/02` belum diperbarui untuk PH-06/PH-07.
+- **Keterbatasan verifikasi:** uji klik-through browser (pilih alamat di checkout, tombol "Pesan Lagi", alur email set/reset password sampai kotak masuk) belum dijalankan; email produksi tetap bergantung pada domain Resend terverifikasi.
+- **Sisa yang belum ditangani (dari PH-06, tidak berubah):** B1 lost update keranjang guest, B3 snapshot harga campur, B4 tanpa rate limit proxy ongkir, C1 item non-aktif ikut dihitung, C2 `getCartItemCount` boros, error 429 destinasi disembunyikan.
 
 ---
 

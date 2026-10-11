@@ -4,6 +4,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { getCart, getCartAccess } from "@/lib/cart";
 import { getPickupSettings } from "@/lib/config";
+import { getAddresses, toSavedAddress, type SavedAddress } from "@/lib/customers";
 import { prisma } from "@/lib/db/prisma";
 import { isShippingApiConfigured } from "@/lib/shipping";
 
@@ -51,16 +52,21 @@ export default async function CheckoutPage({
   const mode = identity.kind === "user" ? "user" : "guest";
 
   let defaults = { name: "", email: "", phone: "" };
+  let savedAddresses: SavedAddress[] = [];
   if (identity.kind === "user") {
-    const account = await prisma.user.findUnique({
-      where: { id: identity.userId },
-      select: { name: true, email: true, phone: true },
-    });
+    const [account, addresses] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: identity.userId },
+        select: { name: true, email: true, phone: true },
+      }),
+      getAddresses(identity.userId),
+    ]);
     defaults = {
       name: account?.name ?? "",
       email: account?.email ?? "",
       phone: account?.phone ?? "",
     };
+    savedAddresses = addresses.map(toSavedAddress);
   }
 
   const subtotal = items.reduce(
@@ -79,6 +85,7 @@ export default async function CheckoutPage({
         subtotal={subtotal}
         shippingConfigured={isShippingApiConfigured()}
         defaults={defaults}
+        savedAddresses={savedAddresses}
         pickup={{
           enabled: pickup.enabled,
           info: pickup.info,

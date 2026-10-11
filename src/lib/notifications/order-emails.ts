@@ -3,6 +3,7 @@ import { buildOrderConfirmationEmail } from "@/emails/order-confirmation";
 import { buildOrderShippedEmail } from "@/emails/order-shipped";
 import { buildPaymentSuccessEmail } from "@/emails/payment-success";
 import { buildRefundCompletedEmail } from "@/emails/refund-completed";
+import { shouldSendNotification } from "@/lib/customers";
 import { prisma } from "@/lib/db/prisma";
 import { isEmailConfigured } from "./config";
 import { sendEmail } from "./email";
@@ -34,6 +35,7 @@ export async function sendOrderConfirmationEmail(orderId: string): Promise<void>
 
     const to = resolveRecipient(order);
     if (!to) return;
+    if (!(await shouldSendNotification(order.userId, "orderConfirmation"))) return;
 
     const { subject, html } = buildOrderConfirmationEmail(
       {
@@ -79,6 +81,7 @@ export async function sendPaymentSuccessEmail(orderId: string): Promise<void> {
 
     const to = resolveRecipient(order);
     if (!to) return;
+    if (!(await shouldSendNotification(order.userId, "paymentConfirmation"))) return;
 
     const { subject, html } = buildPaymentSuccessEmail(
       {
@@ -120,6 +123,7 @@ export async function sendOrderShippedEmail(orderId: string): Promise<void> {
 
     const to = resolveRecipient(order);
     if (!to) return;
+    if (!(await shouldSendNotification(order.userId, "shippingUpdate"))) return;
 
     const { subject, html } = buildOrderShippedEmail(
       {
@@ -157,6 +161,7 @@ export async function sendCancellationEmail(
 
     const to = resolveRecipient(order);
     if (!to) return;
+    if (!(await shouldSendNotification(order.userId, "cancellationUpdate"))) return;
 
     const { subject, html } = buildCancellationEmail(
       {
@@ -196,6 +201,7 @@ export async function sendRefundCompletedEmail(orderId: string): Promise<void> {
 
     const to = resolveRecipient(order);
     if (!to) return;
+    if (!(await shouldSendNotification(order.userId, "refundUpdate"))) return;
 
     const refund = order.refunds[0];
     if (!refund) return;

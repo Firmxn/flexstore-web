@@ -37,8 +37,57 @@ model User {
 
   cartItems CartItem[]
   orders    Order[]
+  addresses Address[]
+
+  notificationPreference NotificationPreference?
 
   @@map("users")
+}
+
+// Alamat tersimpan customer (MOD-CUST, PH-07 / PRD 4.8, 5.8). Maksimal 5 baris
+// per user, ditegakkan di server saat menambah. `destinationId` menyimpan titik
+// tujuan RajaOngkir supaya ongkir bisa dihitung tanpa memilih ulang. Ini snapshot
+// terpisah dari `Order.shippingAddress`: mengubah alamat tidak mengubah pesanan
+// lama.
+model Address {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  label         String
+  recipientName String
+  phone         String
+  destinationId String?
+  province      String
+  city          String
+  district      String?
+  subdistrict   String?
+  postalCode    String?
+  street        String
+  note          String?
+  isPrimary     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+// Preferensi notifikasi customer (MOD-CUST, PH-07 / PRD 4.8). Baris dibuat saat
+// customer pertama kali menyimpan preferensi; pembacaan memakai nilai bawaan
+// semua aktif tanpa menulis, sama seperti StoreSetting.
+model NotificationPreference {
+  userId              String   @id @db.Uuid
+  orderConfirmation   Boolean  @default(true)
+  paymentConfirmation Boolean  @default(true)
+  shippingUpdate      Boolean  @default(true)
+  cancellationUpdate  Boolean  @default(true)
+  refundUpdate        Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_preferences")
 }
 
 model Category {

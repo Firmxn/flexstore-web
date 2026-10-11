@@ -11,7 +11,7 @@
 
 ## 1. Identitas dan indeks fitur
 
-- **Versi / tanggal:** v1.3 / 2026-10-10
+- **Versi / tanggal:** v1.4 / 2026-10-11
 - **Versi PRD / SDD:** PRD v1.1, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
@@ -48,6 +48,11 @@
 | | | ORDER-08 | Tracking Pesanan Customer | Belum dirinci (PH-06) | `docs/04` bagian 10 (keputusan 2026-10-10) |
 | | **MOD-REPORT** | REPORT-01 | Sales Report | Belum dirinci | - |
 | | **MOD-CONFIG** | CONFIG-01 | Store Settings | Belum dirinci | - |
+| **Phase 7** | **MOD-CUST** | CUST-01 | Alamat Tersimpan | Terimplementasi | [CUST-01](#cust-01) |
+| | | CUST-02 | Preferensi Notifikasi | Terimplementasi | [CUST-02](#cust-02) |
+| | **MOD-AUTH** | AUTH-04 | Set Password (Guest → Customer) | Terimplementasi | [AUTH-04](#auth-04) |
+| | | AUTH-05 | Reset Password | Terimplementasi | [AUTH-05](#auth-05) |
+| | **MOD-ORDER** | ORDER-03B | Re-order (lanjutan ORDER-03) | Terimplementasi | [ORDER-03B](#order-03b) |
 
 **Phase Checkpoint:**
 - **Phase 1:** Admin CRUD products, customer register/login/view products ✓ Foundation ready
@@ -56,6 +61,7 @@
 - **Phase 4:** Payment integration, webhook, stock deduction ✓ Payment flow complete
 - **Phase 5:** Voucher, email notification, invoice ✓ Core features complete
 - **Phase 6:** Shipping tracking, cancellation, refund, reports, settings ✓ MVP complete
+- **Phase 7:** Alamat tersimpan, re-order, set/reset password, preferensi notifikasi ✓ Customer management ready
 
 ---
 
@@ -1207,7 +1213,7 @@ Tidak ada.
 ### 12. Batas fitur
 
 - **Termasuk:** Daftar dan detail pesanan customer, pelepasan malas reservasi
-- **Tidak termasuk:** Riwayat untuk guest (pakai ORDER-04), pembatalan (ORDER-05, PH-06), lacak pesanan (ORDER-08, PH-06), invoice (PH-05), pembayaran (PH-04). Tombol "Lacak Pesanan" dan "Batalkan Pesanan" di daftar (sejak 2026-10-10) masih placeholder tanpa fungsi — pemiliknya ORDER-08 dan ORDER-05 (PH-06)
+- **Tidak termasuk:** Riwayat untuk guest (pakai ORDER-04), pembatalan (ORDER-05, PH-06), lacak pesanan (ORDER-08, PH-06), invoice (PH-05), pembayaran (PH-04), re-order (ORDER-03B). Tombol "Lacak Pesanan" dan "Batalkan Pesanan" di daftar sudah berfungsi (sejak PH-07) menautkan ke `/orders/[id]/tracking` dan `/orders/[id]`
 - **Ketergantungan:** ORDER-01/ORDER-02 (data pesanan), MOD-AUTH (sesi)
 
 ### 13. Pertanyaan terbuka
@@ -1548,7 +1554,600 @@ Tidak berlaku — background process.
 
 ---
 
-**Status:** Spesifikasi Fitur v1.3 — PAY-01/PAY-02 terimplementasi (PH-04).
+## <a name="cust-01"></a>CUST-01 — Alamat Tersimpan
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | CUST-01 — Alamat Tersimpan |
+| Modul | MOD-CUST |
+| Tujuan | Customer menyimpan alamat (maksimal 5) agar bisa dipilih saat checkout tanpa mengetik ulang |
+| Aktor utama | Customer |
+| Status | Terimplementasi (PH-07) |
+| Referensi PRD | PRD 2.2 (Customer), PRD 4.8 (Customer Management), PRD 5.8 (Customer Address) |
+| Referensi SDD | SDD 4.8 (MOD-CUST), SDD 6.2 (`shippingAddress`) |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Ada sesi login dengan role Customer
+- **Pemicu:** Buka `/profile`, atau memilih alamat tersimpan di `/checkout`
+- **Titik masuk:** `/profile`, `/checkout`, `/api/customer/addresses`, `/api/customer/addresses/[id]`
+- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`; role non-customer → alihkan ke `/admin`
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Customer login | Baca/tambah/ubah/hapus alamat | Hanya alamat miliknya (`userId` pemanggil) | - |
+| Customer lain | Ubah/hapus alamat orang lain | - | `404 NOT_FOUND` |
+| Store Admin | Akses API alamat | - | `403 FORBIDDEN` |
+| Guest tanpa sesi | Akses API alamat | - | `401 UNAUTHORIZED` |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| label | string | Ya | 1-50 karakter | `Label alamat wajib diisi` |
+| recipientName | string | Ya | 1-100 karakter | `Nama penerima wajib diisi` |
+| phone | string | Ya | Dinormalisasi ke `+62`, 8-11 digit | `Nomor HP tidak valid` |
+| destinationId | string | Tidak | Maks 64 karakter (titik tujuan RajaOngkir) | - |
+| province | string | Ya | 1-100 karakter | `Provinsi wajib diisi` |
+| city | string | Ya | 1-100 karakter | `Kota/Kabupaten wajib diisi` |
+| district | string | Tidak | Maks 100 karakter | - |
+| subdistrict | string | Tidak | Maks 100 karakter | - |
+| postalCode | string | Tidak | Maks 10 karakter | - |
+| street | string | Ya | 1-500 karakter | `Alamat lengkap wajib diisi` |
+| note | string | Tidak | Maks 500 karakter | - |
+| isPrimary | boolean | Tidak | Default `false` | - |
+
+Semua input divalidasi Zod **sebelum** query Prisma. `PATCH` menerima sebagian field (mis. hanya `isPrimary`) dan menolak body kosong (`Tidak ada perubahan`).
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Customer buka `/profile` | Baca alamat miliknya (utama dulu, lalu tertua) | Daftar alamat tampil |
+| 2 | Klik "Tambah Alamat", isi form | `POST /api/customer/addresses` | `201`, alamat tersimpan |
+| 3 | Pilih titik tujuan | Wilayah (provinsi/kota/kecamatan/kelurahan/kode pos) terisi otomatis dan read-only | Data wilayah konsisten |
+| 4 | Klik "Ubah" pada satu alamat | `PATCH /api/customer/addresses/[id]` | `200`, alamat berubah |
+| 5 | Klik "Jadikan Utama" | `PATCH` dengan `{ isPrimary: true }` | Hanya satu alamat utama |
+| 6 | Klik "Hapus" lalu konfirmasi | `DELETE /api/customer/addresses/[id]` | `200`, alamat hilang |
+| 7 | Buka `/checkout` | Pilih alamat tersimpan | Isian alamat + `destinationId` terisi otomatis |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Daftar alamat tersimpan; alamat terisi di form checkout
+- **Data dibaca:** Address milik pemanggil
+- **Data diubah:** Address (create/update/delete). `Order.shippingAddress` **tidak** berubah — pesanan lama tetap snapshot
+- **Kondisi akhir:** Maksimal 5 alamat, tepat satu `isPrimary` selama masih ada alamat
+- **Setelah reload:** Daftar alamat tetap sama
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Alamat pertama | Otomatis ditandai utama | `isPrimary = true` |
+| Menandai alamat lain utama | Alamat utama lama dilepas | Tetap satu utama |
+| Menghapus alamat utama | Alamat tertua berikutnya diangkat | Tetap satu utama (selama masih ada alamat) |
+| Checkout dengan 1 alamat | Terisi otomatis saat halaman dibuka | Tanpa memilih |
+| Checkout dengan >1 alamat | Pemilih "Alamat tersimpan" muncul | Customer memilih atau "Isi manual" |
+| Memilih "Isi manual" | Isian alamat dikosongkan, identitas akun dipertahankan | Isi manual |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Tanpa sesi | `401 UNAUTHORIZED` / alihkan ke `/login` | - |
+| Role bukan customer | `403 FORBIDDEN` / alihkan ke `/admin` | - |
+| Alamat bukan milik pemanggil | `404 NOT_FOUND` | - |
+| Alamat ke-6 | `409 LIMIT_REACHED` "Maksimal 5 alamat tersimpan" | Hapus salah satu |
+| Input tidak valid | `400 VALIDATION_ERROR` + `field` | Perbaiki isian |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/profile` (bagian "Alamat Tersimpan"), `/checkout` (pemilih alamat)
+- **Elemen:** Kartu alamat (label, penanda "Utama", penerima, nomor HP, alamat lengkap, catatan), tombol Ubah/Jadikan Utama/Hapus, form tambah/ubah, pemilih alamat di checkout
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Belum ada alamat | "Belum ada alamat tersimpan" + tombol Tambah | Tambah alamat |
+| Sudah 5 alamat | Tombol Tambah nonaktif + keterangan batas | Hapus dulu |
+| Konfirmasi hapus | "Hapus alamat ini?" + Ya/Batal | Hapus atau batal |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-CUST-01-01 | Customer login | Tambah alamat valid | `201`, alamat tampil di `/profile` |
+| AC-CUST-01-02 | Sudah ada 5 alamat | Tambah alamat ke-6 | `409 LIMIT_REACHED`, alamat tidak bertambah |
+| AC-CUST-01-03 | Ada beberapa alamat | Tandai satu sebagai utama | Hanya satu `isPrimary` |
+| AC-CUST-01-04 | Alamat utama dihapus | Hapus | Alamat tertua berikutnya menjadi utama |
+| AC-CUST-01-05 | Customer A | Ubah/hapus alamat customer B | `404 NOT_FOUND` |
+| AC-CUST-01-06 | Ada alamat tersimpan | Buka `/checkout` dan pilih alamat | Isian alamat + `destinationId` terisi |
+| AC-CUST-01-07 | Pesanan lama sudah dibuat | Ubah/hapus alamat tersimpan | `Order.shippingAddress` tidak berubah |
+| AC-CUST-01-08 | Guest tanpa sesi | Buka `/profile` | Dialihkan ke `/login` |
+| AC-CUST-01-09 | Store Admin | Akses `/api/customer/addresses` | `403` |
+| AC-CUST-01-10 | Belum ada alamat | Tambah alamat pertama | Otomatis menjadi utama |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Tambah valid | label "Rumah", Cilandak, Jakarta Selatan | Alamat tampil | AC-CUST-01-01 |
+| Batas | 5 alamat lalu 1 lagi | `409` | AC-CUST-01-02 |
+| Milik orang lain | `userId` berbeda | `404` | AC-CUST-01-05 |
+| Checkout | Alamat dengan `destinationId` | Ongkir bisa dihitung tanpa memilih ulang | AC-CUST-01-06 |
+
+### 12. Batas fitur
+
+- **Termasuk:** CRUD alamat customer, batas 5, alamat utama tunggal, pemilihan alamat di checkout, preferensi wilayah dari titik tujuan
+- **Tidak termasuk:** Alamat guest (tetap diisi per pesanan), buku alamat toko/pengirim, perubahan bentuk `Order.shippingAddress`, peta titik akurat
+- **Ketergantungan:** MOD-AUTH (sesi), SHIP-01 (titik tujuan/ongkir), ORDER-01/ORDER-02 (checkout)
+
+### 13. Pertanyaan terbuka
+
+- Batas 5 alamat ditegakkan dengan `count` di dalam transaksi, bukan constraint unik di database (batas bersifat dinamis). Dua permintaan yang benar-benar bersamaan secara teoretis bisa lolos melewati batas; risiko dinilai rendah dan dicatat di sini.
+- Alamat utama tidak bisa "dikosongkan" (hanya penanda `true` yang dihormati) supaya selalu ada satu alamat utama.
+
+---
+
+## <a name="cust-02"></a>CUST-02 — Preferensi Notifikasi
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | CUST-02 — Preferensi Notifikasi |
+| Modul | MOD-CUST |
+| Tujuan | Customer memilih jenis email yang ingin diterima |
+| Aktor utama | Customer |
+| Status | Terimplementasi (PH-07) |
+| Referensi PRD | PRD 4.8 (Customer Management), PRD 4.9 (Notification) |
+| Referensi SDD | SDD 4.8 (MOD-CUST), SDD 4.9 (MOD-NOTIF) |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Ada sesi login Customer
+- **Pemicu:** Buka `/profile` bagian "Preferensi Notifikasi"
+- **Titik masuk:** `/profile`, `/api/customer/notification-preferences`
+- **Jika tidak terpenuhi:** Tanpa sesi → alihkan ke `/login`
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Customer login | Baca/ubah preferensi | Miliknya sendiri | - |
+| Store Admin | Akses API preferensi | - | `403 FORBIDDEN` |
+| Guest tanpa sesi | Akses API preferensi | - | `401 UNAUTHORIZED` |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| orderConfirmation | boolean | Ya | - | `Data tidak valid` |
+| paymentConfirmation | boolean | Ya | - | `Data tidak valid` |
+| shippingUpdate | boolean | Ya | - | `Data tidak valid` |
+| cancellationUpdate | boolean | Ya | - | `Data tidak valid` |
+| refundUpdate | boolean | Ya | - | `Data tidak valid` |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Customer buka `/profile` | Baca preferensi (baris tersimpan atau nilai bawaan semua aktif) | Form preferensi tampil |
+| 2 | Ubah centang, klik "Simpan Preferensi" | `PATCH /api/customer/notification-preferences` | `200`, preferensi tersimpan |
+| 3 | Ada email transaksional keluar | Server memeriksa preferensi sebelum kirim | Email dilewati bila dimatikan |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Preferensi notifikasi tersimpan
+- **Data dibaca:** NotificationPreference milik pemanggil
+- **Data diubah:** NotificationPreference (upsert baris `userId`)
+- **Kondisi akhir:** Baris tersimpan mengikuti pilihan; tanpa baris = semua aktif
+- **Setelah reload:** Preferensi tetap sama
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Belum pernah menyimpan | Pakai nilai bawaan semua aktif tanpa menulis baris | Semua jenis dikirimi |
+| Customer mematikan satu jenis | Jenis itu dilewati, jenis lain tetap | Sesuai pilihan |
+| Guest (tanpa akun) | Tidak punya preferensi | Semua email tetap dikirim |
+| Gagal membaca preferensi | Dianggap aktif, email tetap dikirim | Alur tidak terganggu |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Tanpa sesi | `401 UNAUTHORIZED` | Masuk dulu |
+| Role bukan customer | `403 FORBIDDEN` | - |
+| Input tidak lengkap | `400 VALIDATION_ERROR` | Perbaiki isian |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/profile` (bagian "Preferensi Notifikasi")
+- **Elemen:** Lima kotak centang (konfirmasi pesanan, konfirmasi pembayaran, info pengiriman, pembatalan, refund) + tombol Simpan
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Berhasil simpan | Pesan "Preferensi disimpan." | - |
+| Gagal | Pesan galat | Coba lagi |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-CUST-02-01 | Customer belum pernah menyimpan | Buka `/profile` | Semua jenis aktif |
+| AC-CUST-02-02 | Customer mematikan "Konfirmasi pesanan" | Pesanan baru dibuat | Email konfirmasi **tidak** dikirim |
+| AC-CUST-02-03 | Customer mematikan "Konfirmasi pesanan" | Pembayaran berhasil | Email pembayaran tetap dikirim |
+| AC-CUST-02-04 | Guest tanpa akun | Pesanan dibuat | Email tetap dikirim |
+| AC-CUST-02-05 | Store Admin | Akses API preferensi | `403` |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Bawaan | Tanpa baris | Semua aktif | AC-CUST-02-01 |
+| Matikan satu | `orderConfirmation = false` | Email konfirmasi dilewati | AC-CUST-02-02 |
+| Jenis lain | `paymentConfirmation = true` | Email pembayaran dikirim | AC-CUST-02-03 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Preferensi lima jenis email transaksional pesanan, penegakan saat kirim
+- **Tidak termasuk:** Preferensi SMS/WhatsApp, email akun (set/reset password) yang selalu dikirim, notifikasi admin
+- **Ketergantungan:** MOD-NOTIF (NOTIF-01), MOD-AUTH (sesi)
+
+### 13. Pertanyaan terbuka
+
+- Email set/reset password tidak tunduk pada preferensi ini karena dianggap email keamanan akun yang diminta langsung oleh pengguna; dicatat sebagai keputusan.
+
+---
+
+## <a name="auth-04"></a>AUTH-04 — Set Password (Guest → Customer)
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | AUTH-04 — Set Password (Guest → Customer) |
+| Modul | MOD-AUTH |
+| Tujuan | Guest yang mengisi email saat checkout bisa membuat akun customer lewat tautan set password |
+| Aktor utama | Guest dengan email |
+| Status | Terimplementasi (PH-07) |
+| Referensi PRD | PRD 2.1 (Guest), PRD 2.2 (Customer), PRD 3.1.I, PRD 5.7 (Guest Checkout) |
+| Referensi SDD | SDD 4.1 (MOD-AUTH), SDD 4.9 (MOD-NOTIF) |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Pesanan guest dibuat dengan `guestEmail` terisi dan email belum terdaftar
+- **Pemicu:** Pesanan guest selesai dibuat → server mengirim email "Buat Password"
+- **Titik masuk:** `/set-password?token=...`, `POST /api/auth/set-password`
+- **Jika tidak terpenuhi:** Email sudah terdaftar → email tidak dikirim
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Siapa pun dengan token | Buka `/set-password` | Token sebagai bukti | - |
+| Token tanpa/tidak valid | Kirim password | - | `400 INVALID_TOKEN` |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| token | string | Ya | 1-256 karakter, ada di Redis dan belum dipakai | `Tautan tidak valid atau sudah kedaluwarsa` |
+| password | string | Ya | 8-72 karakter | `Password minimal 8 karakter` |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Guest checkout mengisi email | Server membuat token (TTL 24 jam) dan mengirim email | Email berisi tautan `/set-password?token=...` |
+| 2 | Guest klik tautan | Halaman form password tampil | Isi password + konfirmasi |
+| 3 | Kirim | `POST /api/auth/set-password` | Akun Customer dibuat, token dihapus |
+| 4 | System | Ikat pesanan guest dengan `guestEmail` sama ke akun baru (`Order.userId`) | Riwayat pesanan tidak hilang |
+| 5 | Guest masuk | Login dengan email + password | Akses `/orders`, `/profile` |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Akun Customer baru + tautan pesanan guest lama
+- **Data dibaca:** Token (Redis), Order (`guestEmail`, `guestPhone`, `shippingAddress`)
+- **Data diubah:** User (create, password bcrypt), Order.userId (guest lama diikat), token dihapus
+- **Kondisi akhir:** Email terdaftar sebagai Customer, pesanan lama tampil di `/orders`
+- **Setelah reload:** Sesi tetap sampai logout
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Email sudah terdaftar | Email set password tidak dikirim | Guest diarahkan login biasa |
+| Token kedaluwarsa | `400 INVALID_TOKEN` | Minta tautan baru (buat pesanan baru / lupa password) |
+| Token dipakai dua kali | Panggilan kedua `400 INVALID_TOKEN` | Token sekali pakai |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Token tidak ada/terpakai | `400 INVALID_TOKEN` | - |
+| Email sudah terdaftar | `409 EMAIL_TAKEN` "Email sudah terdaftar, silakan masuk" | Masuk |
+| Password tidak valid | `400 VALIDATION_ERROR` | Perbaiki isian |
+| Halaman tanpa token | Pesan "Tautan tidak valid" | - |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/set-password`
+- **Elemen:** Form password + konfirmasi, pesan sukses + tautan ke `/login`
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Ada token | Form password | Simpan |
+| Tanpa token | Pesan tautan tidak valid | Kembali ke login |
+| Sukses | "Akun berhasil dibuat" | Masuk |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-AUTH-04-01 | Guest checkout mengisi email baru | Pesanan dibuat | Email "Buat Password" terkirim |
+| AC-AUTH-04-02 | Token valid | Kirim password valid | Akun Customer dibuat, `201` |
+| AC-AUTH-04-03 | Akun baru dibuat | Login | Bisa masuk, pesanan guest lama tampil di `/orders` |
+| AC-AUTH-04-04 | Token sama | Dipakai dua kali | Panggilan kedua `400` |
+| AC-AUTH-04-05 | Email sudah terdaftar | Pesanan guest dibuat | Email set password tidak dikirim |
+| AC-AUTH-04-06 | Guest checkout tanpa email | Pesanan dibuat | Tidak ada email set password |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Email baru | `guest@contoh.com` | Email terkirim | AC-AUTH-04-01 |
+| Token valid | token + password `Rahasia123` | Akun dibuat | AC-AUTH-04-02 |
+| Token ganda | token dipakai 2x | `400` kedua | AC-AUTH-04-04 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Token sekali pakai (Redis, TTL 24 jam), halaman set password, pembuatan akun Customer, pengikatan pesanan guest lama
+- **Tidak termasuk:** Login otomatis setelah set password, penggabungan keranjang guest, migrasi alamat
+- **Ketergantungan:** ORDER-01 (pesanan guest + `guestEmail`), MOD-NOTIF (Resend), MOD-AUTH
+
+### 13. Pertanyaan terbuka
+
+- Keputusan: pesanan guest lama dengan `guestEmail` yang sama **diikat** ke akun baru supaya riwayat tidak hilang (menjawab pertanyaan terbuka di `docs/04` bagian 12.1).
+- Token disimpan di Redis, bukan tabel database; konsekuensinya token hilang bila cache dibersihkan, dan pengguna perlu meminta tautan baru.
+
+---
+
+## <a name="auth-05"></a>AUTH-05 — Reset Password
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | AUTH-05 — Reset Password |
+| Modul | MOD-AUTH |
+| Tujuan | Customer yang lupa password bisa membuat password baru lewat tautan email |
+| Aktor utama | Customer |
+| Status | Terimplementasi (PH-07) |
+| Referensi PRD | PRD 4.1 (Authentication), PRD 4.9 (Notification) |
+| Referensi SDD | SDD 4.1 (MOD-AUTH), SDD 4.9 (MOD-NOTIF) |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Punya akun Customer dengan email
+- **Pemicu:** Klik "Lupa password?" di `/login`
+- **Titik masuk:** `/forgot-password`, `/reset-password?token=...`, `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`
+- **Jika tidak terpenuhi:** - (selalu dijawab sukses di tahap permintaan)
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Siapa pun | Minta tautan reset | - | `200` (selalu, tanpa membocorkan email) |
+| Pemegang token | Set password baru | - | - |
+| Token tanpa/tidak valid | Set password | - | `400 INVALID_TOKEN` |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| email | string | Ya | Format email, maks 255, lowercase | `Email tidak valid` |
+| token | string | Ya | 1-256 karakter, ada di Redis dan belum dipakai | `Tautan tidak valid atau sudah kedaluwarsa` |
+| password | string | Ya | 8-72 karakter | `Password minimal 8 karakter` |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Customer isi email di `/forgot-password` | `POST /api/auth/forgot-password` | `200` selalu |
+| 2 | System (email terdaftar, punya password, role Customer, tidak kena batas) | Buat token (TTL 1 jam) + kirim email | Email berisi tautan `/reset-password?token=...` |
+| 3 | Customer klik tautan | Form password baru tampil | Isi password + konfirmasi |
+| 4 | Kirim | `POST /api/auth/reset-password` | Password diperbarui (bcrypt), token dihapus |
+| 5 | Customer masuk dengan password baru | Login | Berhasil |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Password akun diperbarui
+- **Data dibaca:** User (email → `id`, `role`), token (Redis)
+- **Data diubah:** User.password (bcrypt), token dihapus
+- **Kondisi akhir:** Password baru berlaku, token tidak bisa dipakai lagi
+- **Setelah reload:** - (sesi lama tidak otomatis dibatalkan)
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Email tidak terdaftar | Tetap jawab `200`, tidak kirim email | Keberadaan email tidak bocor |
+| Email terdaftar tanpa password | Tidak kirim email | - |
+| Melebihi batas (3 permintaan/email/jam) | Tetap `200`, tidak kirim email | Anti-spam kotak masuk |
+| Token kedaluwarsa/terpakai | `400 INVALID_TOKEN` | Minta tautan baru |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Email tidak valid | `400 VALIDATION_ERROR` | Perbaiki isian |
+| Token tidak valid | `400 INVALID_TOKEN` | Minta tautan baru |
+| Password tidak valid | `400 VALIDATION_ERROR` | Perbaiki isian |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/forgot-password`, `/reset-password`
+- **Elemen:** Form email, form password + konfirmasi, pesan sukses, tautan ke `/login`
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Permintaan terkirim | "Bila email terdaftar, kami sudah mengirim tautan reset" | Cek email |
+| Tanpa token | Pesan tautan tidak valid + tautan minta ulang | Minta ulang |
+| Sukses reset | "Password berhasil diubah" | Masuk |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-AUTH-05-01 | Email terdaftar | Minta reset | `200`, email reset terkirim |
+| AC-AUTH-05-02 | Email tidak terdaftar | Minta reset | `200`, tidak ada email |
+| AC-AUTH-05-03 | Token valid | Set password baru | `200`, password berubah |
+| AC-AUTH-05-04 | Password baru | Login | Berhasil |
+| AC-AUTH-05-05 | Token sama | Dipakai dua kali | Panggilan kedua `400` |
+| AC-AUTH-05-06 | Email sama | Minta reset 4x dalam 1 jam | Permintaan ke-4 tidak mengirim email, tetap `200` |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Terdaftar | `customer@contoh.com` | Email terkirim | AC-AUTH-05-01 |
+| Tidak terdaftar | `tidak@ada.com` | `200`, tanpa email | AC-AUTH-05-02 |
+| Token ganda | token dipakai 2x | `400` kedua | AC-AUTH-05-05 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Permintaan tautan (anti-enumerasi + batas 3/jam), token sekali pakai (Redis, TTL 1 jam), halaman set password baru
+- **Tidak termasuk:** Reset lewat SMS/WhatsApp, pembatalan sesi lama, verifikasi identitas tambahan
+- **Ketergantungan:** MOD-AUTH, MOD-NOTIF (Resend)
+
+### 13. Pertanyaan terbuka
+
+- Sesi lama tidak dibatalkan setelah reset password (strategi JWT tanpa daftar sesi). Dicatat sebagai keterbatasan; bisa ditambahkan versi token bila perlu.
+
+---
+
+## <a name="order-03b"></a>ORDER-03B — Re-order (lanjutan ORDER-03)
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | ORDER-03B — Re-order (lanjutan ORDER-03) |
+| Modul | MOD-ORDER |
+| Tujuan | Customer memesan lagi produk dari pesanan lama dengan satu klik |
+| Aktor utama | Customer |
+| Status | Terimplementasi (PH-07) |
+| Referensi PRD | PRD 2.2 (Customer: Re-order), PRD 3.1.C (Checkout & Order) |
+| Referensi SDD | SDD 4.4 (MOD-ORDER), SDD 4.2 (MOD-CART) |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** Ada sesi login Customer dan pesanan miliknya punya item
+- **Pemicu:** Klik tombol "Pesan Lagi" di `/orders` atau `/orders/[id]`
+- **Titik masuk:** `/orders`, `/orders/[id]`, `POST /api/orders/[id]/reorder`
+- **Jika tidak terpenuhi:** Tanpa sesi → `401`; pesanan bukan miliknya → `404`
+
+### 3. Hak akses
+
+| Role | Tindakan | Cakupan | Respons |
+| --- | --- | --- | --- |
+| Customer login | Pesan lagi | Hanya pesanan miliknya | - |
+| Customer lain | Pesan lagi pesanan orang lain | - | `404 NOT_FOUND` |
+| Store Admin | Akses API re-order | - | `403 FORBIDDEN` |
+| Guest tanpa sesi | Akses API re-order | - | `401 UNAUTHORIZED` |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| id (path) | UUID | Ya | UUID valid dan milik pemanggil | `404` `Pesanan tidak ditemukan` |
+
+Tidak ada body. Kuantitas, harga, dan stok **selalu** diambil server dari data terkini, bukan dari pesanan lama.
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Customer klik "Pesan Lagi" | Baca pesanan + item miliknya | - |
+| 2 | System | Tiap item divalidasi: varian ada, produk ACTIVE, stok > 0 | Item valid lanjut |
+| 3 | System | Tambahkan ke keranjang (kuantitas dibatasi stok) | CartItem bertambah |
+| 4 | Selesai | `200 { added, skipped[] }` | Pesan jumlah ditambahkan + tautan `/cart` |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Item ditambahkan ke keranjang
+- **Data dibaca:** Order + OrderItem milik pemanggil, ProductVariant/Product (stok, status)
+- **Data diubah:** CartItem (keranjang customer). **Tidak** ada Order baru, stok **tidak** berkurang di sini
+- **Kondisi akhir:** Keranjang berisi item yang valid
+- **Setelah reload:** Item tetap di keranjang
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Varian sudah tidak ada | Item dilewati | Masuk daftar `skipped` |
+| Produk tidak ACTIVE | Item dilewati | Masuk daftar `skipped` |
+| Stok 0 | Item dilewati | Masuk daftar `skipped` |
+| Stok < kuantitas lama | Kuantitas disesuaikan ke stok tersisa | Masuk `skipped` dengan alasan |
+| Sebagian valid | Item valid tetap ditambahkan | `added > 0`, sisanya dilaporkan |
+| Semua dilewati | `400 NOTHING_ADDED` | Alasan pertama ditampilkan |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Tanpa sesi | `401 UNAUTHORIZED` | Masuk |
+| Role bukan customer | `403 FORBIDDEN` | - |
+| Pesanan bukan miliknya / ID bukan UUID | `404 NOT_FOUND` | - |
+| Tidak ada item yang bisa ditambahkan | `400 NOTHING_ADDED` | Lihat alasan |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/orders` (tombol pada kartu pesanan), `/orders/[id]` (tombol di bawah daftar item)
+- **Elemen:** Tombol "Pesan Lagi"; setelah sukses, teks "{n} item ditambahkan" + tautan "Lihat keranjang" dan daftar alasan item yang dilewati
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Sukses | "n item ditambahkan" | Buka `/cart` |
+| Sebagian dilewati | Daftar alasan per produk | - |
+| Gagal | Pesan galat | Coba lagi |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-ORDER-03-06 | Customer punya pesanan dengan varian tersedia | Klik "Pesan Lagi" | Item masuk keranjang, `200` |
+| AC-ORDER-03-07 | Varian sudah dihapus/nonaktif | Klik "Pesan Lagi" | Item dilewati, alasan tampil, tidak ada pesanan baru |
+| AC-ORDER-03-08 | Stok lebih kecil dari kuantitas lama | Klik "Pesan Lagi" | Kuantitas disesuaikan, alasan tampil |
+| AC-ORDER-03-09 | Customer A | Re-order pesanan customer B | `404` |
+| AC-ORDER-03-10 | Tanpa sesi | Akses API re-order | `401` |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Tersedia | Pesanan 2 item stok cukup | 2 item masuk keranjang | AC-ORDER-03-06 |
+| Varian hilang | Item dengan varian dihapus | Dilewati | AC-ORDER-03-07 |
+| Stok kurang | Minta 3, stok 1 | 1 masuk, alasan tampil | AC-ORDER-03-08 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Menambah item pesanan lama ke keranjang, validasi stok/status, laporan item dilewati
+- **Tidak termasuk:** Membuat pesanan baru, menyalin voucher/ongkir/alamat, checkout otomatis
+- **Ketergantungan:** ORDER-03 (data pesanan), CART-01 (add to cart), MOD-AUTH (sesi)
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada. Pesanan lama tidak berubah sama sekali; seluruh validasi harga/stok diulang saat checkout (ORDER-01/ORDER-02).
+
+---
+
+**Status:** Spesifikasi Fitur v1.4 — PH-07 (CUST-01, CUST-02, AUTH-04, AUTH-05, ORDER-03B) terimplementasi.
 
 **Next steps:**
 1. Review spesifikasi dengan team

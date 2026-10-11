@@ -90,3 +90,40 @@ export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type SendOtpInput = z.infer<typeof sendOtpSchema>;
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;
+
+// PH-07 (AUTH-04/AUTH-05): password baru untuk set password (guest yang mengisi
+// email saat checkout) dan reset password (lupa password). Aturan panjang sama
+// dengan registrasi.
+export const newPasswordSchema = z
+  .string({
+    required_error: "Password wajib diisi",
+    invalid_type_error: "Password wajib diisi",
+  })
+  .min(8, "Password minimal 8 karakter")
+  .max(72, "Password maksimal 72 karakter");
+
+export const setPasswordSchema = z.object({
+  token: z.string().trim().min(1, "Token tidak valid").max(256),
+  password: newPasswordSchema,
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z
+    .string({
+      required_error: "Email wajib diisi",
+      invalid_type_error: "Email tidak valid",
+    })
+    .trim()
+    .toLowerCase()
+    .email("Email tidak valid")
+    .max(255, "Email maksimal 255 karakter"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().trim().min(1, "Token tidak valid").max(256),
+  password: newPasswordSchema,
+});
+
+export type SetPasswordInput = z.infer<typeof setPasswordSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

@@ -6,6 +6,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { OtpVerificationForm } from "@/components/auth/OtpVerificationForm";
 import { CourierPicker } from "@/components/shipping/CourierPicker";
@@ -14,6 +15,7 @@ import type {
   ShippingDestination,
   ShippingOption,
 } from "@/components/shipping/types";
+import type { SavedAddress } from "@/lib/customers/view";
 import { ApiError, apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { formatRupiah } from "@/lib/utils/format";
 
@@ -32,6 +34,7 @@ type CheckoutFormProps = {
   subtotal: number;
   shippingConfigured: boolean;
   defaults: { name: string; email: string; phone: string };
+  savedAddresses: SavedAddress[];
   pickup: {
     enabled: boolean;
     info: string | null;
@@ -54,6 +57,24 @@ type VoucherValidateResponse = {
   errors: { code: string; reason: string }[];
 };
 
+// Alamat tersimpan dipetakan ke bentuk ShippingDestination supaya
+// DestinationPicker dan CourierPicker tetap bekerja tanpa memilih ulang titik.
+function destinationFromAddress(
+  address: SavedAddress,
+): ShippingDestination | null {
+  if (!address.destinationId || !address.city) return null;
+  return {
+    id: address.destinationId,
+    label:
+      [address.district, address.city].filter(Boolean).join(", ") || address.city,
+    provinceName: address.province,
+    cityName: address.city,
+    districtName: address.district ?? "",
+    subdistrictName: address.subdistrict ?? "",
+    zipCode: address.postalCode ?? "",
+  };
+}
+
 // ORDER-01/ORDER-02: form pembuatan pesanan. Guest wajib melewati OTP dulu;
 // customer memakai data akun. Titik tujuan dipilih lebih dulu supaya
 // provinsi/kota/kecamatan/kelurahan/kode pos terisi otomatis. Tarif kurir
@@ -65,25 +86,39 @@ export function CheckoutForm({
   subtotal,
   shippingConfigured,
   defaults,
+  savedAddresses,
   pickup,
 }: CheckoutFormProps) {
+  // Customer dengan tepat satu alamat tersimpan: seluruh isian langsung terisi.
+  // Lebih dari satu: pembeli memilih dari daftar (tiga keadaan sesuai keputusan
+  // PH-07). Guest selalu mengetik manual.
+  const singleAddress =
+    mode === "user" && savedAddresses.length === 1 ? savedAddresses[0] : null;
+
   const [fulfillment, setFulfillment] = useState<"DELIVERY" | "PICKUP">(
     "DELIVERY",
   );
   const [verifiedPhone, setVerifiedPhone] = useState<string | null>(
     mode === "user" ? "akun" : null,
   );
-  const [name, setName] = useState(defaults.name);
+  const [selectedAddressId, setSelectedAddressId] = useState(
+    singleAddress?.id ?? "",
+  );
+  const [name, setName] = useState(singleAddress?.recipientName ?? defaults.name);
   const [email, setEmail] = useState(defaults.email);
-  const [phone, setPhone] = useState(defaults.phone);
-  const [destination, setDestination] = useState<ShippingDestination | null>(null);
-  const [city, setCity] = useState("");
-  const [province, setProvince] = useState("");
-  const [district, setDistrict] = useState("");
-  const [subdistrict, setSubdistrict] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [street, setStreet] = useState("");
-  const [note, setNote] = useState("");
+  const [phone, setPhone] = useState(singleAddress?.phone ?? defaults.phone);
+  const [destination, setDestination] = useState<ShippingDestination | null>(
+    singleAddress ? destinationFromAddress(singleAddress) : null,
+  );
+  const [city, setCity] = useState(singleAddress?.city ?? "");
+  const [province, setProvince] = useState(singleAddress?.province ?? "");
+  const [district, setDistrict] = useState(singleAddress?.district ?? "");
+  const [subdistrict, setSubdistrict] = useState(
+    singleAddress?.subdistrict ?? "",
+  );
+  const [postalCode, setPostalCode] = useState(singleAddress?.postalCode ?? "");
+  const [street, setStreet] = useState(singleAddress?.street ?? "");
+  const [note, setNote] = useState(singleAddress?.note ?? "");
   const [shipping, setShipping] = useState<ShippingOption | null>(null);
   const [voucherInput, setVoucherInput] = useState("");
   const [voucherCodes, setVoucherCodes] = useState<string[]>([]);
@@ -230,6 +265,40 @@ export function CheckoutForm({
     if (value.zipCode) setPostalCode(value.zipCode);
   }
 
+  // CUST-01: pilih alamat tersimpan mengisi seluruh isian dan titik tujuan,
+  // sehingga tarif kurir bisa dihitung tanpa memilih ulang.
+  function handleSelectAddress(value: string) {
+    setSelectedAddressId(value);
+    setShipping(null);
+
+    const address = savedAddresses.find((item) => item.id === value);
+    if (!address) {
+      // "Isi manual": bersihkan isian alamat, sisakan identitas akun.
+      setName(defaults.name);
+      setPhone(defaults.phone);
+      setStreet("");
+      setNote("");
+      setProvince("");
+      setCity("");
+      setDistrict("");
+      setSubdistrict("");
+      setPostalCode("");
+      setDestination(null);
+      return;
+    }
+
+    setName(address.recipientName);
+    setPhone(address.phone);
+    setStreet(address.street);
+    setNote(address.note ?? "");
+    setProvince(address.province);
+    setCity(address.city);
+    setDistrict(address.district ?? "");
+    setSubdistrict(address.subdistrict ?? "");
+    setPostalCode(address.postalCode ?? "");
+    setDestination(destinationFromAddress(address));
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -310,6 +379,25 @@ export function CheckoutForm({
           <h2 className="font-semibold">
             {isPickup ? "Data Pengambil" : "Alamat Pengiriman"}
           </h2>
+
+          {mode === "user" && savedAddresses.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="checkout-saved-address">Alamat tersimpan</Label>
+              <Select
+                id="checkout-saved-address"
+                value={selectedAddressId}
+                onChange={(event) => handleSelectAddress(event.target.value)}
+              >
+                <option value="">Isi manual</option>
+                {savedAddresses.map((address) => (
+                  <option key={address.id} value={address.id}>
+                    {address.label} - {address.recipientName} ({address.city})
+                    {address.isPrimary ? " - Utama" : ""}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          ) : null}
 
           {pickup.enabled ? (
             <div className="flex flex-col gap-2">

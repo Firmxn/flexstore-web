@@ -25,6 +25,15 @@ export default function LoginPage() {
           <LoginForm />
 
           <p className="text-center text-sm text-muted-foreground">
+            <Link
+              href="/forgot-password"
+              className="font-medium text-foreground underline"
+            >
+              Lupa password?
+            </Link>
+          </p>
+
+          <p className="text-center text-sm text-muted-foreground">
             Belum punya akun?{" "}
             <Link href="/register" className="font-medium text-foreground underline">
               Daftar sekarang

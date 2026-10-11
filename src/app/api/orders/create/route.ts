@@ -1,6 +1,9 @@
 import { isPhoneVerified } from "@/lib/auth/otp";
 import { getCartAccess } from "@/lib/cart";
-import { sendOrderConfirmationEmail } from "@/lib/notifications";
+import {
+  sendOrderConfirmationEmail,
+  sendSetPasswordEmailForOrder,
+} from "@/lib/notifications";
 import {
   attachGuestAccessCookie,
   createOrder,
@@ -101,6 +104,8 @@ export async function POST(request: Request) {
     }
     // Notifikasi email (non-blocking: kegagalan hanya dicatat di log).
     await sendOrderConfirmationEmail(result.order.id);
+    // AUTH-04: guest yang mengisi email mendapat tautan set password.
+    await sendSetPasswordEmailForOrder(result.order.id);
     return response;
   });
 }

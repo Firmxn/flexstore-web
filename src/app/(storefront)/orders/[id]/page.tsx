@@ -6,6 +6,7 @@ import { CancelOrderForm } from "@/components/orders/CancelOrderForm";
 import { GuestOrderNotice } from "@/components/orders/GuestOrderNotice";
 import { OrderStatusBadge } from "@/components/orders/OrderStatusBadge";
 import { PaymentDeadline } from "@/components/orders/PaymentDeadline";
+import { ReorderButton } from "@/components/orders/ReorderButton";
 import { PaymentStatusWatcher } from "@/components/payments/PaymentStatusWatcher";
 import { PayNowButton } from "@/components/payments/PayNowButton";
 import { Badge } from "@/components/ui/badge";
@@ -111,6 +112,12 @@ export default async function OrderDetailPage({
           ))}
         </ul>
       </section>
+
+      {user ? (
+        <div className="flex justify-end">
+          <ReorderButton orderId={order.id} />
+        </div>
+      ) : null}
 
       <div className="grid gap-6 sm:grid-cols-2">
         <section className="rounded-xl border border-border bg-background p-4 text-sm">
