@@ -10,6 +10,7 @@ import {
   type CreateOrderErrorCode,
 } from "@/lib/orders";
 import { orderCreateSchema } from "@/lib/orders/validation";
+import { getPlatformSettings } from "@/lib/platform";
 import { isShippingApiConfigured } from "@/lib/shipping";
 import {
   apiError,
@@ -31,6 +32,18 @@ const ERROR_STATUS: Record<CreateOrderErrorCode, number> = {
 
 export async function POST(request: Request) {
   return withRouteErrors(async () => {
+    // SITE-01 (PH-08): mode pemeliharaan menutup pembuatan pesanan baru.
+    // Pembacaan keranjang, lacak pesanan, dan invoice tetap berjalan.
+    const platform = await getPlatformSettings();
+    if (platform.maintenanceMode) {
+      return apiError(
+        "MAINTENANCE",
+        platform.maintenanceMessage?.trim() ||
+          "Toko sedang dalam pemeliharaan, coba lagi nanti",
+        503,
+      );
+    }
+
     // Identitas diambil dari sesi/cookie, bukan body (OWASP A01). Hanya
     // customer dan guest yang boleh membuat pesanan; role lain ditolak.
     const access = await getCartAccess();
@@ -48,7 +61,7 @@ export async function POST(request: Request) {
 
     // Tujuan wajib hanya kalau API ongkir aktif dan pesanan dikirim; pickup
     // tidak memakai ongkir (SHIP-03).
-    if (!isPickup && isShippingApiConfigured() && !parsed.data.destinationId) {
+    if (!isPickup && (await isShippingApiConfigured()) && !parsed.data.destinationId) {
       return apiError("VALIDATION_ERROR", "Tujuan wajib dipilih", 400, "destinationId");
     }
 

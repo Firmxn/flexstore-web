@@ -15,6 +15,7 @@ enum Role {
   GUEST
   CUSTOMER
   STORE_ADMIN
+  SITE_ADMIN
 }
 
 enum ProductStatus {
@@ -32,6 +33,10 @@ model User {
   password  String?
   name      String
   role      Role     @default(CUSTOMER)
+  // SITE-04 (PH-08): diisi saat Site Admin menonaktifkan akun. Guard dan
+  // halaman terlindungi membaca ulang kolom ini supaya penonaktifan berlaku
+  // segera, bukan menunggu JWT kedaluwarsa.
+  deactivatedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -454,6 +459,38 @@ model StoreSetting {
   updatedAt       DateTime @updatedAt
 
   @@map("store_settings")
+}
+
+// SITE-02 (PH-08): mode pembayaran yang ditampilkan/dicatat Site Admin.
+// Xendit memakai base URL yang sama; sandbox vs produksi dibedakan oleh kunci
+// di env, jadi kolom ini bersifat label/jejak audit.
+enum PlatformPaymentMode {
+  SANDBOX
+  PRODUCTION
+}
+
+// SITE-01..SITE-03 (PH-08): konfigurasi level platform. Rahasia (kunci Xendit,
+// kunci RajaOngkir) TIDAK disimpan di sini, melainkan tetap di env (OWASP A02).
+// Satu baris tetap `id = "default"`, pola sama seperti StoreSetting.
+model PlatformSetting {
+  id                        String              @id @default("default")
+  // SITE-01: mode pemeliharaan + status pendaftaran publik.
+  maintenanceMode           Boolean             @default(false)
+  maintenanceMessage        String?
+  registrationEnabled       Boolean             @default(true)
+  // SITE-02: perilaku pembayaran Xendit.
+  paymentEnabled            Boolean             @default(true)
+  paymentMode               PlatformPaymentMode  @default(SANDBOX)
+  invoiceDurationSeconds    Int                 @default(900)
+  // SITE-03: perilaku perhitungan ongkir RajaOngkir.
+  shippingEnabled           Boolean             @default(true)
+  shippingOriginDistrictId  String?
+  shippingCouriers          String              @default("jne:sicepat:jnt")
+  shippingWeightPerItemGram Int                 @default(1000)
+  shippingFlatRateIdr       Int                 @default(10000)
+  updatedAt                 DateTime            @updatedAt
+
+  @@map("platform_settings")
 }
 
 // Template alasan penolakan pembatalan (MOD-CONFIG, PH-06 / PRD 5.5).

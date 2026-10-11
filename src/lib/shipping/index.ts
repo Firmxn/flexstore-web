@@ -1,4 +1,5 @@
 import { redis } from "@/lib/redis/client";
+import { getPlatformSettingsRow } from "@/lib/platform/queries";
 import {
   calculateDomesticCost,
   searchDestinations,
@@ -7,9 +8,13 @@ import {
 } from "./client";
 
 // Keputusan PH-02 (dicatat di docs/04 section 10):
-// - Skema produk belum punya berat, jadi berat paket = total kuantitas x
-//   berat per item (default 1000 gram, bisa dioverride lewat env).
-// - Tanpa API key / saat API gagal: fallback tarif flat Rp10.000 (SDD section 9).
+// - Berat paket = jumlah (kuantitas x berat varian), dengan berat per item dari
+//   env/database sebagai cadangan untuk varian yang beratnya belum diisi.
+// - Tanpa API key / saat API gagal: fallback tarif flat (SDD section 9).
+//
+// PH-08 (SITE-03): nilai operasional (aktif/nonaktif, asal ongkir, kurir, berat
+// per item, tarif flat) dapat diatur Site Admin lewat database. Urutan nilai
+// efektif: baris PlatformSetting -> env -> bawaan. Kunci API tetap di env.
 export const DEFAULT_WEIGHT_PER_ITEM_GRAM = 1000;
 export const FLAT_RATE_IDR = 10_000;
 const DEFAULT_COURIERS = "jne:sicepat:jnt";
@@ -28,9 +33,12 @@ export type ShippingSettings = {
   originDistrictId: string;
   weightPerItemGram: number;
   couriers: string;
+  enabled: boolean;
+  flatRateIdr: number;
 };
 
-export function getShippingSettings(): ShippingSettings {
+// Nilai dari env (dipakai sebagai cadangan saat database belum diatur).
+function getShippingEnvSettings() {
   return {
     apiKey: process.env.RAJAONGKIR_API_KEY?.trim() ?? "",
     originDistrictId: process.env.SHIPPING_ORIGIN_DISTRICT_ID?.trim() ?? "",
@@ -41,9 +49,26 @@ export function getShippingSettings(): ShippingSettings {
   };
 }
 
-export function isShippingApiConfigured(): boolean {
-  const settings = getShippingSettings();
-  return Boolean(settings.apiKey && settings.originDistrictId);
+export async function getShippingSettings(): Promise<ShippingSettings> {
+  const env = getShippingEnvSettings();
+  const row = await getPlatformSettingsRow();
+
+  return {
+    apiKey: env.apiKey,
+    originDistrictId: row?.shippingOriginDistrictId || env.originDistrictId,
+    weightPerItemGram:
+      row?.shippingWeightPerItemGram ?? env.weightPerItemGram,
+    couriers: row?.shippingCouriers || env.couriers,
+    enabled: row?.shippingEnabled ?? true,
+    flatRateIdr: row?.shippingFlatRateIdr ?? FLAT_RATE_IDR,
+  };
+}
+
+export async function isShippingApiConfigured(): Promise<boolean> {
+  const settings = await getShippingSettings();
+  return Boolean(
+    settings.enabled && settings.apiKey && settings.originDistrictId,
+  );
 }
 
 export type ShippingOption = RajaCostOption;
@@ -55,12 +80,12 @@ export type ShippingQuote = {
   options: ShippingOption[];
 };
 
-const flatRateOption = (): ShippingOption => ({
+const flatRateOption = (flatRateIdr: number): ShippingOption => ({
   courier: "FLAT",
   code: "flat",
   service: "REGULER",
   description: "Tarif flat sementara",
-  cost: FLAT_RATE_IDR,
+  cost: flatRateIdr,
   etd: "-",
 });
 
@@ -94,13 +119,15 @@ export async function calculateShippingQuote(
   destinationId: string,
   weightGram: number,
 ): Promise<ShippingQuote> {
-  const settings = getShippingSettings();
+  const settings = await getShippingSettings();
 
-  if (!settings.apiKey || !settings.originDistrictId) {
+  // SITE-03: Site Admin bisa mematikan perhitungan ongkir; semuanya jatuh ke
+  // tarif flat tanpa memanggil provider.
+  if (!settings.enabled || !settings.apiKey || !settings.originDistrictId) {
     return {
       source: "fallback",
       cached: false,
-      options: [flatRateOption()],
+      options: [flatRateOption(settings.flatRateIdr)],
     };
   }
 
@@ -126,7 +153,7 @@ export async function calculateShippingQuote(
       return {
         source: "fallback",
         cached: false,
-        options: [flatRateOption()],
+        options: [flatRateOption(settings.flatRateIdr)],
       };
     }
 
@@ -137,7 +164,7 @@ export async function calculateShippingQuote(
     return {
       source: "fallback",
       cached: false,
-      options: [flatRateOption()],
+      options: [flatRateOption(settings.flatRateIdr)],
     };
   }
 }
@@ -145,8 +172,8 @@ export async function calculateShippingQuote(
 export async function searchShippingDestinations(
   search: string,
 ): Promise<{ configured: boolean; cities: ShippingDestination[] }> {
-  const settings = getShippingSettings();
-  if (!settings.apiKey) {
+  const settings = await getShippingSettings();
+  if (!settings.enabled || !settings.apiKey) {
     return { configured: false, cities: [] };
   }
 

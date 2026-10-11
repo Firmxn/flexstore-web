@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     const parsed = shippingCalculateSchema.safeParse(body);
     if (!parsed.success) return validationError(parsed.error);
 
-    const configured = isShippingApiConfigured();
+    const configured = await isShippingApiConfigured();
 
     if (!identity) {
       return apiError("CART_EMPTY", "Keranjang kosong", 400);
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       return apiError("VALIDATION_ERROR", "Tujuan wajib dipilih", 400, "destinationId");
     }
 
-    const settings = getShippingSettings();
+    const settings = await getShippingSettings();
 
     // Berat paket = jumlah (kuantitas x berat varian). Berat varian berasal dari
     // data produk yang diisi admin, bukan dari body request. Env hanya dipakai

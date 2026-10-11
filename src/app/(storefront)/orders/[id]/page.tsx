@@ -176,12 +176,17 @@ export default async function OrderDetailPage({
               <dd>{formatRupiah(Number(order.total))}</dd>
             </div>
           </dl>
-          <Link
-            href={`/orders/${order.id}/invoice`}
-            className="mt-4 inline-flex h-9 items-center rounded-md border border-input px-3 text-sm hover:bg-accent"
-          >
-            Lihat Invoice
-          </Link>
+          {/* Invoice hanya sah setelah pembayaran lunas (keputusan 2026-10-11,
+              `docs/04` bagian 10). Sebelum bayar, rincian tagihan sudah ada di
+              blok ini dan dokumen yang berlaku adalah halaman bayar Xendit. */}
+          {order.payment?.status === "PAID" ? (
+            <Link
+              href={`/orders/${order.id}/invoice`}
+              className="mt-4 inline-flex h-9 items-center rounded-md border border-input px-3 text-sm hover:bg-accent"
+            >
+              Lihat Invoice
+            </Link>
+          ) : null}
           {order.status === "WAITING_PAYMENT" ? (
             <div className="mt-4 flex flex-col gap-3">
               {order.stockReservedUntil ? (

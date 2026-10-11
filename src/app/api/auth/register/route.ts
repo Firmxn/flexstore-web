@@ -5,6 +5,7 @@ import {
   findUserByPhone,
 } from "@/lib/auth/queries";
 import { registerSchema } from "@/lib/auth/validation";
+import { getPlatformSettings } from "@/lib/platform";
 import {
   apiError,
   apiSuccess,
@@ -13,6 +14,16 @@ import {
 } from "@/lib/utils/api";
 
 export async function POST(request: Request) {
+  // SITE-01 (PH-08): Site Admin bisa menutup pendaftaran publik.
+  const platform = await getPlatformSettings();
+  if (!platform.registrationEnabled) {
+    return apiError(
+      "REGISTRATION_DISABLED",
+      "Pendaftaran sedang ditutup",
+      403,
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = registerSchema.safeParse(body);
 

@@ -346,6 +346,7 @@ pnpm dev
 `pnpm db:seed` membuat:
 
 - 1 akun Store Admin (`SEED_ADMIN_EMAIL`, default `admin@flexstore.local`)
+- 1 akun Site Admin (`SEED_SITE_ADMIN_EMAIL`, default `siteadmin@flexstore.local`, PH-08)
 - 4 kategori dan 3 brand
 - 6 produk contoh (5 status `ACTIVE`, 1 `DRAFT`) beserta varian dan gambar
 
@@ -366,6 +367,30 @@ melewati pembuatan admin ketika email di `SEED_ADMIN_EMAIL` sudah terdaftar, jad
 mengubah `SEED_ADMIN_PASSWORD` setelahnya tidak berpengaruh. Untuk memakai password
 baru, ubah dulu password akun itu (atau hapus akunnya) sebelum menjalankan seed lagi.
 
+### Akun dan Konfigurasi Site Admin (PH-08)
+
+Sejak PH-08 ada dua peran admin yang terpisah ketat: **Store Admin** (`/admin/*`) dan
+**Site Admin** (`/site-admin/*`). Akun Site Admin pertama dibuat oleh seed:
+
+```powershell
+SEED_SITE_ADMIN_EMAIL="siteadmin@flexstore.local"
+SEED_SITE_ADMIN_NAME="Site Admin"
+SEED_SITE_ADMIN_PASSWORD=""
+```
+
+- Aturan password sama seperti `SEED_ADMIN_*`: nilai kosong membuat seed menerbitkan password
+  acak dan mencetaknya sekali di terminal; mengubah nilainya tidak berpengaruh bila akun
+  tersebut sudah ada (`seedSiteAdmin` melewatinya).
+- Di area `/site-admin` Site Admin dapat: mengatur mode pemeliharaan dan status pendaftaran
+  (`/site-admin/settings`), mengubah konfigurasi Xendit (`/site-admin/payment`), mengubah
+  konfigurasi RajaOngkir (`/site-admin/shipping`), dan mengelola akun Store Admin
+  (`/site-admin/users`).
+- **Rahasia tetap di `.env.local`.** UI platform hanya menampilkan status terisi/tidak terisi;
+  Site Admin tidak dapat memindahkan kunci Xendit/RajaOngkir ke database (keputusan OWASP A02,
+  `docs/04` bagian 13.2). Sakelar dan mode di UI berlaku sebagai lapisan di atas nilai env.
+- Akun Site Admin tambahan tidak dibuat lewat aplikasi, hanya lewat seed (di luar cakupan
+  PRD 2.4).
+
 ### Daftar periksa setelah setup
 
 | Yang diperiksa | Cara | Hasil yang diharapkan |
@@ -375,6 +400,8 @@ baru, ubah dulu password akun itu (atau hapus akunnya) sebelum menjalankan seed 
 | Twilio terkirim | Cek HP tujuan | Kode OTP 6 digit diterima |
 | Login admin | Buka `/login`, masuk dengan akun seed | Diarahkan ke `/admin/products` |
 | Proteksi admin | Buka `/admin/products` tanpa login | Dialihkan ke `/login` |
+| Login Site Admin | Buka `/login`, masuk dengan `SEED_SITE_ADMIN_EMAIL` | Diarahkan ke `/site-admin` |
+| Proteksi area platform | Buka `/site-admin` sebagai Store Admin, dan `/admin` sebagai Site Admin | Masing-masing dialihkan ke area perannya sendiri |
 | Uploadthing | `/admin/products/new`, unggah gambar | Gambar muncul di pratinjau |
 | Ongkir mode API | `POST /api/shipping` dengan `destinationId` (isi dulu bagian 6) | `"source":"api"`, daftar kurir asli |
 | Ongkir fallback | Kosongkan `RAJAONGKIR_API_KEY` lalu hitung ongkir | `"source":"fallback"`, tarif flat Rp10.000 |

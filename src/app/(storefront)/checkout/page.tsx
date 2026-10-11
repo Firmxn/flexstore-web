@@ -1,11 +1,14 @@
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { Alert } from "@/components/ui/alert";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
+import { homeForRole } from "@/lib/auth/session";
 import { getCart, getCartAccess } from "@/lib/cart";
 import { getPickupSettings } from "@/lib/config";
 import { getAddresses, toSavedAddress, type SavedAddress } from "@/lib/customers";
 import { prisma } from "@/lib/db/prisma";
+import { getPlatformSettings } from "@/lib/platform";
 import { isShippingApiConfigured } from "@/lib/shipping";
 
 export const metadata = { title: "Checkout" };
@@ -38,9 +41,9 @@ export default async function CheckoutPage({
   const variantIds = parseVariantIds(params.variantIds);
 
   // Checkout hanya untuk customer dan guest; role lain (mis. admin)
-  // diarahkan ke area admin (PRD 2).
+  // diarahkan ke areanya masing-masing (PRD 2).
   const access = await getCartAccess();
-  if (!access.ok) redirect("/admin");
+  if (!access.ok) redirect(homeForRole(access.role));
   const identity = access.identity;
   if (!identity || variantIds.length === 0) redirect("/cart");
 
@@ -75,15 +78,31 @@ export default async function CheckoutPage({
   );
 
   const pickup = await getPickupSettings();
+  const platform = await getPlatformSettings();
 
   return (
     <PageContainer>
       <h1 className="text-2xl font-bold tracking-tight">Checkout</h1>
+
+      {platform.maintenanceMode ? (
+        <Alert variant="destructive">
+          {platform.maintenanceMessage?.trim() ||
+            "Toko sedang dalam pemeliharaan. Pemesanan baru sementara ditutup."}
+        </Alert>
+      ) : null}
+
+      {!platform.paymentEnabled ? (
+        <Alert variant="destructive">
+          Pembayaran sedang dimatikan. Pesanan bisa dibuat, tetapi pembayaran
+          belum tersedia.
+        </Alert>
+      ) : null}
+
       <CheckoutForm
         mode={mode}
         items={items}
         subtotal={subtotal}
-        shippingConfigured={isShippingApiConfigured()}
+        shippingConfigured={await isShippingApiConfigured()}
         defaults={defaults}
         savedAddresses={savedAddresses}
         pickup={{

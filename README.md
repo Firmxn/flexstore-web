@@ -2,14 +2,17 @@
 
 Platform e-commerce MVP single-store, target pasar Indonesia (UI Bahasa Indonesia, mata uang IDR).
 
-Fitur yang sudah ada (PH-01 sampai PH-05): autentikasi (customer + store admin, guest OTP),
-CRUD produk (kategori, brand, varian), katalog dengan pencarian, filter, dan urutan, keranjang
-dengan pemilihan item, hitung ongkir (RajaOngkir), checkout guest dan customer, riwayat dan
-pelacakan pesanan, pembayaran Xendit (Invoice API + webhook), voucher (kalkulasi bertahap +
-CRUD admin), email transaksional (Resend), dan invoice siap-cetak.
+Fitur yang sudah ada (PH-01 sampai PH-08): autentikasi (customer, Store Admin, Site Admin,
+guest OTP), CRUD produk (kategori, brand, varian), katalog dengan pencarian, filter, dan urutan,
+keranjang dengan pemilihan item, hitung ongkir (RajaOngkir), checkout guest dan customer
+(termasuk alamat tersimpan), pembayaran Xendit (Invoice API + webhook), voucher (kalkulasi
+bertahap + CRUD admin), kelola pesanan dan lima laporan penjualan Store Admin, cancel/refund,
+pickup, pelacakan pesanan, email transaksional (Resend), invoice siap-cetak, serta konfigurasi
+platform dan akun Store Admin oleh Site Admin.
 
-Status fase: **PH-01 sampai PH-04 disetujui; PH-05 selesai dikerjakan dan ter-commit**. PH-06
-sampai PH-08 menyusul. Peta fase lengkap ada di `docs/04_IMPLEMENTATION_PLAN.md`.
+Status fase: **PH-01 sampai PH-07 disetujui; PH-08 siap direview; PH-09 (kustomisasi brand)
+dan PH-10 (halaman akun, halaman alamat khusus, notifikasi in-app) dalam rencana**. Peta fase
+lengkap ada di `docs/04_IMPLEMENTATION_PLAN.md`.
 
 ## Tech stack
 
@@ -79,13 +82,15 @@ di-commit. `.env.example` hanya berisi placeholder.
 | Pembayaran | `XENDIT_SECRET_KEY`, `XENDIT_WEBHOOK_TOKEN`, `XENDIT_INVOICE_DURATION` |
 | Email | `RESEND_API_KEY`, `EMAIL_FROM` |
 | Aplikasi | `NEXT_PUBLIC_APP_URL` |
-| Seed (opsional) | `SEED_ADMIN_EMAIL`, `SEED_ADMIN_NAME`, `SEED_ADMIN_PASSWORD` |
+| Seed (opsional) | `SEED_ADMIN_EMAIL`, `SEED_ADMIN_NAME`, `SEED_ADMIN_PASSWORD`, `SEED_SITE_ADMIN_EMAIL`, `SEED_SITE_ADMIN_NAME`, `SEED_SITE_ADMIN_PASSWORD` |
 
 Catatan:
 
 - `pnpm db:migrate` memakai `DIRECT_URL` (port 5432). Aplikasi saat berjalan memakai `DATABASE_URL`
   (pooler, port 6543).
 - Kalau `SEED_ADMIN_PASSWORD` kosong, seed membuat password acak dan mencetaknya sekali di terminal.
+- `SEED_SITE_ADMIN_*` membuat akun Site Admin pertama (area `/site-admin`); password kosong diperlakukan sama seperti admin.
+- Store Admin dan Site Admin dipisah ketat: Store Admin hanya `/admin/*`, Site Admin hanya `/site-admin/*`.
 - `TWILIO_VERIFY_SERVICE_SID` wajib. Tanpa itu, `/api/otp/send` menjawab `502`.
 - `XENDIT_INVOICE_DURATION` (detik) dipakai sebagai masa bayar sekaligus masa reservasi stok.
 - Tanpa `RESEND_API_KEY`, email dilewati tanpa galat. Selama `EMAIL_FROM` masih default
@@ -103,7 +108,7 @@ Catatan:
 | `pnpm db:migrate` | Buat/terapkan migrasi (dev) |
 | `pnpm db:deploy` | Terapkan migrasi (produksi) |
 | `pnpm db:push` | Sinkron skema tanpa file migrasi |
-| `pnpm db:seed` | Isi data awal (admin, kategori, brand, produk) |
+| `pnpm db:seed` | Isi data awal (Store Admin, Site Admin, kategori, brand, produk) |
 | `pnpm db:studio` | Prisma Studio (GUI database) |
 | `pnpm db:generate` | Regenerasi Prisma Client |
 
@@ -121,29 +126,40 @@ dicatat di `docs/04_IMPLEMENTATION_PLAN.md`.
    muncul di ringkasan dan di halaman pesanan.
 3. Pembayaran: dari halaman pesanan, buat pembayaran lalu selesaikan di halaman Xendit; status
    pesanan berubah saat webhook masuk (dev perlu tunnel publik).
-4. Invoice: buka pesanan, klik Lihat Invoice, lalu cetak/simpan PDF lewat tombol Cetak.
-5. Customer: daftar di `/register`, login di `/login`, lihat `/orders`, atau lacak pesanan apa pun
-   di `/track-order` (nomor pesanan + nomor HP).
-6. Admin: login memakai `SEED_ADMIN_EMAIL` dan password hasil seed. Kelola produk, kategori, dan
-   brand di `/admin/products` dan sejenisnya; kelola voucher di `/admin/vouchers`.
-7. Akses kontrol: buka `/admin/products` tanpa login akan dialihkan ke `/login`; role admin yang
-   membuka halaman belanja akan dialihkan ke `/admin`.
+4. Invoice (muncul setelah pembayaran lunas): buka pesanan, klik Lihat Invoice, lalu
+   cetak/simpan PDF lewat tombol Cetak.
+5. Customer: daftar di `/register`, login di `/login`, kelola alamat tersimpan dan preferensi
+   notifikasi di `/profile`, pesan ulang lewat tombol "Pesan Lagi" di `/orders`, dan atur ulang
+   password lewat `/forgot-password`. Lacak pesanan di `/track-order` (guest: nomor pesanan +
+   nomor HP; customer: daftar pesanan dalam perjalanan) atau buka detail tracking per pesanan.
+6. Store Admin: login memakai `SEED_ADMIN_EMAIL` dan password hasil seed. Kelola produk,
+   kategori, brand, dan voucher; kelola pesanan di `/admin/orders` (status, resi, cancel/refund,
+   pickup); lihat laporan di `/admin/reports`; atur toko dan template alasan penolakan di
+   `/admin/settings` dan `/admin/cancellation-reasons`.
+7. Site Admin: login memakai `SEED_SITE_ADMIN_EMAIL`. Di `/site-admin` ada pengaturan platform
+   (mode pemeliharaan, pendaftaran), konfigurasi payment/shipping, dan kelola akun Store Admin.
+8. Akses kontrol: buka `/admin/products` tanpa login akan dialihkan ke `/login`; Store Admin yang
+   membuka `/site-admin` dialihkan ke `/admin`, dan sebaliknya.
 
 ## Struktur proyek
 
 ```
 src/
   app/                 Next.js App Router
-    (auth)/            Halaman login dan register
-    (storefront)/      Halaman customer: katalog, detail produk, keranjang, checkout, pesanan, lacak
-    admin/             Panel admin (produk, kategori, brand, voucher)
-    api/               API Routes (auth, otp, cart, shipping, orders, payments, vouchers, admin,
-                       uploadthing, webhooks)
-  components/          Komponen React (ui, auth, cart, checkout, orders, products, payments,
-                       invoices, layout)
+    (auth)/            Login, register, lupa/reset password, set password
+    (storefront)/      Halaman customer: katalog, detail produk, keranjang, checkout, pesanan,
+                       invoice, tracking, profil/alamat, lacak pesanan
+    admin/             Panel Store Admin (produk, kategori, brand, voucher, pesanan, laporan,
+                       pengaturan, template alasan penolakan)
+    site-admin/        Panel Site Admin (pengaturan platform, payment, shipping, akun Store Admin)
+    api/               API Routes (auth, otp, cart, customer, shipping, orders, payments,
+                       vouchers, admin, site-admin, uploadthing, webhooks)
+  components/          Komponen React (admin, auth, cart, checkout, customer, invoices, layout,
+                       orders, payments, platform, products, shipping, ui)
   emails/              Template email transaksional
-  lib/                 Business logic (auth, cart, shipping, orders, payments, vouchers,
-                       notifications, products, categories, brands, redis, uploadthing, utils)
+  lib/                 Business logic (auth, brands, cart, categories, config, customers, db, hooks,
+                       notifications, orders, payments, platform, products, redis, reports,
+                       shipping, uploadthing, utils, vouchers)
 prisma/
   schema.prisma        Skema database
   migrations/          Migrasi

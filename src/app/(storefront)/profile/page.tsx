@@ -47,7 +47,7 @@ export default async function ProfilePage() {
         </div>
         <AddressManager
           addresses={addresses.map(toSavedAddress)}
-          shippingConfigured={isShippingApiConfigured()}
+          shippingConfigured={await isShippingApiConfigured()}
           maxAddresses={MAX_ADDRESSES}
         />
       </section>

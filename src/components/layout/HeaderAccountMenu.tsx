@@ -27,6 +27,17 @@ export function HeaderAccountMenu({
   const menuItemClass =
     "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium";
 
+  // PH-08 (SITE-00): Site Admin punya area sendiri dan tidak berbelanja, jadi
+  // menu pesanan/alamat hanya untuk customer.
+  const roleLabel =
+    role === "STORE_ADMIN"
+      ? "Store Admin"
+      : role === "SITE_ADMIN"
+        ? "Site Admin"
+        : "Pelanggan";
+  const isStaff = role === "STORE_ADMIN" || role === "SITE_ADMIN";
+  const panelHref = role === "SITE_ADMIN" ? "/site-admin" : "/admin/products";
+
   return (
     <div className="relative" ref={rootRef}>
       <button
@@ -57,40 +68,42 @@ export function HeaderAccountMenu({
         >
           <div className="px-2 py-1.5">
             <p className="truncate text-sm font-medium">{name}</p>
-            <p className="text-xs text-muted-foreground">
-              {role === "STORE_ADMIN" ? "Store Admin" : "Pelanggan"}
-            </p>
+            <p className="text-xs text-muted-foreground">{roleLabel}</p>
           </div>
 
           <div className="my-1 h-px bg-border" />
 
-          <Link
-            href="/profile"
-            onClick={() => setOpen(false)}
-            className={cn(
-              menuItemClass,
-              "hover:bg-accent hover:text-accent-foreground",
-            )}
-          >
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            Alamat & Profil
-          </Link>
+          {role === "CUSTOMER" ? (
+            <>
+              <Link
+                href="/profile"
+                onClick={() => setOpen(false)}
+                className={cn(
+                  menuItemClass,
+                  "hover:bg-accent hover:text-accent-foreground",
+                )}
+              >
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                Alamat & Profil
+              </Link>
 
-          <Link
-            href="/orders"
-            onClick={() => setOpen(false)}
-            className={cn(
-              menuItemClass,
-              "hover:bg-accent hover:text-accent-foreground",
-            )}
-          >
-            <Package className="h-4 w-4 text-muted-foreground" />
-            Pesanan saya
-          </Link>
+              <Link
+                href="/orders"
+                onClick={() => setOpen(false)}
+                className={cn(
+                  menuItemClass,
+                  "hover:bg-accent hover:text-accent-foreground",
+                )}
+              >
+                <Package className="h-4 w-4 text-muted-foreground" />
+                Pesanan saya
+              </Link>
+            </>
+          ) : null}
 
-          {role === "STORE_ADMIN" ? (
+          {isStaff ? (
             <Link
-              href="/admin/products"
+              href={panelHref}
               onClick={() => setOpen(false)}
               className={cn(
                 menuItemClass,
@@ -98,7 +111,7 @@ export function HeaderAccountMenu({
               )}
             >
               <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-              Panel admin
+              {role === "SITE_ADMIN" ? "Panel platform" : "Panel admin"}
             </Link>
           ) : null}
 

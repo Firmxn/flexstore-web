@@ -1,7 +1,7 @@
 import { Prisma, type OrderStatus } from "@prisma/client";
 import { getCartRawItems, getGuestCart, setGuestCart, type CartIdentity } from "@/lib/cart";
 import { prisma } from "@/lib/db/prisma";
-import { getInvoiceDurationSeconds } from "@/lib/payments/config";
+import { getEffectiveInvoiceDurationSeconds } from "@/lib/payments/config";
 import { calculateShippingQuote, getShippingSettings } from "@/lib/shipping";
 import { calculateDiscount, resolveVouchers } from "@/lib/vouchers";
 import { generateOrderNumber } from "./number";
@@ -218,7 +218,7 @@ export async function createOrder(
   let etd: string | null = null;
 
   if (!isPickup) {
-    const settings = getShippingSettings();
+    const settings = await getShippingSettings();
     const fallbackGram = settings.weightPerItemGram;
     const weightGram = lines.reduce(
       (total, line) =>
@@ -285,7 +285,7 @@ export async function createOrder(
   const total = subtotal + shippingCost - discount.totalDiscount;
   const orderNumber = await pickOrderNumber();
   const stockReservedUntil = new Date(
-    Date.now() + getInvoiceDurationSeconds() * 1000,
+    Date.now() + (await getEffectiveInvoiceDurationSeconds()) * 1000,
   );
 
   try {

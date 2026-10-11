@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { CartView } from "@/components/cart/CartView";
+import { homeForRole } from "@/lib/auth/session";
 import { getCart, getCartAccess } from "@/lib/cart";
 
 export const metadata = { title: "Keranjang" };
@@ -19,9 +20,9 @@ export default async function CartPage() {
   await connection();
 
   // Keranjang hanya untuk customer dan guest; role lain (mis. admin)
-  // diarahkan ke area admin (PRD 2).
+  // diarahkan ke areanya masing-masing (PRD 2).
   const access = await getCartAccess();
-  if (!access.ok) redirect("/admin");
+  if (!access.ok) redirect(homeForRole(access.role));
 
   const cart = access.identity
     ? await getCart(access.identity)

@@ -47,6 +47,11 @@ export default async function InvoicePage({
       ? await getGuestOrderDetail(id, guestPhone)
       : null;
   if (!order) notFound();
+  // Invoice hanya sah setelah pembayaran lunas: pesanan yang belum dibayar atau
+  // dibatalkan sebelum bayar tidak punya dokumen tagihan yang bisa dicetak
+  // (keputusan 2026-10-11, `docs/04` bagian 10). URL langsung pun ditolak.
+  if (order.payment?.status !== "PAID") notFound();
+
 
   const address = (order.shippingAddress ?? {}) as AddressJson;
   const isPaid = order.payment?.status === "PAID";

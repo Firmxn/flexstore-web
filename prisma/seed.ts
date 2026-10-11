@@ -165,6 +165,40 @@ async function seedAdmin() {
   }
 }
 
+// SITE-00 (PH-08): akun Site Admin pertama, pola sama seperti Store Admin.
+// Password dari env; kalau kosong dibuat acak dan dicetak sekali.
+async function seedSiteAdmin() {
+  const email = process.env.SEED_SITE_ADMIN_EMAIL ?? "siteadmin@flexstore.local";
+  const existing = await prisma.user.findUnique({ where: { email } });
+
+  if (existing) {
+    console.log(`Site Admin sudah ada: ${email}`);
+    return;
+  }
+
+  const configured = process.env.SEED_SITE_ADMIN_PASSWORD?.trim();
+  const plainPassword = configured || randomBytes(9).toString("base64url");
+  const generated = !configured;
+
+  if (!plainPassword) {
+    throw new Error("Password Site Admin kosong; seed dibatalkan.");
+  }
+
+  await prisma.user.create({
+    data: {
+      email,
+      name: process.env.SEED_SITE_ADMIN_NAME ?? "Site Admin",
+      password: await bcrypt.hash(plainPassword, BCRYPT_ROUNDS),
+      role: "SITE_ADMIN",
+    },
+  });
+
+  console.log(`Site Admin dibuat: ${email}`);
+  if (generated) {
+    console.log(`Password Site Admin (acak, simpan sekarang): ${plainPassword}`);
+  }
+}
+
 async function seedCatalog() {
   for (const category of CATEGORIES) {
     await prisma.category.upsert({
@@ -254,6 +288,7 @@ async function seedCatalog() {
 
 async function main() {
   await seedAdmin();
+  await seedSiteAdmin();
   await seedCatalog();
   console.log("Seed selesai.");
 }

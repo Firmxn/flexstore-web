@@ -40,8 +40,14 @@ export function LoginForm() {
       // di sini tidak menghalangi login.
       await apiRequest("/api/cart/sync", { method: "POST" }).catch(() => null);
 
+      const role = session?.user?.role;
+
       router.replace(
-        session?.user?.role === "STORE_ADMIN" ? "/admin/products" : "/",
+        role === "STORE_ADMIN"
+          ? "/admin/products"
+          : role === "SITE_ADMIN"
+            ? "/site-admin"
+            : "/",
       );
       router.refresh();
     } catch {

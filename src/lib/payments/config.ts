@@ -1,5 +1,7 @@
 // Konfigurasi Xendit (MOD-PAY, PH-04). Base URL ditulis tetap di kode supaya
 // tidak bisa diarahkan ke host lain (OWASP A10 SSRF).
+import { getPlatformSettingsRow } from "@/lib/platform/queries";
+
 export const XENDIT_BASE_URL = "https://api.xendit.co";
 
 // Masa bayar invoice = masa reservasi stok. Satu nilai dipakai keduanya supaya
@@ -18,6 +20,20 @@ export function getInvoiceDurationSeconds(): number {
 
 export function getXenditSecretKey(): string {
   return process.env.XENDIT_SECRET_KEY?.trim() ?? "";
+}
+
+// PH-08 (SITE-02): durasi efektif = nilai yang diatur Site Admin di database ->
+// env XENDIT_INVOICE_DURATION -> bawaan. Baris database dibuat hanya saat Site
+// Admin menyimpan, sehingga nilai env tetap dipakai sampai itu terjadi.
+export async function getEffectiveInvoiceDurationSeconds(): Promise<number> {
+  const row = await getPlatformSettingsRow();
+  return row?.invoiceDurationSeconds ?? getInvoiceDurationSeconds();
+}
+
+// PH-08 (SITE-02): sakelar pembayaran. Baris belum ada = aktif.
+export async function isPaymentEnabled(): Promise<boolean> {
+  const row = await getPlatformSettingsRow();
+  return row?.paymentEnabled ?? true;
 }
 
 export function getXenditWebhookToken(): string {

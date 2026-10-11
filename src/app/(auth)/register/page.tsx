@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { Alert } from "@/components/ui/alert";
 import {
   Card,
   CardContent,
@@ -8,10 +9,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getPlatformSettings } from "@/lib/platform";
 
 export const metadata: Metadata = { title: "Daftar" };
 
-export default function RegisterPage() {
+// Halaman ini membaca pengaturan platform (SITE-01), jadi tidak diprerender.
+export const instant = false;
+
+export default async function RegisterPage() {
+  const platform = await getPlatformSettings();
+  const closed = !platform.registrationEnabled;
+
   return (
     <div className="flex flex-col">
       <Card>
@@ -22,7 +30,13 @@ export default function RegisterPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <RegisterForm />
+          {closed ? (
+            <Alert variant="destructive">
+              Pendaftaran sedang ditutup. Silakan coba lagi nanti.
+            </Alert>
+          ) : (
+            <RegisterForm />
+          )}
 
           <p className="text-center text-sm text-muted-foreground">
             Sudah punya akun?{" "}

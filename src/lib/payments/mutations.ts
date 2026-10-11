@@ -3,12 +3,17 @@ import { sendPaymentSuccessEmail } from "@/lib/notifications";
 import { isUuid } from "@/lib/orders/queries";
 import { cancelOrderAndReleaseStock } from "@/lib/orders/reservations";
 import { createInvoice, getInvoice } from "./client";
-import { getInvoiceDurationSeconds, isXenditConfigured } from "./config";
+import {
+  getEffectiveInvoiceDurationSeconds,
+  isPaymentEnabled,
+  isXenditConfigured,
+} from "./config";
 
 export type CreatePaymentErrorCode =
   | "ORDER_NOT_FOUND"
   | "FORBIDDEN"
   | "ORDER_NOT_PAYABLE"
+  | "PAYMENT_DISABLED"
   | "PAYMENT_PROVIDER_ERROR";
 
 export type CreatePaymentResult =
@@ -70,7 +75,18 @@ export async function createPaymentForOrder(
     };
   }
 
-  const durationSeconds = getInvoiceDurationSeconds();
+  // SITE-02 (PH-08): Site Admin bisa mematikan pembayaran. Ditempatkan setelah
+  // pemeriksaan idempoten supaya tautan invoice yang sudah ada tetap bisa
+  // dibuka, hanya invoice baru yang ditolak.
+  if (!(await isPaymentEnabled())) {
+    return {
+      ok: false,
+      code: "PAYMENT_DISABLED",
+      message: "Pembayaran sedang dimatikan",
+    };
+  }
+
+  const durationSeconds = await getEffectiveInvoiceDurationSeconds();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || null;
   // Guest dan customer kembali ke halaman pesanan yang sama setelah membayar.
   const redirectUrl = appUrl ? `${appUrl}/orders/${order.id}` : null;

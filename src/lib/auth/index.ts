@@ -29,6 +29,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!passwordValid) return null;
 
         if (user.role === "GUEST") return null;
+        // PH-08 (SITE-04): akun yang dinonaktifkan Site Admin tidak bisa masuk.
+        if (user.deactivatedAt) return null;
 
         return {
           id: user.id,

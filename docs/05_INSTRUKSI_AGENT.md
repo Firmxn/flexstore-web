@@ -106,7 +106,7 @@
 
 ## 7. Verifikasi dan bukti
 
-- **Gunakan perintah SDD section 12 (Verification commands)** — `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm test`, `pnpm test:e2e`, dan migrasi lewat script `pnpm db:*` (`pnpm db:migrate`, `pnpm db:deploy`). Jangan panggil `pnpx prisma` langsung: CLI Prisma tidak membaca `.env.local` (lihat Implementation Plan section 10)
+- **Gunakan perintah SDD section 12 (Verification commands)** — `pnpm dev`, `pnpm build`, `pnpm lint`, dan migrasi lewat script `pnpm db:*` (`pnpm db:migrate`, `pnpm db:deploy`). Repo ini belum punya skrip `pnpm test`/`pnpm test:e2e`; skenario verifikasi dijalankan manual per fase (lihat SDD section 12). Jangan panggil `pnpx prisma` langsung: CLI Prisma tidak membaca `.env.local` (lihat Implementation Plan section 10)
 - **Pilih pemeriksaan yang buktikan AC dan risiko perubahan** — Alur gagal (duplicate SKU), nilai batas (stock = 0), akses tidak sah (guest access admin route)
 - **Jalankan pemeriksaan saat fase dikerjakan, jangan tunda sampai akhir** — Contoh: TASK-11 (Product CRUD) selesai → langsung verify AC-PROD-01-01 sampai AC-PROD-01-08
 - **Build success bukan bukti seluruh perilaku fitur terpenuhi** — `pnpm build` success = type check pass, bukan "semua fitur work"

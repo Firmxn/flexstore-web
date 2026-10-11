@@ -27,15 +27,27 @@ export const authConfig = {
   providers: [],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      const isAdminRoute = nextUrl.pathname.startsWith("/admin");
-      if (!isAdminRoute) return true;
+      const path = nextUrl.pathname;
+      // PH-08 (SITE-00): dua area terpisah — /admin untuk Store Admin,
+      // /site-admin untuk Site Admin. Pemisahan ketat sesuai PRD 2.4.
+      const isSiteAdminRoute = path.startsWith("/site-admin");
+      const isAdminRoute = path.startsWith("/admin");
+      if (!isAdminRoute && !isSiteAdminRoute) return true;
 
       const user = auth?.user;
       if (!user) return false;
-      if (user.role !== "STORE_ADMIN") {
-        return Response.redirect(new URL("/", nextUrl));
+
+      if (isSiteAdminRoute) {
+        if (user.role === "SITE_ADMIN") return true;
+        return Response.redirect(
+          new URL(user.role === "STORE_ADMIN" ? "/admin" : "/", nextUrl),
+        );
       }
-      return true;
+
+      if (user.role === "STORE_ADMIN") return true;
+      return Response.redirect(
+        new URL(user.role === "SITE_ADMIN" ? "/site-admin" : "/", nextUrl),
+      );
     },
     jwt({ token, user }) {
       if (user) {

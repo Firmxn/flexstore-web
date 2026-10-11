@@ -13,6 +13,16 @@ export function findUserByEmail(email: string) {
   return prisma.user.findUnique({ where: { email } });
 }
 
+// PH-08 (SITE-04): role dan status aktif dibaca ulang dari database pada setiap
+// permintaan terlindungi supaya penonaktifan akun berlaku segera, bukan menunggu
+// JWT kedaluwarsa (OWASP A07).
+export function findUserAccessById(id: string) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: { id: true, role: true, deactivatedAt: true },
+  });
+}
+
 export function findUserByPhone(phone: string) {
   return prisma.user.findUnique({ where: { phone } });
 }
