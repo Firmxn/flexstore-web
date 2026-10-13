@@ -439,7 +439,7 @@ SEED_SITE_ADMIN_PASSWORD=""
 
 ## 9. Deploy ke Vercel (produksi)
 
-Repo sudah disiapkan untuk Vercel: `postinstall` menjalankan `prisma generate`, `engines.node`
+Repo sudah disiapkan untuk Vercel: `build` menjalankan `prisma generate && next build`, `engines.node`
 minimal 20, dan `vercel.json` mengarahkan fungsi ke region `sin1` (Singapore, paling dekat ke
 Supabase region dan pengguna Indonesia).
 
@@ -477,6 +477,12 @@ Supabase region dan pengguna Indonesia).
 
 ### 9.3. Catatan
 
+- **Kenapa `prisma generate` ada di `build`:** dengan layout pnpm, generate yang hanya berjalan di
+  `postinstall` bisa menulis ke `node_modules/.prisma/client` sementara `@prisma/client` membaca
+  salinan di dalam virtual store (`.pnpm/@prisma+client@.../node_modules/.prisma/client`) yang
+  masih stub — build gagal dengan `has no exported member 'OrderStatus'`. Generate di dalam
+  `build` berjalan setelah node_modules selesai di-link, jadi menulis ke lokasi yang benar.
+  Sudah diuji dari checkout bersih: `pnpm install` lalu `pnpm build` exit 0.
 - **DB sekarang dipakai bersama dev dan produksi.** Data uji ikut tampil di produksi, dan
   migrasi dev langsung berlaku di produksi. Pisahkan dengan project Supabase baru bila ingin
   data produksi bersih (ulangi langkah 9.1 butir 7).

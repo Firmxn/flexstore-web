@@ -939,7 +939,7 @@ git push origin main
 #      AUTH_URL=https://<domain-produksi>
 
 # 3. Verifikasi build pertama di tab Deployments (Logs)
-#    `postinstall` di package.json menjalankan `prisma generate` saat build.
+#    `build` menjalankan `prisma generate` lebih dulu (lihat catatan di bawah).
 
 # 4. Migrasi ke DB produksi (kalau DB produksi berbeda dari lokal)
 vercel env pull .env.production.local
@@ -952,7 +952,7 @@ pnpm db:deploy
 Catatan produksi:
 
 - **Region:** `vercel.json` memakai `sin1` (Singapore) — paling dekat ke Supabase region dan pengguna Indonesia.
-- **`prisma generate` wajib saat build.** Di Vercel tidak ada `.env.local`, jadi script `db:generate` (yang memakai `dotenv -e .env.local`) tidak dipakai; `postinstall` memanggil `prisma generate` langsung (tidak butuh env).
+- **`prisma generate` wajib saat build.** Di Vercel tidak ada `.env.local`, jadi script `db:generate` (yang memakai `dotenv -e .env.local`) tidak dipakai. `build` menjalankan `prisma generate && next build`: dengan layout pnpm, generate yang berjalan di dalam `postinstall` bisa jatuh ke `node_modules/.prisma/client` sementara `@prisma/client` membaca `.prisma/client` di dalam virtual store (`.pnpm/@prisma+client@.../node_modules/`) — akibatnya type check gagal (`has no exported member 'OrderStatus'`). Generate di dalam `build` berjalan setelah node_modules selesai di-link sehingga menulis ke lokasi yang benar. Sudah diuji dari checkout bersih: `pnpm install` lalu `pnpm build` exit 0.
 - **DB dipakai bersama dev & produksi** pada setup sekarang: data uji ikut tampil di produksi, dan migrasi dev langsung berlaku di produksi. Untuk memisahkan, buat project Supabase baru lalu ulangi langkah 4.
 - **Twilio masih Trial:** OTP hanya sampai ke nomor yang terdaftar di console. **Xendit** sebaiknya tetap sandbox sampai verifikasi bisnis selesai.
 - **Build memakai commit terakhir di `main`.** Pekerjaan yang belum di-commit tidak ikut ter-deploy.
