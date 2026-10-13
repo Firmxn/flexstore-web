@@ -127,7 +127,7 @@ function imageUrl(seed: string, index: number) {
 }
 
 async function seedAdmin() {
-  const email = process.env.SEED_ADMIN_EMAIL ?? "admin@flexstore.local";
+  const email = process.env.SEED_ADMIN_EMAIL ?? "storeadmin@flexstore.local";
   const existing = await prisma.user.findUnique({ where: { email } });
 
   if (existing) {

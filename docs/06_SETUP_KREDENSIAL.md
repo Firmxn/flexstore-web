@@ -345,7 +345,7 @@ pnpm dev
 
 `pnpm db:seed` membuat:
 
-- 1 akun Store Admin (`SEED_ADMIN_EMAIL`, default `admin@flexstore.local`)
+- 1 akun Store Admin (`SEED_ADMIN_EMAIL`, default `storeadmin@flexstore.local`)
 - 1 akun Site Admin (`SEED_SITE_ADMIN_EMAIL`, default `siteadmin@flexstore.local`, PH-08)
 - 4 kategori dan 3 brand
 - 6 produk contoh (5 status `ACTIVE`, 1 `DRAFT`) beserta varian dan gambar
