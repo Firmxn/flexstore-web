@@ -59,13 +59,14 @@ export function LoginForm() {
   }
 
   return (
-    // Form login memakai autoComplete off + "new-password" di field password:
-    // password manager browser menyimpan kredensial dan mengisinya otomatis
-    // ketika balik ke halaman login setelah logout, sehingga form tampak
-    // "lengket" dengan akun sebelumnya. Mode new-password tidak memicu
-    // pengisian otomatis; pilihan akun tetap muncul saat user memfokuskan
-    // field (pilihan user, bukan prefill).
-    <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col gap-4">
+    // Token autocomplete mengikuti standar spec HTML untuk form login:
+    // `username` + `current-password` (keputusan 2026-10-12, `docs/04` bagian 10
+    // — supersede pilihan `off`/`new-password` sebelumnya). Keuntungan: password
+    // manager (Proton Pass, Bitwarden, 1Password, browser) mengenali halaman ini
+    // sebagai login — bukan register — lalu menawarkan kredensial tersimpan.
+    // Siluman prefill browser setelah logout dikendalikan lewat setting
+    // autofill pengguna, bukan atribut kode.
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <FormErrorAlert message={error} />
 
       <div className="flex flex-col gap-2">
@@ -73,7 +74,7 @@ export function LoginForm() {
         <Input
           id="identifier"
           name="identifier"
-          autoComplete="off"
+          autoComplete="username"
           required
           maxLength={255}
           value={identifier}
@@ -87,7 +88,7 @@ export function LoginForm() {
           id="password"
           name="password"
           type="password"
-          autoComplete="new-password"
+          autoComplete="current-password"
           required
           value={password}
           onChange={(event) => setPassword(event.target.value)}
