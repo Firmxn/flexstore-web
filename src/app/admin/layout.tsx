@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
           "sidebar belakang" saat dropdown pilih template dibuka di
           AdminOrderActions). `fixed` tidak terpengaruh overflow body. Konten
           main dikompensasi dengan `lg:pl-60` (lebar sidebar 15rem). */}
-      <aside className="border-b border-border bg-background lg:fixed lg:inset-y-0 lg:left-0 lg:z-10 lg:w-60 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+      <aside className="flex flex-col border-b border-border bg-background lg:fixed lg:inset-y-0 lg:left-0 lg:z-10 lg:w-60 lg:overflow-y-auto lg:border-b-0 lg:border-r">
         <div className="flex h-16 items-center gap-2 border-b border-border px-4">
           <Link href="/" className="font-bold tracking-tight">
             {brand.brandName}
