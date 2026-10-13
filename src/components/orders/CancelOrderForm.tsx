@@ -37,7 +37,7 @@ export function CancelOrderForm({ orderId }: { orderId: string }) {
 
   if (!open) {
     return (
-      <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+      <Button type="button" variant="outline" size="sm" className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700" onClick={() => setOpen(true)}>
         Ajukan Pembatalan
       </Button>
     );

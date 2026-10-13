@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackLink } from "@/components/layout/BackLink";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -10,6 +11,8 @@ import { ReorderButton } from "@/components/orders/ReorderButton";
 import { PaymentStatusWatcher } from "@/components/payments/PaymentStatusWatcher";
 import { PayNowButton } from "@/components/payments/PayNowButton";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils/cn";
 import { getShopperUser } from "@/lib/auth/session";
 import {
   getGuestAccessPhone,
@@ -74,6 +77,12 @@ export default async function OrderDetailPage({
 
   return (
     <PageContainer>
+      {/* Mode customer: kembali ke daftar pesanan; mode guest: kembali ke
+          halaman pelacakan tempat mereka datang. */}
+      <BackLink href={user ? "/orders" : "/track-order"}>
+        {user ? "Kembali ke daftar pesanan" : "Lacak pesanan lain"}
+      </BackLink>
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold tracking-tight">
@@ -99,7 +108,7 @@ export default async function OrderDetailPage({
           {order.items.map((item) => (
             <li
               key={item.id}
-              className="flex flex-wrap items-center justify-between gap-2 py-2"
+              className="flex flex-wrap items-center justify-between gap-2 py-2 first:pt-0"
             >
               <span className="flex flex-col">
                 <span className="font-medium">{item.productName}</span>
@@ -111,42 +120,73 @@ export default async function OrderDetailPage({
             </li>
           ))}
         </ul>
+
+        {/* "Pesan Lagi" tinggal di dalam container Item penempatan tombol
+            invoice di container pembayaran — kanan, setelah konten. */}
+        {user ? (
+          <div className="mt-4 flex justify-end">
+            <ReorderButton orderId={order.id} />
+          </div>
+        ) : null}
       </section>
 
-      {user ? (
-        <div className="flex justify-end">
-          <ReorderButton orderId={order.id} />
-        </div>
-      ) : null}
-
       <div className="grid gap-6 sm:grid-cols-2">
+        {/* Struktur dl gap-2 identik dengan kartu Pembayaran — ritme baris
+            (label nembel di kiri, nilai di kanan) seragam antar kartu. */}
         <section className="rounded-xl border border-border bg-background p-4 text-sm">
           <h2 className="mb-3 font-semibold">
             {order.fulfillment === "PICKUP" ? "Ambil di Toko" : "Alamat Pengiriman"}
           </h2>
-          <p className="font-medium">{address.name}</p>
-          <p className="text-muted-foreground">{address.phone}</p>
-          {order.fulfillment === "PICKUP" ? null : (
-            <>
-              <p className="text-muted-foreground">{address.street}</p>
-              <p className="text-muted-foreground">
-                {[
-                  address.subdistrict,
-                  address.district,
-                  address.city,
-                  address.province,
-                  address.postalCode,
-                ]
-                  .filter(Boolean)
-                  .join(", ")}
-              </p>
-            </>
-          )}
-          {address.note ? (
-            <p className="mt-2 text-xs text-muted-foreground">
-              Catatan: {address.note}
-            </p>
-          ) : null}
+          <dl className="flex flex-col gap-2">
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Penerima</dt>
+              <dd className="text-right font-medium">{address.name}</dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Telepon</dt>
+              <dd className="text-right">{address.phone}</dd>
+            </div>
+            {order.fulfillment === "PICKUP" ? null : (
+              <>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Alamat</dt>
+                  <dd className="text-right">
+                    {address.street}
+                    <br />
+                    {[
+                      address.subdistrict,
+                      address.district,
+                      address.city,
+                      address.province,
+                      address.postalCode,
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </dd>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <dt className="text-muted-foreground">Pengiriman</dt>
+                  <dd className="text-right">
+                    {order.shippingCourier && order.shippingService
+                      ? `${order.shippingCourier} ${order.shippingService}`
+                      : "-"}
+                  </dd>
+                </div>
+                {order.trackingNumber ? (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted-foreground">Nomor resi</dt>
+                    <dd className="text-right">{order.trackingNumber}</dd>
+                  </div>
+                ) : null}
+              </>
+            )}
+            {address.note ? (
+              <div className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">Catatan</dt>
+                <dd className="text-right">{address.note}</dd>
+              </div>
+            ) : null}
+          </dl>
         </section>
 
         <section className="rounded-xl border border-border bg-background p-4 text-sm">
@@ -182,7 +222,7 @@ export default async function OrderDetailPage({
           {order.payment?.status === "PAID" ? (
             <Link
               href={`/orders/${order.id}/invoice`}
-              className="mt-4 inline-flex h-9 items-center rounded-md border border-input px-3 text-sm hover:bg-accent"
+              className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-4")}
             >
               Lihat Invoice
             </Link>
@@ -206,7 +246,29 @@ export default async function OrderDetailPage({
         </section>
       </div>
 
-      {order.trackingNumber ? (
+      {user ? (
+        /* Pelacakan selalu tersedia untuk customer — riwayat milestone pesanan
+            berlaku sejak dibuat (ORDER-08), bukan hanya setelah dikirim. */
+        <section className="rounded-xl border border-border bg-background p-4 text-sm">
+          {/* Struktur identik dengan kartu Pembatalan: heading, teks penjelas,
+              lalu tombol aksi di bawah — bukan tombol di kanan heading. */}
+          <h2 className="mb-3 font-semibold">Pelacakan</h2>
+          <p className="mb-3 text-muted-foreground">
+            {order.trackingNumber
+              ? `Resi ${order.shippingCourier ?? ""} ${order.shippingService ?? ""}: ${order.trackingNumber}`
+              : "Riwayat status pesanan sejak dibuat hingga selesai."}
+          </p>
+          <Link
+            href={`/orders/${order.id}/tracking`}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-700",
+            )}
+          >
+            Lihat Pelacakan
+          </Link>
+        </section>
+      ) : order.trackingNumber ? (
         <section className="rounded-xl border border-border bg-background p-4 text-sm">
           <h2 className="mb-3 font-semibold">Pengiriman</h2>
           <p className="text-muted-foreground">
@@ -215,14 +277,6 @@ export default async function OrderDetailPage({
               .join(" ")}
           </p>
           <p className="font-medium">Nomor resi: {order.trackingNumber}</p>
-          {user ? (
-            <Link
-              href={`/orders/${order.id}/tracking`}
-              className="mt-3 inline-flex h-9 items-center rounded-md border border-input px-3 hover:bg-accent"
-            >
-              Lihat Status Pengiriman
-            </Link>
-          ) : null}
         </section>
       ) : null}
 
@@ -279,13 +333,6 @@ export default async function OrderDetailPage({
           <CancelOrderForm orderId={order.id} />
         </section>
       ) : null}
-
-      <Link
-        href={user ? "/orders" : "/track-order"}
-        className="text-sm text-muted-foreground hover:underline"
-      >
-        {user ? "Kembali ke daftar pesanan" : "Lacak pesanan lain"}
-      </Link>
     </PageContainer>
   );
 }
