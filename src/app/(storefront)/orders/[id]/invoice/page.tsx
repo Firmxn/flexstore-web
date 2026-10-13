@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "@/components/layout/BackLink";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -63,12 +63,7 @@ export default async function InvoicePage({
   return (
     <PageContainer className="print:max-w-none print:px-0 print:py-0">
       <div className="flex items-center justify-between gap-3 print:hidden">
-        <Link
-          href={`/orders/${order.id}`}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          Kembali ke pesanan
-        </Link>
+        <BackLink href={`/orders/${order.id}`}>Kembali ke pesanan</BackLink>
         <PrintButton />
       </div>
 

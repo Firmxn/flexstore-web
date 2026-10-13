@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
+import { BackLink } from "@/components/layout/BackLink";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { VoucherForm } from "@/components/admin/VoucherForm";
 import { getVoucherById, getVoucherOptions, getVoucherScopeOptions } from "@/lib/vouchers";
@@ -39,6 +40,8 @@ export default async function EditVoucherPage({
 
   return (
     <div className="flex flex-col gap-6">
+      <BackLink href="/admin/vouchers">Kembali ke voucher</BackLink>
+
       <PageHeader title="Ubah Voucher" description={`Kode: ${voucher.code}`} />
 
       <VoucherForm

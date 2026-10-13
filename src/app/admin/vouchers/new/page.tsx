@@ -1,3 +1,4 @@
+import { BackLink } from "@/components/layout/BackLink";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { VoucherForm } from "@/components/admin/VoucherForm";
 import { getVoucherOptions, getVoucherScopeOptions } from "@/lib/vouchers";
@@ -15,6 +16,8 @@ export default async function NewVoucherPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <BackLink href="/admin/vouchers">Kembali ke voucher</BackLink>
+
       <PageHeader
         title="Tambah Voucher"
         description="Voucher berlaku sesuai periode, kuota, cakupan produk, dan aturan kompatibilitas."

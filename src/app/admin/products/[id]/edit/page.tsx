@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
+import { BackLink } from "@/components/layout/BackLink";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { getBrands } from "@/lib/brands";
@@ -29,6 +30,8 @@ export default async function EditProductPage({
 
   return (
     <div className="flex flex-col gap-6">
+      <BackLink href="/admin/products">Kembali ke produk</BackLink>
+
       <PageHeader
         title="Ubah Produk"
         description={`Slug: ${product.slug}`}

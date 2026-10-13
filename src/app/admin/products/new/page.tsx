@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackLink } from "@/components/layout/BackLink";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { getBrands } from "@/lib/brands";
@@ -16,6 +17,8 @@ export default async function NewProductPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <BackLink href="/admin/products">Kembali ke produk</BackLink>
+
       <PageHeader
         title="Tambah Produk"
         description="Produk baru disimpan dengan minimal satu varian dan satu gambar."

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "@/components/layout/BackLink";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { cn } from "@/lib/utils/cn";
@@ -77,12 +77,7 @@ export default async function OrderTrackingPage({
 
   return (
     <PageContainer>
-      <Link
-        href={`/orders/${order.id}`}
-        className="text-sm text-muted-foreground hover:underline"
-      >
-        Kembali ke pesanan
-      </Link>
+      <BackLink href={`/orders/${order.id}`}>Kembali ke pesanan</BackLink>
 
       <article className="flex flex-col gap-6 rounded-xl border border-border bg-background p-4">
         <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-4">

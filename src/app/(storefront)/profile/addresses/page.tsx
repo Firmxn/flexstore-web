@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { connection } from "next/server";
+import { BackLink } from "@/components/layout/BackLink";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { AddressManager } from "@/components/customer/AddressManager";
 import { requireCustomerPage } from "@/lib/auth/session";
@@ -22,12 +22,7 @@ export default async function ProfileAddressesPage() {
   return (
     <PageContainer>
       <div className="flex flex-col gap-1">
-        <Link
-          href="/profile"
-          className="w-fit text-sm text-muted-foreground hover:underline"
-        >
-          Kembali ke profil
-        </Link>
+        <BackLink href="/profile">Kembali ke profil</BackLink>
         <h1 className="text-2xl font-bold tracking-tight">Alamat Saya</h1>
         <p className="text-sm text-muted-foreground">
           Simpan alamat supaya bisa dipilih saat checkout (maksimal{" "}

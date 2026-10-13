@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { BackLink } from "@/components/layout/BackLink";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { AdminOrderActions } from "@/components/admin/AdminOrderActions";
@@ -56,18 +56,13 @@ export default async function AdminOrderDetailPage({
 
   return (
     <div className="flex flex-col gap-6">
+      <BackLink href="/admin/orders">Kembali ke daftar pesanan</BackLink>
+
       <PageHeader
         title={order.orderNumber}
         description={formatDateTime(order.createdAt)}
         action={<OrderStatusBadge status={order.status} />}
       />
-
-      <Link
-        href="/admin/orders"
-        className="text-sm text-muted-foreground hover:underline"
-      >
-        Kembali ke daftar pesanan
-      </Link>
 
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="flex flex-col gap-6">
