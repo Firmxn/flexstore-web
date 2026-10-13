@@ -883,6 +883,8 @@ TWILIO_VERIFY_CHANNEL="sms"
 
 # Email (PH-05)
 RESEND_API_KEY="..."
+# Alamat pengirim; domain harus sudah diverifikasi di Resend (mis. FlexStore <noreply@flexstore.web.id>)
+EMAIL_FROM="..."
 
 # Shipping (RajaOngkir Komerce v1)
 RAJAONGKIR_API_KEY="..."
@@ -925,19 +927,38 @@ pnpm dev
 ```
 
 **Deployment steps (Vercel):**
+
 ```bash
-# 1. Push to main branch
+# 1. Push ke main — Vercel auto-deploy dari repo GitHub
 git push origin main
 
-# 2. Vercel auto-deploy
-# Set env vars in Vercel dashboard
+# 2. Set env vars di Vercel dashboard (scope Production + Preview)
+#    Daftar lengkap: docs/06_SETUP_KREDENSIAL.md bagian 9
+#    Dua yang build-time (harus ada sebelum build):
+#      NEXT_PUBLIC_APP_URL=https://<domain-produksi>
+#      AUTH_URL=https://<domain-produksi>
 
-# 3. Run migration (production)
+# 3. Verifikasi build pertama di tab Deployments (Logs)
+#    `postinstall` di package.json menjalankan `prisma generate` saat build.
+
+# 4. Migrasi ke DB produksi (kalau DB produksi berbeda dari lokal)
 vercel env pull .env.production.local
+# arahkan DIRECT_URL/DATABASE_URL ke DB produksi lalu:
 pnpm db:deploy
+
+# 5. Arahkan webhook Xendit ke https://<domain-produksi>/api/payments/webhook
 ```
 
-**Rollback:** Vercel instant rollback via dashboard (previous deployment).
+Catatan produksi:
+
+- **Region:** `vercel.json` memakai `sin1` (Singapore) — paling dekat ke Supabase region dan pengguna Indonesia.
+- **`prisma generate` wajib saat build.** Di Vercel tidak ada `.env.local`, jadi script `db:generate` (yang memakai `dotenv -e .env.local`) tidak dipakai; `postinstall` memanggil `prisma generate` langsung (tidak butuh env).
+- **DB dipakai bersama dev & produksi** pada setup sekarang: data uji ikut tampil di produksi, dan migrasi dev langsung berlaku di produksi. Untuk memisahkan, buat project Supabase baru lalu ulangi langkah 4.
+- **Twilio masih Trial:** OTP hanya sampai ke nomor yang terdaftar di console. **Xendit** sebaiknya tetap sandbox sampai verifikasi bisnis selesai.
+- **Build memakai commit terakhir di `main`.** Pekerjaan yang belum di-commit tidak ikut ter-deploy.
+- **Gap yang belum ditutup:** security headers A05 (CSP, `X-Frame-Options`, `X-Content-Type-Options`) belum dipasang di `next.config.ts`.
+
+**Rollback:** Vercel instant rollback via dashboard (deployment sebelumnya).
 
 ## 12. Perintah dan strategi verifikasi
 

@@ -434,3 +434,56 @@ SEED_SITE_ADMIN_PASSWORD=""
 | `502 PAYMENT_PROVIDER_ERROR` | `XENDIT_SECRET_KEY` salah/kosong, atau kunci Test dipakai dengan cara yang tidak sesuai. Detailnya hanya ada di log server |
 | Webhook menjawab `401 INVALID_CALLBACK_TOKEN` | `XENDIT_WEBHOOK_TOKEN` tidak sama dengan token di dashboard, atau header `x-callback-token` tidak terkirim |
 | Webhook menjawab `503 WEBHOOK_NOT_CONFIGURED` | `XENDIT_WEBHOOK_TOKEN` masih kosong di `.env.local` |
+
+---
+
+## 9. Deploy ke Vercel (produksi)
+
+Repo sudah disiapkan untuk Vercel: `postinstall` menjalankan `prisma generate`, `engines.node`
+minimal 20, dan `vercel.json` mengarahkan fungsi ke region `sin1` (Singapore, paling dekat ke
+Supabase region dan pengguna Indonesia).
+
+### 9.1. Langkah deploy
+
+1. Buka <https://vercel.com>, login memakai GitHub.
+2. **Add New** → **Project** → import repo `flexstore`. Framework terdeteksi Next.js; biarkan
+   install/build command bawaan (`pnpm install` lalu `pnpm build`).
+3. **Environment Variables** — isi seluruh variabel di tabel 9.2 (scope Production dan Preview).
+4. **Deploy**. Tunggu build pertama selesai; kalau gagal, periksa tab Build Logs.
+5. Setelah domain jadi, samakan `NEXT_PUBLIC_APP_URL` dan `AUTH_URL` dengan domain itu
+   (mis. `https://flexstore.vercel.app`) lalu **Redeploy** — keduanya dibaca saat build.
+6. Arahkan webhook Xendit ke `https://<domain>/api/payments/webhook` (Xendit Dashboard →
+   Settings → Webhooks; token harus sama dengan `XENDIT_WEBHOOK_TOKEN`).
+7. Kalau DB produksi berbeda dari dev: `vercel env pull .env.production.local`, arahkan
+   `DATABASE_URL`/`DIRECT_URL` ke DB produksi, lalu `pnpm db:deploy`.
+
+### 9.2. Variabel yang wajib ada di Vercel
+
+| Variabel | Keterangan |
+| --- | --- |
+| `DATABASE_URL` | pooler Supabase port 6543, sertakan `?pgbouncer=true` |
+| `DIRECT_URL` | koneksi langsung port 5432 (dipakai Prisma CLI/migrasi) |
+| `AUTH_SECRET` | nilai yang sama dengan dev, atau rotasi baru |
+| `AUTH_URL` | `https://<domain-produksi>` (build-time) |
+| `AUTH_TRUST_HOST` | `true` |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | cache, rate limit OTP, reservasi stok |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_VERIFY_SERVICE_SID` / `TWILIO_VERIFY_CHANNEL` | OTP SMS |
+| `UPLOADTHING_TOKEN` | upload gambar produk |
+| `RAJAONGKIR_API_KEY` / `SHIPPING_ORIGIN_DISTRICT_ID` / `SHIPPING_WEIGHT_PER_ITEM_GRAM` / `SHIPPING_COURIERS` | ongkos kirim |
+| `XENDIT_SECRET_KEY` / `XENDIT_WEBHOOK_TOKEN` / `XENDIT_INVOICE_DURATION` | pembayaran |
+| `RESEND_API_KEY` / `EMAIL_FROM` | email; domain `flexstore.web.id` sudah terverifikasi |
+| `NEXT_PUBLIC_APP_URL` | `https://<domain-produksi>` (build-time) |
+| `SEED_ADMIN_*` / `SEED_SITE_ADMIN_*` | hanya bila seed dijalankan dari mesin yang membaca env Vercel |
+
+### 9.3. Catatan
+
+- **DB sekarang dipakai bersama dev dan produksi.** Data uji ikut tampil di produksi, dan
+  migrasi dev langsung berlaku di produksi. Pisahkan dengan project Supabase baru bila ingin
+  data produksi bersih (ulangi langkah 9.1 butir 7).
+- **Twilio masih Trial** (hanya nomor terverifikasi), **Xendit** sebaiknya tetap sandbox sampai
+  verifikasi bisnis selesai.
+- **Build memakai commit terakhir di `main`.** Pekerjaan yang belum di-commit tidak ter-deploy.
+- **Security headers A05** (CSP, `X-Frame-Options`, `X-Content-Type-Options`) belum dipasang di
+  `next.config.ts`.
+- **Rollback:** Vercel Dashboard → Deployments → pilih deployment sebelumnya → **Promote to
+  Production**.
