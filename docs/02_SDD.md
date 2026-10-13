@@ -946,7 +946,8 @@ vercel env pull .env.production.local
 # arahkan DIRECT_URL/DATABASE_URL ke DB produksi lalu:
 pnpm db:deploy
 
-# 5. Arahkan webhook Xendit ke https://<domain-produksi>/api/payments/webhook
+# 5. Arahkan webhook Xendit (section Invoice, "Invoice paid") ke
+#    https://<domain-produksi>/api/webhooks/xendit
 ```
 
 Catatan produksi:

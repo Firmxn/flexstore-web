@@ -452,8 +452,9 @@ Supabase region dan pengguna Indonesia).
 4. **Deploy**. Tunggu build pertama selesai; kalau gagal, periksa tab Build Logs.
 5. Setelah domain jadi, samakan `NEXT_PUBLIC_APP_URL` dan `AUTH_URL` dengan domain itu
    (mis. `https://flexstore.vercel.app`) lalu **Redeploy** — keduanya dibaca saat build.
-6. Arahkan webhook Xendit ke `https://<domain>/api/payments/webhook` (Xendit Dashboard →
-   Settings → Webhooks; token harus sama dengan `XENDIT_WEBHOOK_TOKEN`).
+6. Arahkan webhook Xendit ke `https://<domain>/api/webhooks/xendit` (Xendit Dashboard →
+   Developers → Webhooks, section **Invoice** — kolom "Invoice paid"; token harus
+   sama dengan `XENDIT_WEBHOOK_TOKEN`).
 7. Kalau DB produksi berbeda dari dev: `vercel env pull .env.production.local`, arahkan
    `DATABASE_URL`/`DIRECT_URL` ke DB produksi, lalu `pnpm db:deploy`.
 
