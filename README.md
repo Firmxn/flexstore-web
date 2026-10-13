@@ -199,6 +199,8 @@ Detail lengkap: `docs/02_SDD.md` section 5.
 
 ## Lisensi
 
-Repo public (`github.com/Firmxn/flexstore-web`) dan **belum ada lisensi**: tanpa berkas LICENSE,
-kode dilindungi hak cipta bawaan, jadi orang lain tidak boleh memakai ulang tanpa izin. Tambahkan
-lisensi (misal MIT) bila kode ingin dipakai ulang secara terbuka.
+Repo public (`github.com/Firmxn/flexstore-web`) dan dipakai-ulang mengikuti lisensi
+**MIT** (lihat berkas `LICENSE` di root): bebas memakai, mengubah, dan mendistribusikan
+sepanjang pemberitahuan copyright dan teks lisensi disertakan, tanpa jaminan apa pun.
+Lisensi itu mencakup kode repo ini saja; kredensial dan berkas lingkungan (`.env.local`)
+tidak ikut, dan tiap dependensi pihak ketiga memakai lisensinya masing-masing.
