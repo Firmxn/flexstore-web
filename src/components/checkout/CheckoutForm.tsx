@@ -40,6 +40,9 @@ type CheckoutFormProps = {
   shippingConfigured: boolean;
   defaults: { name: string; email: string; phone: string };
   savedAddresses: SavedAddress[];
+  // Batas alamat tersimpan (5) belum penuh — checkbox "simpan alamat" hanya
+  // ditawarkan kalau masih ada ruang.
+  addressSaveEnabled: boolean;
   pickup: {
     enabled: boolean;
     info: string | null;
@@ -94,13 +97,20 @@ export function CheckoutForm({
   shippingConfigured,
   defaults,
   savedAddresses,
+  addressSaveEnabled,
   pickup,
 }: CheckoutFormProps) {
-  // Customer dengan tepat satu alamat tersimpan: seluruh isian langsung terisi.
-  // Lebih dari satu: pembeli memilih dari daftar (tiga keadaan sesuai keputusan
-  // PH-07). Guest selalu mengetik manual.
-  const singleAddress =
-    mode === "user" && savedAddresses.length === 1 ? savedAddresses[0] : null;
+  // Customer dengan alamat tersimpan: isian langsung terisi — tepat satu
+  // memakai alamat itu; lebih dari satu memakai alamat Utama (hasil akhirnya
+  // sama: form otomatis terisi, tinggal diubah bila perlu). "Isi manual"
+  // tetap tersedia sebagai pilihan di select, bukan default. Guest selalu
+  // mengetik manual.
+  const defaultAddress =
+    mode === "user"
+      ? (savedAddresses.length === 1
+          ? savedAddresses[0]
+          : (savedAddresses.find((address) => address.isPrimary) ?? null))
+      : null;
 
   const [fulfillment, setFulfillment] = useState<"DELIVERY" | "PICKUP">(
     "DELIVERY",
@@ -109,23 +119,26 @@ export function CheckoutForm({
     mode === "user" ? "akun" : null,
   );
   const [selectedAddressId, setSelectedAddressId] = useState(
-    singleAddress?.id ?? "",
+    defaultAddress?.id ?? "",
   );
-  const [name, setName] = useState(singleAddress?.recipientName ?? defaults.name);
+  const [name, setName] = useState(defaultAddress?.recipientName ?? defaults.name);
   const [email, setEmail] = useState(defaults.email);
-  const [phone, setPhone] = useState(singleAddress?.phone ?? defaults.phone);
+  const [phone, setPhone] = useState(defaultAddress?.phone ?? defaults.phone);
   const [destination, setDestination] = useState<ShippingDestination | null>(
-    singleAddress ? destinationFromAddress(singleAddress) : null,
+    defaultAddress ? destinationFromAddress(defaultAddress) : null,
   );
-  const [city, setCity] = useState(singleAddress?.city ?? "");
-  const [province, setProvince] = useState(singleAddress?.province ?? "");
-  const [district, setDistrict] = useState(singleAddress?.district ?? "");
+  const [city, setCity] = useState(defaultAddress?.city ?? "");
+  const [province, setProvince] = useState(defaultAddress?.province ?? "");
+  const [district, setDistrict] = useState(defaultAddress?.district ?? "");
   const [subdistrict, setSubdistrict] = useState(
-    singleAddress?.subdistrict ?? "",
+    defaultAddress?.subdistrict ?? "",
   );
-  const [postalCode, setPostalCode] = useState(singleAddress?.postalCode ?? "");
-  const [street, setStreet] = useState(singleAddress?.street ?? "");
-  const [note, setNote] = useState(singleAddress?.note ?? "");
+  const [postalCode, setPostalCode] = useState(defaultAddress?.postalCode ?? "");
+  const [street, setStreet] = useState(defaultAddress?.street ?? "");
+  const [note, setNote] = useState(defaultAddress?.note ?? "");
+  // Simpan alamat manual ke daftar alamat customer setelah pesanan dibuat.
+  const [saveAddress, setSaveAddress] = useState(false);
+  const [saveAddressLabel, setSaveAddressLabel] = useState("");
   const [shipping, setShipping] = useState<ShippingOption | null>(null);
   const [voucherInput, setVoucherInput] = useState("");
   const [voucherCodes, setVoucherCodes] = useState<string[]>([]);
@@ -353,6 +366,31 @@ export function CheckoutForm({
       );
       // Pesanan tersimpan sebagai WAITING_PAYMENT. Lanjut ke halaman pesanan
       // yang sama untuk guest dan customer (ada tombol bayar + batas waktu).
+      // Simpan alamat bersifat best-effort: pesanan sudah jadi, kegagalan
+      // menyimpan (mis. limit 5 alamat keserempetan) tidak boleh meruntuhkan
+      // alur checkout.
+      if (saveAddress && mode === "user" && !isPickup) {
+        try {
+          await apiRequest("/api/customer/addresses", {
+            method: "POST",
+            body: JSON.stringify({
+              label: saveAddressLabel,
+              recipientName: name,
+              phone,
+              destinationId: destination?.id,
+              province,
+              city,
+              district: district || undefined,
+              subdistrict: subdistrict || undefined,
+              postalCode: postalCode || undefined,
+              street,
+              note: note || undefined,
+            }),
+          });
+        } catch {
+          // Sengaja diabaikan: pesanan sudah berhasil dibuat.
+        }
+      }
       router.push(`/orders/${result.order.id}`);
     } catch (caught) {
       // Penanda OTP hilang/kedaluwarsa di server: kembalikan ke langkah
@@ -588,10 +626,43 @@ export function CheckoutForm({
                 onChange={(event) => setNote(event.target.value)}
               />
             </div>
+            {/* Simpan alamat manual (CUST-01): hanya customer yang mengisi
+                manual dan masih ada ruang (maks. 5). Dilakukan setelah pesanan
+                dibuat; kegagalan menyimpan tidak membatalkan pesanan. */}
+            {mode === "user" &&
+            !isPickup &&
+            !selectedAddressId &&
+            addressSaveEnabled ? (
+              <div className="flex flex-col gap-2 sm:col-span-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4"
+                    checked={saveAddress}
+                    onChange={(event) => setSaveAddress(event.target.checked)}
+                  />
+                  Simpan alamat ini ke daftar alamat saya
+                </label>
+                {saveAddress ? (
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="checkout-save-label">Label alamat</Label>
+                    <Input
+                      id="checkout-save-label"
+                      required
+                      maxLength={50}
+                      placeholder="Contoh: Rumah, Kantor"
+                      value={saveAddressLabel}
+                      onChange={(event) =>
+                        setSaveAddressLabel(event.target.value)
+                      }
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             {mode === "guest" ? (
               <div className="flex flex-col gap-2 sm:col-span-2">
-                <Label htmlFor="checkout-email">Email (opsional)</Label>
-                <Input
+                <Label htmlFor="checkout-email">Email (opsional)</Label>                <Input
                   id="checkout-email"
                   type="email"
                   placeholder="nama@contoh.com"

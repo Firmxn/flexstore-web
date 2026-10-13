@@ -4,10 +4,11 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { Alert } from "@/components/ui/alert";
 import { CheckoutForm } from "@/components/checkout/CheckoutForm";
 import { homeForRole } from "@/lib/auth/session";
+import { BackLink } from "@/components/layout/BackLink";
 import { getBrandSetting } from "@/lib/brand";
 import { getCart, getCartAccess } from "@/lib/cart";
 import { getPickupSettings } from "@/lib/config";
-import { getAddresses, toSavedAddress, type SavedAddress } from "@/lib/customers";
+import { getAddresses, toSavedAddress, MAX_ADDRESSES, type SavedAddress } from "@/lib/customers";
 import { prisma } from "@/lib/db/prisma";
 import { getPlatformSettings } from "@/lib/platform";
 import { isShippingApiConfigured } from "@/lib/shipping";
@@ -86,6 +87,8 @@ export default async function CheckoutPage({
 
   return (
     <PageContainer>
+      <BackLink href="/cart">Kembali ke keranjang</BackLink>
+
       <h1 className="text-2xl font-bold tracking-tight">Checkout</h1>
 
       {platform.maintenanceMode ? (
@@ -109,6 +112,7 @@ export default async function CheckoutPage({
         shippingConfigured={await isShippingApiConfigured()}
         defaults={defaults}
         savedAddresses={savedAddresses}
+        addressSaveEnabled={savedAddresses.length < MAX_ADDRESSES}
         pickup={{
           enabled: pickup.enabled,
           info: pickup.info,
