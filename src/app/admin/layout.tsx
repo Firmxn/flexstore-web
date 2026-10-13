@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { SidebarAccountMenu } from "@/components/layout/SidebarAccountMenu";
 import { requireStoreAdminPage } from "@/lib/auth/session";
 import { getBrandSetting } from "@/lib/brand";
+import { connection } from "next/server";
 
 // Seluruh area admin bergantung pada session, jadi tidak ada gunanya
 // diprerender. `instant = false` menandai route ini sebagai blocking route
@@ -12,6 +13,9 @@ export const instant = false;
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   // Proteksi berlapis: proxy menahan request, dan layout ini memastikan role
   // STORE_ADMIN sebelum halaman admin dirender (OWASP A01).
+  // `connection()`: area admin selalu dibaca request-time (sesi + kedaluwarsa
+  // di NextAuth memakai `new Date()` — gak sah di-prerender).
+  await connection();
   const user = await requireStoreAdminPage();
   // SITE-05 (PH-09): nama brand dari pengaturan Site Admin.
   const brand = await getBrandSetting();

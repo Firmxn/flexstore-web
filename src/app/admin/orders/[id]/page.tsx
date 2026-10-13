@@ -1,5 +1,6 @@
 import { BackLink } from "@/components/layout/BackLink";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { z } from "zod";
 import { AdminOrderActions } from "@/components/admin/AdminOrderActions";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -44,6 +45,12 @@ export default async function AdminOrderDetailPage({
 }: PageProps<"/admin/orders/[id]">) {
   const { id } = await params;
   if (!idSchema.safeParse(id).success) notFound();
+
+  // `connection()`: `getAdminOrderDetail` menjalankan `releaseExpiredReservations`
+  // yang memakai `new Date()` — nilai tidak stabil untuk prerender. Halaman ini
+  // memang harus dibaca saat request (status pesanan berubah-ubah), jadi
+  // ditandai dynamic dengan pola yang sama seperti halaman detail customer.
+  await connection();
 
   const [order, reasons] = await Promise.all([
     getAdminOrderDetail(id),
