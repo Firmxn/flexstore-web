@@ -909,8 +909,9 @@ PH-05 sudah disetujui, tetapi akses invoice dikoreksi setelah dilaporkan penggun
 | V4 | `pnpm build` | exit 0; rute baru muncul: `/admin`, `/admin/cancellation-reasons`, `/admin/orders`, `/admin/orders/[id]`, `/admin/reports`, `/admin/settings`, `/api/admin/cancellation-reasons` (+`/[id]`), `/api/admin/orders/[id]`, `/api/admin/settings`, `/api/orders/[id]/cancel`, `/orders/[id]/tracking` |
 | V5 | `pnpm exec tsc --noEmit` | Bersih setelah tipe rute Next diregenerasi build |
 | V6 | Smoke test HTTP (dev server) | `PATCH /api/admin/settings` tanpa sesi → `401`; `PATCH /api/admin/orders/[id]` tanpa sesi → `401`; `GET /api/admin/cancellation-reasons` tanpa sesi → `401`; `POST /api/orders/[id]/cancel` tanpa cookie guest → `404` (kepemilikan disembunyikan); `GET /admin/orders` tanpa sesi → `307` |
+| V7 | Unggah berkas nyata endpoint `refundProof` (ORDER-06, diuji 2026-10-14) | Sesi Store Admin: `POST /api/uploadthing?actionType=upload&slug=refundProof` → `200` (presigned) → `PUT sea1.ingest.uploadthing.com` multipart field `file` → `200` → `https://jqvuhozget.ufs.sh/f/rhko4DgxpLVA2twAjKstE8H5qmXwlReAhBrPc9KanNgku1Df` disajikan `200 image/png 247 bytes`; 2 berkas satu permintaan → `400 {"message":"Invalid config: FileCountMismatch"}`; badan mentah (`Content-Type: image/png`) → `415`; produksi tanpa sesi → `403 {"message":"Anda harus masuk terlebih dahulu"}`. Berkas uji dihapus lewat `UTApi.deleteFiles` (`{"success":true,"deletedCount":1}`, 11 → 10 berkas). Jalur UI lengkap terbukti sudah pernah berjalan: refund `FS-20261013-87S2YV` `COMPLETED` + `proofUrl` asli tersaji `200 image/png 22910 bytes` |
 
-Catatan: verifikasi V3-V4 adalah otomatis. Uji klik-through manual (alur admin ubah status → resi → email → cancel/refund → pickup → tracking customer) **belum dijalankan** dan perlu dilakukan pengguna sebelum approval.
+Catatan: verifikasi V3-V4 adalah otomatis. Unggah bukti refund (V7) sudah terbukti dengan berkas nyata. Uji klik-through manual sisanya (admin ubah status → resi → email → pickup → tracking customer) **belum dijalankan** dan perlu dilakukan pengguna sebelum approval.
 
 ### 9.5. Laporan untuk review
 

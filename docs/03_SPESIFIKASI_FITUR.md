@@ -291,6 +291,7 @@ Tidak ada â€” ready for implementation.
 - Galat unggah di klien menampilkan "Gagal mengunggah gambar, coba lagi"; tombol unggah bisa dipakai ulang (bagian 8).
 - Endpoint terpisah `refundProof` (bukti refund manual, ORDER-06): gambar, maksimal 1 berkas 4MB, gerbang `STORE_ADMIN` sama.
 - Status uji: gerbang terverifikasi `403`/`200` sejak PH-01. Unggah berkas nyata endpoint `productImage` **terverifikasi 2026-10-14** lewat UI admin: PNG 247 byte → `POST /api/uploadthing?actionType=upload&slug=productImage` `200` → `PUT sea1.ingest.uploadthing.com` `200` → URL `https://jqvuhozget.ufs.sh/f/...` disajikan `200 image/png 247 bytes`. Batas endpoint ikut terbukti (5MB → `400 FileSizeMismatch`, 5 berkas → `400 FileCountMismatch`), dan gerbang di produksi tanpa sesi → `403`. Bukti: `docs/04` bagian 4.5.
+- Status uji endpoint `refundProof` **terverifikasi 2026-10-14** dengan berkas nyata: sesi Store Admin → `POST /api/uploadthing?actionType=upload&slug=refundProof` `200` (presigned) → `PUT sea1.ingest.uploadthing.com` (multipart, field `file`) `200` → URL `https://jqvuhozget.ufs.sh/f/...` disajikan `200 image/png 247 bytes`; dua berkas dalam satu permintaan → `400 FileCountMismatch`; tanpa sesi di produksi → `403`. `PUT` dengan badan mentah (`Content-Type: image/png`) ditolak `415` — ingest hanya menerima `multipart/form-data`. Jalur UI lengkap pernah berjalan: baris refund `FS-20261013-87S2YV` berstatus `COMPLETED` dengan `proofUrl` asli yang tersaji `200 image/png 22910 bytes`. Bukti: `docs/04` bagian 9.4.
 
 ### 5. Alur berhasil
 
