@@ -20,11 +20,14 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     // `flex-1` (bukan `min-h-full`): `<body>` root layout hanya punya
     // `min-height`, sehingga persentase tinggi tidak dapat dihitung.
     <div className="flex flex-1 flex-col lg:flex-row">
-      {/* `lg:sticky lg:top-0 lg:h-screen` + `overflow-y-auto`: tanpa ini,
-          tinggi aside mengikuti tinggi baris (yakni setinggi konten main yang
-          bisa jauh melebihi layar), sehingga header dan bar keluar ikut
-          tergulung keluar layar saat admin mengisi form panjang. */}
-      <aside className="flex shrink-0 flex-col border-b border-border bg-background lg:sticky lg:top-0 lg:z-10 lg:h-screen lg:w-60 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+      {/* Sidebar memakai `lg:fixed`, BUKAN `lg:sticky`. Penyebabnya Radix
+          Select/Dialog saat popup terbuka menandai body `data-scroll-locked`
+          + `overflow: hidden`, yang mengganti scroll container terdekat bagi
+          elemen sticky — sticky berhenti menempel dan ikut tergulung (bug
+          "sidebar belakang" saat dropdown pilih template dibuka di
+          AdminOrderActions). `fixed` tidak terpengaruh overflow body. Konten
+          main dikompensasi dengan `lg:pl-60` (lebar sidebar 15rem). */}
+      <aside className="border-b border-border bg-background lg:fixed lg:inset-y-0 lg:left-0 lg:z-10 lg:w-60 lg:overflow-y-auto lg:border-b-0 lg:border-r">
         <div className="flex h-16 items-center gap-2 border-b border-border px-4">
           <Link href="/" className="font-bold tracking-tight">
             {brand.brandName}
@@ -41,7 +44,9 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
         </div>
       </aside>
 
-      <main className="flex-1 bg-muted/20 p-4 lg:p-8">{children}</main>
+      <main className="flex-1 bg-muted/20 p-4 lg:p-8 lg:pl-[17rem]">
+        {children}
+      </main>
     </div>
   );
 }
