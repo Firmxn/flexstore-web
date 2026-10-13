@@ -290,7 +290,7 @@ Tidak ada â€” ready for implementation.
 - Batas 4MB menggantikan 5MB spesifikasi karena Uploadthing hanya menerima ukuran kelipatan pangkat dua (keputusan `docs/04` bagian 10, 2026-10-09).
 - Galat unggah di klien menampilkan "Gagal mengunggah gambar, coba lagi"; tombol unggah bisa dipakai ulang (bagian 8).
 - Endpoint terpisah `refundProof` (bukti refund manual, ORDER-06): gambar, maksimal 1 berkas 4MB, gerbang `STORE_ADMIN` sama.
-- Status uji: gerbang terverifikasi `403`/`200` sejak PH-01; unggah berkas nyata belum pernah diuji â€” `UPLOADTHING_TOKEN` sudah terisi (dicek 2026-10-11), pengujian menyusul.
+- Status uji: gerbang terverifikasi `403`/`200` sejak PH-01. Unggah berkas nyata endpoint `productImage` **terverifikasi 2026-10-14** lewat UI admin: PNG 247 byte → `POST /api/uploadthing?actionType=upload&slug=productImage` `200` → `PUT sea1.ingest.uploadthing.com` `200` → URL `https://jqvuhozget.ufs.sh/f/...` disajikan `200 image/png 247 bytes`. Batas endpoint ikut terbukti (5MB → `400 FileSizeMismatch`, 5 berkas → `400 FileCountMismatch`), dan gerbang di produksi tanpa sesi → `403`. Bukti: `docs/04` bagian 4.5.
 
 ### 5. Alur berhasil
 
@@ -920,7 +920,8 @@ Tidak ada.
 ### 12. Batas fitur
 
 - **Termasuk:** Pencarian kecamatan tujuan, hitung ongkir multi-kurir, cache, fallback tarif flat
-- **Tidak termasuk:** Simpan pilihan ongkir ke pesanan (PH-03), lacak kiriman (SHIP-02), berat per produk (dipakai berat per varian)
+- **Tidak termasuk:** Simpan pilihan ongkir ke pesanan (PH-03), lacak kiriman (SHIP-02)
+- **Sudah termasuk sejak revisi 2026-10-10:** berat per varian (`ProductVariant.weightGram`) — pengganti asumsi berat seragam yang berlaku sebelumnya (bagian 13)
 - **Ketergantungan:** MOD-CART (berat dari keranjang), RajaOngkir Komerce API v1 (opsional)
 
 ### 13. Pertanyaan terbuka

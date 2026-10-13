@@ -7,9 +7,9 @@
 | Isian | Jawaban |
 | --- | --- |
 | Nama proyek | FlexStore |
-| Versi / tanggal SDD | v1.0 / 2026-10-09 |
-| Status rancangan | Draft |
-| Versi PRD dan fitur yang dirujuk | PRD v1.0 (2026-10-08) — MVP scope section 3.1, Modules section 4 |
+| Versi / tanggal SDD | v1.0 / 2026-10-09; diselaraskan 2026-10-11 dan 2026-10-13 |
+| Status rancangan | Finalized — mengikuti implementasi PH-01..PH-10 |
+| Versi PRD dan fitur yang dirujuk | PRD v1.6 (2026-10-13) — MVP scope section 3.1, Modules section 4 |
 | Penanggung jawab keputusan teknis | Development Team |
 
 ## 2. Tech stack dan referensi
@@ -610,7 +610,7 @@ flexstore/
 | PlatformSetting | Konfigurasi platform | MOD-SITE | id (UUID) | Singleton |
 | CancellationReason | Template alasan pembatalan | MOD-CONFIG | id (UUID) | Standalone |
 
-NextAuth memakai strategi sesi JWT sehingga tidak ada tabel `Session`/`Account`; model `BrandSetting` menyusul di PH-09.
+NextAuth memakai strategi sesi JWT sehingga tidak ada tabel `Session`/`Account`. `BrandSetting` (singleton, PH-09) menyimpan identitas brand per deployment: `brandName`, `tagline`, `logoUrl`, `faviconUrl`, `footerText`, dan palet warna 9 grup (hex, nullable — `null` = nilai bawaan).
 
 ### ERD:
 
@@ -662,9 +662,44 @@ erDiagram
 - orderNumber: String, unique
 - userId: FK, nullable (guest)
 - guestPhone, guestEmail: nullable
-- status: Enum (WAITING_PAYMENT, PROCESSING, SHIPPED, COMPLETED, CANCELED)
+- status: Enum (WAITING_PAYMENT, PROCESSING, SHIPPED, COMPLETED, CANCEL_REQUESTED, CANCELED)
 - subtotal, shippingCost, discount, total: Decimal
-- shippingAddress: JSON
+- shippingAddress: JSON (snapshot alamat saat pesanan dibuat; tidak berubah saat alamat tersimpan diubah)
+- shippingCourier, shippingService, shippingEtd: nullable
+- stockReservedUntil: DateTime, nullable (batas reservasi stok)
+- fulfillment: Enum (DELIVERY, PICKUP) — PICKUP tanpa ongkir (PH-06)
+- trackingNumber, shippedAt, completedAt: nullable (ORDER-07/SHIP-02)
+- cancelRequestedAt, cancelReason, cancelRejectionReason, canceledAt: nullable (ORDER-05)
+
+**Address:**
+- id: UUID, PK; userId: FK
+- label, recipientName, phone: String
+- destinationId: nullable (titik tujuan RajaOngkir untuk ongkir)
+- province, city, street: String; district, subdistrict, postalCode, note: nullable
+- isPrimary: Boolean (penanda alamat utama tunggal per user)
+- Batas server: maksimal 5 baris per user (CUST-01)
+
+**NotificationPreference:**
+- userId: UUID, PK/FK (satu baris per user)
+- orderConfirmation, paymentConfirmation, shippingUpdate, cancellationUpdate, refundUpdate: Boolean (default true)
+- Pembacaan tanpa menulis: tanpa baris = semua aktif (CUST-02)
+
+**Refund:**
+- id: UUID, PK; orderId: FK
+- amount: Decimal
+- method: Enum (AUTOMATIC, MANUAL) — saat ini selalu MANUAL (revisi PRD 1.6)
+- status: Enum (PENDING, COMPLETED, FAILED)
+- proofUrl, note: nullable; processedAt: nullable (ORDER-06)
+
+**StoreSetting:**
+- id: String, PK (singleton, id tetap "default")
+- storeEmail, storePhone, storeAddress, aboutUs, returnPolicy, warrantyPolicy: nullable
+- pickupEnabled: Boolean (default false); pickupInfo: nullable (SHIP-03)
+- socialInstagram, socialFacebook, socialWhatsapp: nullable (CONFIG-01)
+
+**CancellationReason:**
+- id: UUID, PK
+- text: String; isActive: Boolean (template alasan penolakan admin — CONFIG-01)
 
 **Payment:**
 - id: UUID, PK
@@ -752,6 +787,23 @@ erDiagram
 - Query: `?page=1&limit=20&status=ACTIVE`
 - Response (200): `{ products: [...], total, page, limit }`
 - Response (403): `{ error: "FORBIDDEN" }`
+
+**PATCH /api/admin/orders/[id]** (PH-06, ORDER-05/06/07)
+- Auth: Store Admin
+- Request: discriminated union `action` — `SHIP` (+`trackingNumber`), `COMPLETE`, `APPROVE_CANCEL`, `REJECT_CANCEL` (+`rejectionReason`), `COMPLETE_REFUND` (+`refundId`, `proofUrl`, `note?`)
+- Response (200): `{ ok: true }`; keadaan tidak sah → `409` dengan pesan; galat validasi → `400`
+
+**POST /api/orders/[id]/cancel** (PH-06, ORDER-05)
+- Auth: pemilik (customer sesi) atau guest (`guestPhone` cocok)
+- Request: `{ reason }` (3-300 karakter)
+- Response (200): status berubah ke `CANCEL_REQUESTED`; pesanan bukan milik pemilik → `404` generik
+
+**POST /api/orders/[id]/reorder** (PH-07, ORDER-03B)
+- Auth: Customer
+- Response (200): `{ added, skipped }`; varian hilang/non-aktif/stok habis dilewati; pesanan lain tidak berubah
+
+**POST /api/auth/forgot-password** (PH-07, AUTH-05)
+- Request: `{ email }`; Response (200) selalu — tidak membocorkan keberadaan email; token sekali pakai di Redis (TTL 1 jam)
 
 **Validation:** Zod schemas in `/src/lib/{module}/validation.ts`
 
@@ -982,7 +1034,7 @@ Catatan produksi:
 6. **Webhook idempotency:** Kirim webhook Xendit yang sama dua kali → diproses sekali
 
 **Test data:**
-- Admin: email dari `SEED_ADMIN_EMAIL` (default `admin@flexstore.local`); password dari `SEED_ADMIN_PASSWORD`, atau password acak yang dicetak `pnpm db:seed` bila variabel itu kosong
+- Admin: email dari `SEED_ADMIN_EMAIL` (default `storeadmin@flexstore.local`); password dari `SEED_ADMIN_PASSWORD`, atau password acak yang dicetak `pnpm db:seed` bila variabel itu kosong
 - Customer: tidak di-seed — dibuat lewat `/register`
 - Guest phone: `+628123456789` (OTP via Twilio Verify)
 
@@ -1011,13 +1063,12 @@ Catatan produksi:
 | 2026-10-09 | Initial draft | PRD v1.0 MVP scope | All sections |
 | 2026-10-11 | Penyelarasan dengan implementasi: `proxy.ts` (Next.js 16), invoice HTML siap-cetak (bukan `@react-pdf/renderer`), status Resend, MOD-NOTIF 4.9 (tujuh jenis email, Resend lewat `fetch`, preferensi CUST-02, non-blocking), pemisahan ketat Store Admin/Site Admin, nama model (`StoreSetting`, `PlatformSetting`, `CancellationReason`) + model PH-07/PH-08, paritas struktur (`(auth)`, `site-admin`) dan perintah verifikasi manual | Sinkronisasi dokumen | `docs/04` bagian 10 (2026-10-11) |
 | 2026-10-11 | Perbaikan UI akun + notifikasi in-app (PH-10, rencana): 4.8 dipisah menjadi halaman profil akun (CUST-03) dan halaman alamat (CUST-01), 4.9 memuat pusat notifikasi in-app (dialog dari ikon navbar, daftar dari lima kejadian pesanan, badge lewat Redis `notif:last-seen`), struktur bagian 5 diperbarui, PRD naik ke v1.3 | Kebutuhan baru (keputusan pengguna) | `docs/04` bagian 10 dan 15; `docs/01` revisi 1.3 |
+| 2026-10-13 | Penyelarasan PH-06/PH-07: data dictionary bagian 6.2 menambah `CANCEL_REQUESTED`, field pemenuhan/pembatalan `Order`, dan entitas `Address`, `NotificationPreference`, `Refund`, `StoreSetting`, `CancellationReason`; `BrandSetting` dicatat sebagai sudah ada (PH-09); contoh kontrak bagian 8 menambah `PATCH /api/admin/orders/[id]`, `POST /api/orders/[id]/cancel`, `POST /api/orders/[id]/reorder`, `POST /api/auth/forgot-password` | Sinkronisasi dokumen (utang bagian 12.5 `docs/04`) | `docs/04` bagian 9.2, 12.5; `docs/01` revisi 1.6 |
 
 ---
 
-**Status:** SDD v1.0 — dipakai sebagai dasar implementasi PH-01 sampai PH-08, diselaraskan dengan kode pada 2026-10-11; rancangan PH-09 (SITE-05) dan PH-10 (CUST-03 + NOTIF-02) sudah tercermin di bagian 4, 5, dan 6.
+**Status:** SDD v1.0 — dipakai sebagai dasar implementasi PH-01 sampai PH-10, diselaraskan dengan kode pada 2026-10-11 (termasuk rancangan PH-09 SITE-05 dan PH-10 CUST-03 + NOTIF-02 di bagian 4, 5, dan 6) dan 2026-10-13 (data dictionary + kontrak PH-06/PH-07).
 
 **Next steps:**
-1. Review PH-08 dan lanjut PH-09 (`docs/04` bagian 3 dan 14)
-2. Perbarui bagian 6 saat PH-09 menambah `BrandSetting`
-3. Kerjakan PH-10 (`docs/04` bagian 15): halaman `/profile/addresses`, halaman akun `/profile`, ikon notifikasi + dialog (NOTIF-02)
-4. Jaga SDD tetap sinkron setiap fase selesai (pola penyelarasan 2026-10-11)
+1. Jaga SDD tetap sinkron setiap fase/revisi selesai (pola penyelarasan 2026-10-11 dan 2026-10-13)
+2. Tinjau kembali pertanyaan terbuka OPEN-01..03 saat keputusan diambil (mis. migrasi OTP ke provider lain — lihat `docs/04` bagian 10)

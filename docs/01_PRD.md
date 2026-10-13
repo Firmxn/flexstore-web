@@ -1,9 +1,9 @@
 # Product Requirements Document (PRD)
 # FlexStore — E-Commerce Platform
 
-**Versi:** 1.5 (Finalized)  
-**Tanggal:** 8 Oktober 2026  
-**Status:** Finalized — Siap untuk SDD
+**Versi:** 1.6 (Finalized)  
+**Tanggal:** 13 Oktober 2026  
+**Status:** Finalized — diselaraskan dengan implementasi PH-01..PH-10
 
 **Revisi 1.1 (10 Oktober 2026):** model role = 4 (Guest, Customer, Store Admin, Site Admin): bagian 2.4 Site Admin ditambah; baris "3 role utama" (bagian 2) dan "no Site Admin role" (bagian 2.3) dicabut karena bertentangan dengan bagian 1, 3.1.K, 4.1, 4.12, dan kriteria sukses #10. Keputusan tercatat di `docs/04` bagian 10.
 
@@ -14,6 +14,8 @@
 **Revisi 1.4 (11 Oktober 2026):** perubahan email customer wajib verifikasi ulang. Saat customer mengganti email di `/profile`, sistem mengirim tautan verifikasi sekali pakai ke email baru, dan `User.email` baru berubah setelah tautan itu dibuka; email lama tetap aktif sampai verifikasi selesai, dan permintaan baru membatalkan tautan sebelumnya. Keputusan tercatat di `docs/04` bagian 10 dan 15; spek di `docs/03` CUST-03. Implementasi dijadwalkan pada fase **PH-10**.
 
 **Revisi 1.5 (11 Oktober 2026):** centang "Variant images" di bagian 3.1.A dan 7.4 dipulihkan. Input unggah gambar per varian kini ada di form admin produk (satu berkas opsional per baris varian, memakai endpoint Uploadthing `productImage` yang sama dengan galeri), dikerjakan sebagai revisi pasca-persetujuan PH-01. Spek diperbarui di `docs/03` PROD-01; keputusan tercatat di `docs/04` bagian 4.8 dan 10.
+
+**Revisi 1.6 (13 Oktober 2026):** penyelarasan dengan implementasi PH-06/PH-07. Status pesanan bertambah **"Cancel Requested"** (pengajuan pembatalan menunggu tinjauan admin — bagian 3.1.C dan 5.5). Aturan pembatalan (5.5) dirinci sesuai kode: pengajuan bisa dari status Menunggu Pembayaran maupun Diproses, persetujuan mengembalikan stok dan membuat baris refund bila pesanan sudah dibayar, penolakan mengembalikan status ke status sebelumnya. Refund otomatis lewat gateway dinyatakan **belum diimplementasikan di MVP** — seluruh refund berjalan manual dengan bukti unggahan (bagian 3.1.G dan 5.6). Keputusan tercatat di `docs/04` bagian 9.2 dan 10; spek di `docs/03` ORDER-05, ORDER-06, ORDER-07, dan CUST-01..CUST-03.
 
 ---
 
@@ -137,7 +139,7 @@ Sistem memiliki **4 role** (single-store MVP):
 - ✅ Customer checkout (harus login)
 - ✅ Address management untuk customer (maksimal 5 alamat)
 - ✅ Create order
-- ✅ Order status: Waiting Payment, Processing, Shipped, Completed, Canceled
+- ✅ Order status: Waiting Payment, Cancel Requested (pengajuan pembatalan menunggu tinjauan admin), Processing, Shipped, Completed, Canceled
 - ✅ Stock reservation saat order dibuat
 - ✅ Stock release jika payment gagal/expired
 - ✅ Stock deduction jika payment berhasil
@@ -199,8 +201,8 @@ Sistem memiliki **4 role** (single-store MVP):
   - Store Admin bisa mengelola (tambah, ubah, nonaktifkan)
   - Admin bisa pilih template atau isi manual
 - ✅ Refund setelah pembatalan disetujui:
-  - Sistem coba refund otomatis lewat payment gateway (jika didukung)
-  - Jika tidak didukung → refund manual oleh Store Admin
+  - Refund otomatis lewat payment gateway **belum diimplementasikan di MVP** (revisi 1.6) — jalur manual yang dipakai
+  - Refund manual oleh Store Admin
 - ✅ Refund manual:
   - Store Admin yang melakukan
   - **Wajib upload bukti refund** (screenshot/bukti transfer)
@@ -478,30 +480,27 @@ Gambaran modul tanpa detail teknis (detail teknis masuk SDD):
 
 **Aturan:**
 1. Pembatalan hanya untuk **seluruh pesanan** (bukan sebagian produk)
-2. Pembatalan hanya bisa dilakukan selama pesanan **belum diproses/dikirim**
+2. Pembatalan diajukan selama pesanan berstatus **Menunggu Pembayaran atau Diproses** (belum dikirim/diselesaikan)
 3. Alur pembatalan:
-   - Pembeli mengajukan pembatalan lewat website
-   - Store Admin meninjau
-   - Store Admin menyetujui atau menolak
+   - Pembeli mengajukan pembatalan lewat website (alasan wajib diisi)
+   - Pesanan berstatus **Cancel Requested** (menunggu tinjauan)
+   - Store Admin meninjau dan menyetujui atau menolak
 4. Jika Store Admin menolak:
    - **Wajib memberikan alasan**
    - Bisa pilih dari template alasan atau isi manual
    - Template alasan bisa dikelola Store Admin (tambah, ubah, nonaktifkan)
+   - Status pesanan kembali ke status sebelumnya (Diproses jika sudah dibayar, Menunggu Pembayaran jika belum)
 5. Jika Store Admin menyetujui:
-   - Sistem coba refund otomatis lewat payment gateway
-   - Jika gateway tidak mendukung → refund manual
+   - Pesanan berstatus Canceled dan stok dikembalikan
+   - Jika pesanan sudah dibayar → baris refund dibuat (PENDING) untuk diproses sesuai aturan 5.6
 
 ### 5.6 Refund
 
 **Aturan:**
-1. **Refund otomatis** (jika gateway mendukung):
-   - Sistem mengirim request refund ke payment gateway
-   - Gateway memproses refund
-   - Status refund di-update otomatis
-
-2. **Refund manual** (jika gateway tidak mendukung):
-   - Store Admin melakukan refund manual (transfer bank, dll)
-   - Store Admin **wajib upload bukti refund** (screenshot/bukti transfer)
+1. **Refund otomatis lewat payment gateway: belum diimplementasikan di MVP** (revisi 1.6). Jalurnya disediakan di skema (`Refund.method`), tetapi seluruh refund saat ini berjalan manual (butir 2)
+2. **Refund manual:**
+   - Store Admin yang melakukan
+   - **Wajib upload bukti refund** (screenshot/bukti transfer)
    - Store Admin menandai refund sebagai berhasil
    - Bukti tersimpan di riwayat refund
 
