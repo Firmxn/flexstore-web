@@ -2,17 +2,21 @@
 
 Platform e-commerce MVP single-store, target pasar Indonesia (UI Bahasa Indonesia, mata uang IDR).
 
-Fitur yang sudah ada (PH-01 sampai PH-08): autentikasi (customer, Store Admin, Site Admin,
-guest OTP), CRUD produk (kategori, brand, varian), katalog dengan pencarian, filter, dan urutan,
-keranjang dengan pemilihan item, hitung ongkir (RajaOngkir), checkout guest dan customer
-(termasuk alamat tersimpan), pembayaran Xendit (Invoice API + webhook), voucher (kalkulasi
-bertahap + CRUD admin), kelola pesanan dan lima laporan penjualan Store Admin, cancel/refund,
-pickup, pelacakan pesanan, email transaksional (Resend), invoice siap-cetak, serta konfigurasi
-platform dan akun Store Admin oleh Site Admin.
+Fitur yang sudah ada (PH-01 sampai PH-10): autentikasi (customer, Store Admin, Site Admin,
+guest OTP), CRUD produk (kategori, brand, varian, gambar per varian), katalog dengan pencarian,
+filter, dan urutan, keranjang dengan pemilihan item, hitung ongkir (RajaOngkir), checkout guest
+dan customer (termasuk alamat tersimpan), pembayaran Xendit (Invoice API + webhook), voucher
+(kalkulasi bertahap + CRUD admin), kelola pesanan dan lima laporan penjualan Store Admin,
+cancel/refund, pickup, pelacakan pesanan, email transaksional (Resend), invoice siap-cetak,
+konfigurasi platform dan akun Store Admin oleh Site Admin, kustomisasi brand oleh Site Admin
+(nama, logo, favicon, tagline, palet warna, banner homepage, teks footer), halaman akun mandiri
+(`/profile`) plus halaman alamat khusus (`/profile/addresses`), verifikasi email saat ganti
+email, dan pusat notifikasi in-app dari ikon lonceng di navbar.
 
-Status fase: **PH-01 sampai PH-07 disetujui; PH-08 siap direview; PH-09 (kustomisasi brand)
-dan PH-10 (halaman akun, halaman alamat khusus, notifikasi in-app) dalam rencana**. Peta fase
-lengkap ada di `docs/04_IMPLEMENTATION_PLAN.md`.
+Status fase: **PH-01 sampai PH-10 terimplementasi dan disetujui** (2026-10-11). Bukti verifikasi
+per fase ada di `docs/04_IMPLEMENTATION_PLAN.md`; butir yang masih terbuka di luar kode tercatat
+di bagian 11 dokumen itu (antaranya uji unggah Uploadthing dengan berkas nyata dan `EMAIL_FROM`
+domain terverifikasi).
 
 ## Tech stack
 
@@ -128,16 +132,20 @@ dicatat di `docs/04_IMPLEMENTATION_PLAN.md`.
    pesanan berubah saat webhook masuk (dev perlu tunnel publik).
 4. Invoice (muncul setelah pembayaran lunas): buka pesanan, klik Lihat Invoice, lalu
    cetak/simpan PDF lewat tombol Cetak.
-5. Customer: daftar di `/register`, login di `/login`, kelola alamat tersimpan dan preferensi
-   notifikasi di `/profile`, pesan ulang lewat tombol "Pesan Lagi" di `/orders`, dan atur ulang
-   password lewat `/forgot-password`. Lacak pesanan di `/track-order` (guest: nomor pesanan +
-   nomor HP; customer: daftar pesanan dalam perjalanan) atau buka detail tracking per pesanan.
+5. Customer: daftar di `/register`, login di `/login`, kelola alamat tersimpan di
+   `/profile/addresses`, atur akun (nama, ganti email wajib verifikasi, ubah password) di
+   `/profile`, lihat notifikasi pesanan lewat ikon lonceng di navbar (daftar + preferensi email),
+   pesan ulang lewat tombol "Pesan Lagi" di `/orders`, dan atur ulang password lewat
+   `/forgot-password`. Lacak pesanan di `/track-order` (guest: nomor pesanan + nomor HP;
+   customer: daftar pesanan dalam perjalanan) atau buka detail tracking per pesanan.
 6. Store Admin: login memakai `SEED_ADMIN_EMAIL` dan password hasil seed. Kelola produk,
    kategori, brand, dan voucher; kelola pesanan di `/admin/orders` (status, resi, cancel/refund,
    pickup); lihat laporan di `/admin/reports`; atur toko dan template alasan penolakan di
    `/admin/settings` dan `/admin/cancellation-reasons`.
 7. Site Admin: login memakai `SEED_SITE_ADMIN_EMAIL`. Di `/site-admin` ada pengaturan platform
-   (mode pemeliharaan, pendaftaran), konfigurasi payment/shipping, dan kelola akun Store Admin.
+   (mode pemeliharaan, pendaftaran), konfigurasi payment/shipping, kelola akun Store Admin, dan
+   kustomisasi brand di `/site-admin/brand` (nama, logo, favicon, tagline, palet warna, banner
+   homepage, teks footer).
 8. Akses kontrol: buka `/admin/products` tanpa login akan dialihkan ke `/login`; Store Admin yang
    membuka `/site-admin` dialihkan ke `/admin`, dan sebaliknya.
 
@@ -151,7 +159,7 @@ src/
                        invoice, tracking, profil/alamat, lacak pesanan
     admin/             Panel Store Admin (produk, kategori, brand, voucher, pesanan, laporan,
                        pengaturan, template alasan penolakan)
-    site-admin/        Panel Site Admin (pengaturan platform, payment, shipping, akun Store Admin)
+    site-admin/        Panel Site Admin (pengaturan platform, payment, shipping, brand, akun Store Admin)
     api/               API Routes (auth, otp, cart, customer, shipping, orders, payments,
                        vouchers, admin, site-admin, uploadthing, webhooks)
   components/          Komponen React (admin, auth, cart, checkout, customer, invoices, layout,
@@ -191,4 +199,6 @@ Detail lengkap: `docs/02_SDD.md` section 5.
 
 ## Lisensi
 
-Repo privat. Belum ada lisensi.
+Repo public (`github.com/Firmxn/flexstore-web`) dan **belum ada lisensi**: tanpa berkas LICENSE,
+kode dilindungi hak cipta bawaan, jadi orang lain tidak boleh memakai ulang tanpa izin. Tambahkan
+lisensi (misal MIT) bila kode ingin dipakai ulang secara terbuka.
