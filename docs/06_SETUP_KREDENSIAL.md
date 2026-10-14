@@ -11,7 +11,7 @@ baru layanan lain, terakhir migrasi dan seed).
 
 Setelah semua terisi, jalankan migrasi dan seed:
 
-```powershell
+```bash
 pnpm db:migrate --name init
 pnpm db:seed
 pnpm dev
@@ -94,13 +94,13 @@ karena memakai prepared statement yang tidak didukung PgBouncer (`DIRECT_URL`, p
 
 Buat secret acak 32 byte:
 
-```powershell
+```bash
 npx auth secret
 ```
 
 Atau, tanpa network:
 
-```powershell
+```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
@@ -337,7 +337,7 @@ Xendit Invoice API v2 membuat invoice (hosted page) → pembeli membayar → Xen
 
 Setelah semua kredensial terisi:
 
-```powershell
+```bash
 pnpm db:migrate --name init
 pnpm db:seed
 pnpm dev
@@ -373,7 +373,7 @@ yang sudah ada, pakai skrip khusus di bagian **"Rotasi password akun admin"** di
 Sejak PH-08 ada dua peran admin yang terpisah ketat: **Store Admin** (`/admin/*`) dan
 **Site Admin** (`/site-admin/*`). Akun Site Admin pertama dibuat oleh seed:
 
-```powershell
+```dotenv
 SEED_SITE_ADMIN_EMAIL="siteadmin@flexstore.local"
 SEED_SITE_ADMIN_NAME="Site Admin"
 SEED_SITE_ADMIN_PASSWORD=""
@@ -401,20 +401,21 @@ skrip khusus `pnpm db:reset-admin-passwords`. Ada dua cara:
 
 **A. Password dipilih sendiri** (tidak pernah dicetak skrip):
 
-```powershell
-$env:RESET_ADMIN_PASSWORD="<password Store Admin baru>"
-$env:RESET_SITE_ADMIN_PASSWORD="<password Site Admin baru>"
+```bash
+export RESET_ADMIN_PASSWORD="<password Store Admin baru>"
+export RESET_SITE_ADMIN_PASSWORD="<password Site Admin baru>"
 pnpm db:reset-admin-passwords
-Remove-Item Env:RESET_ADMIN_PASSWORD
-Remove-Item Env:RESET_SITE_ADMIN_PASSWORD
+unset RESET_ADMIN_PASSWORD RESET_SITE_ADMIN_PASSWORD
 ```
+
+> Tip: supaya password tidak masuk riwayat shell, ganti dua baris `export` dengan
+> `read -rsp "Password Store Admin baru: " RESET_ADMIN_PASSWORD; export RESET_ADMIN_PASSWORD`
+> (idem untuk Site Admin).
 
 **B. Password acak dibuat skrip** (praktis; tidak menulis password ke `.env.local`):
 
-```powershell
-$env:RESET_GENERATE="true"
-pnpm db:reset-admin-passwords
-Remove-Item Env:RESET_GENERATE
+```bash
+RESET_GENERATE=true pnpm db:reset-admin-passwords
 ```
 
 Password acak (24 karakter) dicetak **sekali** di terminal setelah rotasi berhasil —
