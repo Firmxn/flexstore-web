@@ -176,7 +176,7 @@
 | **Shipping API timeout 10s, fallback flat rate Rp10k** | UX resilience (PRD 3.1.F) | PRD section 3.1.F, SDD 4.7 |
 | **shadcn/ui untuk admin panel** | Modern, Tailwind-based, customizable (PRD 7.6) | PRD section 7.6, SDD section 2 |
 | **Prisma migrations via script `pnpm db:*` (`pnpm db:migrate` dev, `pnpm db:deploy` prod)** | CLI Prisma tidak membaca `.env.local`; script dibungkus `dotenv-cli` | SDD section 12, Implementation Plan section 10 |
-| **Seed create-only; rotasi password akun lewat `pnpm db:reset-admin-passwords`, bukan seed** | Seed tidak boleh menimpa password akun lama; dua akun admin wajib beda password (min 12 karakter) | `docs/06` bagian 8, SDD section 12 |
+| **Seed create-only; rotasi password akun lewat `pnpm db:reset-admin-passwords`, bukan seed** | Seed tidak boleh menimpa password akun lama; dua akun admin wajib beda password (min 12 karakter, atau dibuat acak dengan `RESET_GENERATE=true`) | `docs/06` bagian 8, SDD section 12 |
 | **NextAuth v5 (beta)** | Dukungan App Router; v5 belum rilis stabil (tag `latest` npm masih v4) | SDD section 2, SDD 4.1 |
 | **Phase bertahap review (PH-01 sampai PH-06)** | Incremental verification, catch bugs early | Implementation Plan section 3 |
 | **Pesan commit pakai Conventional Commits v1.0.0** | Riwayat terbaca manusia + dibaca tooling (changelog, versi) | Section 12, <https://www.conventionalcommits.org/en/v1.0.0> |

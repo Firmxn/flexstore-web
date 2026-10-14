@@ -96,7 +96,8 @@ Catatan:
 - Kalau `SEED_ADMIN_PASSWORD` kosong, seed membuat password acak dan mencetaknya sekali di terminal.
 - `SEED_SITE_ADMIN_*` membuat akun Site Admin pertama (area `/site-admin`); password kosong diperlakukan sama seperti admin.
 - Seed bersifat *create-only*: akun yang sudah ada tidak diubah passwordnya. Untuk merotasi password akun admin lama,
-  jalankan `pnpm db:reset-admin-passwords` dengan `RESET_ADMIN_PASSWORD` dan `RESET_SITE_ADMIN_PASSWORD` (wajib berbeda), lalu kosongkan lagi.
+  jalankan `pnpm db:reset-admin-passwords` dengan `RESET_ADMIN_PASSWORD` dan `RESET_SITE_ADMIN_PASSWORD` (wajib berbeda),
+  atau set `RESET_GENERATE=true` agar skrip membuat password acak (dicetak sekali); lalu kosongkan lagi.
 - Store Admin dan Site Admin dipisah ketat: Store Admin hanya `/admin/*`, Site Admin hanya `/site-admin/*`.
 - `TWILIO_VERIFY_SERVICE_SID` wajib. Tanpa itu, `/api/otp/send` menjawab `502`.
 - `XENDIT_INVOICE_DURATION` (detik) dipakai sebagai masa bayar sekaligus masa reservasi stok.

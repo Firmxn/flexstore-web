@@ -397,7 +397,9 @@ SEED_SITE_ADMIN_PASSWORD=""
 
 Akun yang **sudah terdaftar** tidak dapat diubah passwordnya lewat `pnpm db:seed`.
 Untuk merotasi password akun lama (misalnya password dev yang lemah atau bocor), pakai
-skrip khusus `pnpm db:reset-admin-passwords`:
+skrip khusus `pnpm db:reset-admin-passwords`. Ada dua cara:
+
+**A. Password dipilih sendiri** (tidak pernah dicetak skrip):
 
 ```powershell
 $env:RESET_ADMIN_PASSWORD="<password Store Admin baru>"
@@ -407,21 +409,33 @@ Remove-Item Env:RESET_ADMIN_PASSWORD
 Remove-Item Env:RESET_SITE_ADMIN_PASSWORD
 ```
 
+**B. Password acak dibuat skrip** (praktis; tidak menulis password ke `.env.local`):
+
+```powershell
+$env:RESET_GENERATE="true"
+pnpm db:reset-admin-passwords
+Remove-Item Env:RESET_GENERATE
+```
+
+Password acak (24 karakter) dicetak **sekali** di terminal setelah rotasi berhasil —
+salin ke password manager saat itu juga, karena tidak ditampilkan lagi.
+
 Aturan skrip:
 
 - **Satu variabel per peran:** `RESET_ADMIN_PASSWORD` (Store Admin) dan
-  `RESET_SITE_ADMIN_PASSWORD` (Site Admin). Keduanya wajib diisi; skrip merotasi kedua
-  akun dalam satu transaksi.
+  `RESET_SITE_ADMIN_PASSWORD` (Site Admin). Isi keduanya, atau set `RESET_GENERATE=true`
+  supaya password acak dibuat skrip. Skrip merotasi kedua akun dalam satu transaksi.
 - **Kedua password wajib berbeda.** Skrip menolak bila kedua nilai sama persis — dua akun
   tidak boleh memakai password identik.
 - Minimal 12 karakter. Pakai password manager. Jangan tulis password ke dokumen, pesan
-  commit, atau riwayat terminal.
+  commit, atau riwayat terminal (mode B menghindari ini).
 - Akun dicari berdasarkan `SEED_ADMIN_EMAIL` / `SEED_SITE_ADMIN_EMAIL` (default
   `storeadmin@flexstore.local` / `siteadmin@flexstore.local`) **dan** role yang sesuai.
 - **Tidak membuat akun baru.** Bila salah satu akun tidak ditemukan atau role-nya tidak
   cocok, seluruh rotasi dibatalkan tanpa perubahan.
-- Skrip tidak pernah mencetak password maupun hash — hanya email dan role yang diubah.
-- Setelah selesai, hapus variabel `RESET_*` dari environment. Nilai itu tidak perlu
+- Password yang diberikan lewat env (mode A) tidak pernah dicetak; hanya password yang
+  di-generate (mode B) yang dicetak sekali. Hash tidak pernah dicetak.
+- Setelah selesai, hapus variabel `RESET_*` dari environment. Nilainya tidak perlu
   disimpan di `.env.local`; kalau tetap ditulis di sana, jangan di-commit.
 
 ### Daftar periksa setelah setup
