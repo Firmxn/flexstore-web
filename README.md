@@ -87,6 +87,7 @@ di-commit. `.env.example` hanya berisi placeholder.
 | Email | `RESEND_API_KEY`, `EMAIL_FROM` |
 | Aplikasi | `NEXT_PUBLIC_APP_URL` |
 | Seed (opsional) | `SEED_ADMIN_EMAIL`, `SEED_ADMIN_NAME`, `SEED_ADMIN_PASSWORD`, `SEED_SITE_ADMIN_EMAIL`, `SEED_SITE_ADMIN_NAME`, `SEED_SITE_ADMIN_PASSWORD` |
+| Rotasi password admin (opsional) | `RESET_ADMIN_PASSWORD`, `RESET_SITE_ADMIN_PASSWORD` |
 
 Catatan:
 
@@ -94,6 +95,8 @@ Catatan:
   (pooler, port 6543).
 - Kalau `SEED_ADMIN_PASSWORD` kosong, seed membuat password acak dan mencetaknya sekali di terminal.
 - `SEED_SITE_ADMIN_*` membuat akun Site Admin pertama (area `/site-admin`); password kosong diperlakukan sama seperti admin.
+- Seed bersifat *create-only*: akun yang sudah ada tidak diubah passwordnya. Untuk merotasi password akun admin lama,
+  jalankan `pnpm db:reset-admin-passwords` dengan `RESET_ADMIN_PASSWORD` dan `RESET_SITE_ADMIN_PASSWORD` (wajib berbeda), lalu kosongkan lagi.
 - Store Admin dan Site Admin dipisah ketat: Store Admin hanya `/admin/*`, Site Admin hanya `/site-admin/*`.
 - `TWILIO_VERIFY_SERVICE_SID` wajib. Tanpa itu, `/api/otp/send` menjawab `502`.
 - `XENDIT_INVOICE_DURATION` (detik) dipakai sebagai masa bayar sekaligus masa reservasi stok.
@@ -113,6 +116,7 @@ Catatan:
 | `pnpm db:deploy` | Terapkan migrasi (produksi) |
 | `pnpm db:push` | Sinkron skema tanpa file migrasi |
 | `pnpm db:seed` | Isi data awal (Store Admin, Site Admin, kategori, brand, produk) |
+| `pnpm db:reset-admin-passwords` | Rotasi password akun Store Admin + Site Admin yang sudah ada |
 | `pnpm db:studio` | Prisma Studio (GUI database) |
 | `pnpm db:generate` | Regenerasi Prisma Client |
 
@@ -172,6 +176,7 @@ prisma/
   schema.prisma        Skema database
   migrations/          Migrasi
   seed.ts              Data awal
+  reset-admin-passwords.ts  Rotasi password akun admin
 docs/                  Dokumen perencanaan dan spesifikasi
 public/                Aset statis
 ```

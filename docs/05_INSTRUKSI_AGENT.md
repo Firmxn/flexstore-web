@@ -106,7 +106,7 @@
 
 ## 7. Verifikasi dan bukti
 
-- **Gunakan perintah SDD section 12 (Verification commands)** — `pnpm dev`, `pnpm build`, `pnpm lint`, dan migrasi lewat script `pnpm db:*` (`pnpm db:migrate`, `pnpm db:deploy`). Repo ini belum punya skrip `pnpm test`/`pnpm test:e2e`; skenario verifikasi dijalankan manual per fase (lihat SDD section 12). Jangan panggil `pnpx prisma` langsung: CLI Prisma tidak membaca `.env.local` (lihat Implementation Plan section 10)
+- **Gunakan perintah SDD section 12 (Verification commands)** — `pnpm dev`, `pnpm build`, `pnpm lint`, dan migrasi lewat script `pnpm db:*` (`pnpm db:migrate`, `pnpm db:deploy`; `pnpm db:seed`; rotasi password admin `pnpm db:reset-admin-passwords`). Repo ini belum punya skrip `pnpm test`/`pnpm test:e2e`; skenario verifikasi dijalankan manual per fase (lihat SDD section 12). Jangan panggil `pnpx prisma` langsung: CLI Prisma tidak membaca `.env.local` (lihat Implementation Plan section 10)
 - **Pilih pemeriksaan yang buktikan AC dan risiko perubahan** — Alur gagal (duplicate SKU), nilai batas (stock = 0), akses tidak sah (guest access admin route)
 - **Jalankan pemeriksaan saat fase dikerjakan, jangan tunda sampai akhir** — Contoh: TASK-11 (Product CRUD) selesai → langsung verify AC-PROD-01-01 sampai AC-PROD-01-08
 - **Build success bukan bukti seluruh perilaku fitur terpenuhi** — `pnpm build` success = type check pass, bukan "semua fitur work"
@@ -176,6 +176,7 @@
 | **Shipping API timeout 10s, fallback flat rate Rp10k** | UX resilience (PRD 3.1.F) | PRD section 3.1.F, SDD 4.7 |
 | **shadcn/ui untuk admin panel** | Modern, Tailwind-based, customizable (PRD 7.6) | PRD section 7.6, SDD section 2 |
 | **Prisma migrations via script `pnpm db:*` (`pnpm db:migrate` dev, `pnpm db:deploy` prod)** | CLI Prisma tidak membaca `.env.local`; script dibungkus `dotenv-cli` | SDD section 12, Implementation Plan section 10 |
+| **Seed create-only; rotasi password akun lewat `pnpm db:reset-admin-passwords`, bukan seed** | Seed tidak boleh menimpa password akun lama; dua akun admin wajib beda password (min 12 karakter) | `docs/06` bagian 8, SDD section 12 |
 | **NextAuth v5 (beta)** | Dukungan App Router; v5 belum rilis stabil (tag `latest` npm masih v4) | SDD section 2, SDD 4.1 |
 | **Phase bertahap review (PH-01 sampai PH-06)** | Incremental verification, catch bugs early | Implementation Plan section 3 |
 | **Pesan commit pakai Conventional Commits v1.0.0** | Riwayat terbaca manusia + dibaca tooling (changelog, versi) | Section 12, <https://www.conventionalcommits.org/en/v1.0.0> |

@@ -288,6 +288,21 @@ PH-01 sudah disetujui, tetapi satu celah yang tercatat saat audit dokumen 2026-1
 
 **Verifikasi:** `pnpm exec tsc --noEmit` exit 0; `pnpm exec eslint` pada tiga berkas yang tersentuh exit 0. Uji klik-through (unggah berkas nyata) menyusul bersama butir uji unggah Uploadthing yang masih terbuka (bagian 11).
 
+### 4.9. Revisi pasca-persetujuan PH-01 (2026-10-15)
+
+Password akun admin dev sempat lemah (literal lamanya sudah dihapus dari dokumen) dan `pnpm db:seed` tidak dapat menggantinya: `seedAdmin`/`seedSiteAdmin` hanya memanggil `prisma.user.create`, sehingga akun yang sudah ada dilewati dan passwordnya tidak pernah tersentuh. Rotasi sebelumnya (2026-10-10, bagian 10) memakai skrip sekali pakai `prisma/tmp-reset-admin.ts` yang lalu dihapus — bentuknya tidak dapat diulang secara konsisten.
+
+**Perbaikan:** skrip rotasi permanen `prisma/reset-admin-passwords.ts` + perintah `pnpm db:reset-admin-passwords`.
+
+1. **Hanya meng-update akun yang sudah ada** — tidak pernah membuat akun baru. Akun dicari lewat `SEED_ADMIN_EMAIL` / `SEED_SITE_ADMIN_EMAIL` **dan** role yang diharapkan (`STORE_ADMIN` / `SITE_ADMIN`); bila salah satu tidak cocok, seluruh rotasi dibatalkan dalam satu transaksi.
+2. Password dari env per peran: `RESET_ADMIN_PASSWORD` (Store Admin) dan `RESET_SITE_ADMIN_PASSWORD` (Site Admin). Keduanya wajib diisi, **wajib berbeda**, minimal 12 karakter.
+3. Memakai helper hash yang sama dengan seed (`hashPassword` dari `src/lib/auth/password.ts`, `BCRYPT_ROUNDS = 10`) supaya tidak ada dua implementasi hashing.
+4. Tidak pernah mencetak password atau hash — hanya email dan role yang diubah.
+
+**Batas:** skrip ini untuk dua akun admin yang dikenal seed, bukan alat reset sembarang user. Reset password customer tetap lewat fitur aplikasi (AUTH-05) dan Store Admin tambahan lewat SITE-04.
+
+**Verifikasi:** `pnpm exec tsc --noEmit` exit 0; `pnpm exec eslint prisma/reset-admin-passwords.ts` exit 0. Lima jalur diuji tanpa mengubah data (semua exit 1 dengan pesan jelas): tanpa `RESET_ADMIN_PASSWORD` → "wajib diisi"; kedua password sama → "tidak boleh sama"; password < 12 karakter → "minimal 12 karakter"; email tidak ditemukan → "tidak ditemukan" (transaksi dibatalkan); email Site Admin dipakai sebagai target Store Admin → "bukan STORE_ADMIN" (transaksi dibatalkan, rollback). Rotasi Site Admin yang sebenarnya menunggu eksekusi pengguna (butir 9 bagian 11).
+
 ---
 
 ## 5. Rincian Fase: PH-02 — Shopping Flow (Cart + Shipping)
@@ -1022,6 +1037,7 @@ Catatan: verifikasi V3-V4 adalah otomatis. Unggah bukti refund (V7) sudah terbuk
 | 2026-10-12 | **Autocomplete form login disamakan ke standar spec HTML (`username` + `current-password`), supersede keputusan `off`/`new-password`.** User: "coba cek halaman login apakah klaim ini tepat?" (laporan Proton Pass mengira halaman login adalah halaman register), lalu "idealnya 2 atau 3?" | Token `new-password` memang sengaja dipasang kemarin untuk mematikan prefill browser setelah logout (form "lengket"); akibat sampingannya baru ketahuan: semua password manager membaca token itu sebagai sinyal halaman pendaftaran sehingga menawarkan bikin password baru, bukan isi kredensial. Prefill "lengket" sebenarnya urusan setting autofill di sisi pengguna — perilaku yang diharapkan kebanyakan user justru kredensial tersimpan yang mudah diisi | `LoginForm.tsx`: field identifier `autoComplete="off"` → `"username"`, field password `"new-password"` → `"current-password"`, atribut `autoComplete="off"` di tag `<form>` dihapus. Komentar penjelas di-update. Audit seluruh form auth: `RegisterForm`/`ResetPasswordForm`/`SetPasswordForm` tetap `new-password` (memang benar untuk alur buat/password baru), `ChangePasswordForm` sudah `current`+`new`, OTP sudah `one-time-code` — LoginForm satu-satunya outlier | `src/components/auth/LoginForm.tsx` |
 | 2026-10-13 | **Sinkronkan README dengan Implementation Plan dan koreksi keterangan "privat".** User menanyakan arti catatan tersisa sesi paralel ("Tinggal dua hal di luar file ini: sinkronkan README FlexStore dengan Implementation Plan (status PH-08 sampai PH-10 dan keterangan \"privat\")") lalu menegaskan repo sudah public (tangkapan layar Danger Zone GitHub) | README masih berkisah sampai PH-08: daftar fitur tanpa hasil PH-09/PH-10, status "PH-08 siap direview; PH-09/PH-10 dalam rencana", alur demo menempatkan preferensi notifikasi di `/profile`, dan bagian Lisensi menulis "Repo privat" padahal `Firmxn/flexstore-web` sudah public | README disegarkan: fitur dan status sampai PH-10 (semua disetujui), alur demo #5 (alamat di `/profile/addresses`, akun di `/profile`, notifikasi lewat ikon lonceng) dan #7 (brand di `/site-admin/brand`), pohon struktur, serta bagian Lisensi kini menyatakan repo public dan belum berlisensi — tanpa berkas LICENSE hak cipta bawaan berlaku; lisensi (mis. MIT) menyusul bila diputuskan. Catatan tersebut diduga catatan serah-terima sesi paralel; `contect.md` di root kosong dan tidak berisi teks itu | `README.md` |
 | 2026-10-14 | **Email akun Store Admin di-seed diganti `admin@flexstore.local` → `storeadmin@flexstore.local`** (disamakan pola `siteadmin@...`). User: "ganti jadi storeadmin@flexstore.local biar sama kayak site admin. eh btw sekarang udah di deploy. masih pake .local?" | `.env.local` saja tidak cukup — seed idempoten (skip bila email sudah ada), jadi akun lama di database tetap memakai email lama; nama email lama juga tercatat di beberapa dokumen | `SEED_ADMIN_EMAIL` di `.env.local` diganti; rename database lewat skrip sekali pakai Prisma (id `9b7ba243-...`, skrip dihapus setelah dipakai); fallback default di `prisma/seed.ts` + rujukan di `docs/02`/`docs/06`/`docs/04` diselaraskan. Pertanyaan ".local di produksi" dijawab: TLD `.local` hanya nama login internal (akun admin tidak menerima email — tidak ada kode yang mengirim email ke admin), jadi tidak berpengaruh pada deploy | `.env.local`, `prisma/seed.ts`, `docs/02_SDD.md`, `docs/06_SETUP_KREDENSIAL.md` |
+| 2026-10-15 | **Skrip rotasi password akun admin dijadikan permanen** (`prisma/reset-admin-passwords.ts` + `pnpm db:reset-admin-passwords`); menggantikan skrip sekali pakai `prisma/tmp-reset-admin.ts` (2026-10-10) yang bentuknya tidak dapat diulang. Dipicu permintaan user: "bantu gua brainstorming ... password sekarang terlalu lemah" lalu "kerjakan dokumen dulu, lalu skrip" | `seedAdmin`/`seedSiteAdmin` hanya `prisma.user.create`, jadi akun lama tidak pernah diubah passwordnya dan rotasi hanya mungkin lewat skrip manual yang mudah kehilangan bentuknya | **Keputusan:** skrip permanen yang sempit — hanya update akun yang sudah ada (verifikasi email + role, satu transaksi), env per peran `RESET_ADMIN_PASSWORD` / `RESET_SITE_ADMIN_PASSWORD` (wajib berbeda, min 12 karakter), tidak mencetak password, dan tidak membuat akun baru. Memakai helper hash yang sama (`src/lib/auth/password.ts`). Password literal lama (`123456`) dihapus dari dokumen (aturan repo: jangan tulis kredensial). Rotasi Site Admin yang sebenarnya menunggu eksekusi pengguna | `prisma/reset-admin-passwords.ts`, `package.json`, `.env.example`, `docs/06` bagian 8, SDD section 12, `docs/04` bagian 4.9 |
 
 
 ---
@@ -1041,7 +1057,7 @@ Catatan: verifikasi V3-V4 adalah otomatis. Unggah bukti refund (V7) sudah terbuk
   6. Sinkronisasi dokumen dengan implementasi (audit 2026-10-11) — **selesai**: indeks `docs/03` memakai status "Terimplementasi (PH-XX)" plus baris ORDER-07/SHIP-03, README ke PH-08, sisa baris SDD, `docs/06`, `AGENTS.md`, `.env.example`
   7. Tulis bagian rinci fitur yang belum punya spesifikasi `docs/03` (13 fitur, daftar di bagian 10, 2026-10-11) — satu batch setelah PH-09 atau saat penutupan MVP
   8. (Opsional) Ubah `XENDIT_INVOICE_DURATION` (mis. 1800 = 30 menit) bila masa bayar perlu lebih longgar
-  9. (PH-01) `SEED_ADMIN_PASSWORD` dev lemah dan **wajib diganti** sebelum produksi — **selesai 2026-10-14** untuk Store Admin (`storeadmin@flexstore.local`, password acak 24 karakter, `.env.local` diperbarui, login lama `123456` ditolak `CredentialsSignin`). **Sisa:** `siteadmin@flexstore.local` (SITE_ADMIN) masih memakai password lama; rotasinya ditunda atas permintaan user
+  9. (PH-01) Password akun admin dev lemah dan **wajib diganti** sebelum produksi — Store Admin selesai 2026-10-14 (password acak 24 karakter, `.env.local` diperbarui, login dengan password lama ditolak `CredentialsSignin`). **Skrip rotasi permanen `pnpm db:reset-admin-passwords` disiapkan 2026-10-15 (bagian 4.9).** Sisa: `siteadmin@flexstore.local` (SITE_ADMIN) belum dirotasi — eksekusi menunggu pengguna
 - **Hal yang masih menghalangi:** tidak ada untuk PH-08. Butir eksternal terbuka:
   (a) verifikasi webhook dari Xendit asli (tunnel publik / tombol "Test webhook" dashboard) belum dijalankan — verifikasi PH-04 memanggil endpoint webhook langsung ke server dev; (b) unggah berkas Uploadthing dengan berkas nyata **sudah diuji** 2026-10-11 lewat `/site-admin/brand` dan 2026-10-14 lewat `productImage` di UI admin (bukti bagian 4.5 dan 14.5) — sisa: aplikasi belum punya endpoint hapus berkas, jadi berkas uji masih tersimpan di Uploadthing tanpa dirujuk (`UTApi.deleteFiles` tersedia di SDK bila nanti dibutuhkan); (c) `EMAIL_FROM` domain terverifikasi belum diisi sehingga email baru sampai ke alamat pemilik akun Resend; (d) format PDF invoice final menunggu keputusan (saat ini HTML siap-cetak). Pengiriman OTP, kredensial ongkir, dan kredensial Xendit Test Mode sudah lengkap.
 - **Catatan teknis yang berguna untuk sesi berikutnya:**
@@ -1284,7 +1300,7 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
 **Smoke HTTP (dev server `pnpm dev` + skrip Node dengan cookie jar manual):** 50 pemeriksaan **lulus**, 0 gagal.
 
 - **A (401 tanpa sesi):** keempat `GET /api/site-admin/*` → `401`.
-- **B (Store Admin vs platform):** login `admin@flexstore.local` → `GET /api/site-admin/users` `403`, `GET /api/admin/products` `200`, `GET /site-admin` `302` → `/admin`.
+- **B (Store Admin vs platform):** login `storeadmin@flexstore.local` → `GET /api/site-admin/users` `403`, `GET /api/admin/products` `200`, `GET /site-admin` `302` → `/admin`.
 - **C (Site Admin):** login `siteadmin@flexstore.local` → `GET /api/site-admin/platform-settings` `200` (field `secrets` hanya boolean, tidak ada nilai kunci), keempat halaman `/site-admin/*` `200`, `GET /admin` `302` → `/site-admin`.
 - **D-F (SITE-04):** `POST /api/site-admin/users` `201`; akun baru login → `GET /api/admin/products` `200`; setelah `PATCH {active:false}` → **sesi lama** `GET /api/admin/products` `401` dan login ulang gagal; setelah `{active:true}` + `{password}` → login dengan password baru berhasil.
 - **G-H (batas):** email duplikat `409`, target akun Site Admin `404`, id bukan UUID `400`, body kosong `400`.
@@ -1293,7 +1309,7 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
 - **K-L (validasi Zod):** `paymentMode` salah `400`, `couriers` salah format `400`, `maintenanceMode: "ya"` `400`.
 - **Bersih-bersih:** akun uji terhapus, baris `platform_settings` `0`.
 
-**Data uji yang ditambahkan (persisten):** akun Site Admin `siteadmin@flexstore.local` / `123456`, id `251881e3-9e99-4a52-b406-a8c5c37a2a7c`, dibuat dengan logika seed yang sama (password sengaja disamakan dengan akun Store Admin uji agar mudah dicoba).
+**Data uji yang ditambahkan (persisten):** akun Site Admin `siteadmin@flexstore.local`, id `251881e3-9e99-4a52-b406-a8c5c37a2a7c`, dibuat dengan logika seed yang sama. Password akun ini tidak ditulis di dokumen; rotasinya sejak 2026-10-15 memakai `pnpm db:reset-admin-passwords` (bagian 4.9 dan 10).
 
 **Uji klik-through (browser nyata, dev server `pnpm dev`, 2026-10-11):** tanpa sesi, `/site-admin` → `302` ke `/login?callbackUrl=/site-admin`; setelah login Site Admin, enam halaman dibuka berurutan dan semua render tanpa error — `/site-admin` (Dasbor Platform + panel Status Kunci Rahasia), `/site-admin/settings` (Mode Pemeliharaan, Pendaftaran Publik, `maintenance-message`), `/site-admin/payment`, `/site-admin/shipping`, `/site-admin/users`, `/site-admin/brand`. Sidebar platform tampil di semua halaman; palet brand yang sedang aktif ikut terpakai di area `/site-admin` (lihat bagian 14.5).
 
@@ -1305,12 +1321,12 @@ Keputusan tambahan yang diambil agent (dicatat supaya bisa ditinjau):
 4. **Verifikasi:** `migrate deploy`, `generate`, `tsc`, `lint`, `build` semuanya exit 0; uji lib 35 pemeriksaan lulus; smoke HTTP 50 pemeriksaan lulus. Rincian di bagian 13.5
 5. **Cara mencoba:**
    - `pnpm dev` → buka `http://localhost:3000/login`
-   - Login **Site Admin**: `siteadmin@flexstore.local` / `123456` → dialihkan ke `/site-admin`
+   - Login **Site Admin**: `siteadmin@flexstore.local` (password dari `SEED_SITE_ADMIN_PASSWORD` atau hasil rotasi) → dialihkan ke `/site-admin`
    - `/site-admin/shipping`: matikan ongkir, simpan → buka keranjang → checkout → ongkir memakai tarif flat
    - `/site-admin/settings`: aktifkan mode pemeliharaan → banner muncul di halaman toko, checkout ditolak `503`
    - `/site-admin/users`: buat Store Admin baru dengan password yang Anda pilih → login dengan akun itu → kembali ke tab Site Admin → Nonaktifkan → sesi Store Admin langsung `401`
    - `/site-admin/payment`: ubah "Masa bayar invoice" → pesanan baru (bila ada) memakai durasi baru
-   - Login **Store Admin**: `admin@flexstore.local` / `123456` → buka `/site-admin` → dialihkan ke `/admin`
+   - Login **Store Admin**: `storeadmin@flexstore.local` (password dari `SEED_ADMIN_PASSWORD` atau hasil rotasi) → buka `/site-admin` → dialihkan ke `/admin`
 6. **Masalah / batasan:**
    - **`pnpm db:seed` tidak dijalankan penuh.** `seedCatalog` menghapus dan membuat ulang varian, sementara `OrderItem` masih merujuk `variantId`; menjalankannya berisiko memutus tautan pesanan. Akun Site Admin dibuat dengan menjalankan fungsi seed yang sama lewat skrip sekali jalan; `seedSiteAdmin()` tetap ada di `prisma/seed.ts` untuk run berikutnya
    - **Rahasia tetap di env.** Artinya Site Admin tidak bisa mengganti kunci Xendit/RajaOngkir dari UI — hanya status keberadaannya. Ini keputusan yang Anda pilih (OWASP A02); untuk MVP satu deployment hal ini cukup

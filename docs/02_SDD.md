@@ -363,7 +363,8 @@ flexstore/
 ├── prisma/
 │   ├── schema.prisma              # Prisma schema (DB entities)
 │   ├── migrations/                # DB migrations
-│   └── seed.ts                    # Seed data script
+│   ├── seed.ts                    # Seed data script
+│   └── reset-admin-passwords.ts   # Rotasi password akun admin (Store/Site Admin)
 ├── src/
 │   ├── app/                       # Next.js 16 App Directory (file-based routing)
 │   │   ├── (auth)/                # Route group: login, register, lupa/reset password, set password
@@ -1024,6 +1025,7 @@ Catatan produksi:
 | E2E test | (belum ada) | - | Skenario E2E dijalankan manual (daftar di bawah) |
 | DB migration | `pnpm db:migrate` | Root | Migration applied |
 | DB seed | `pnpm db:seed` | Root | Seed data created |
+| Rotasi password admin | `pnpm db:reset-admin-passwords` | Root | Password akun Store Admin + Site Admin yang sudah ada diperbarui (env `RESET_ADMIN_PASSWORD` / `RESET_SITE_ADMIN_PASSWORD`, wajib berbeda) |
 
 **Verifikasi manual (E2E scenarios):**
 1. **Guest checkout:** Browse product → add to cart → checkout (OTP verify) → payment (sandbox) → order created
@@ -1034,7 +1036,7 @@ Catatan produksi:
 6. **Webhook idempotency:** Kirim webhook Xendit yang sama dua kali → diproses sekali
 
 **Test data:**
-- Admin: email dari `SEED_ADMIN_EMAIL` (default `storeadmin@flexstore.local`); password dari `SEED_ADMIN_PASSWORD`, atau password acak yang dicetak `pnpm db:seed` bila variabel itu kosong
+- Admin: email dari `SEED_ADMIN_EMAIL` (default `storeadmin@flexstore.local`); password dari `SEED_ADMIN_PASSWORD`, atau password acak yang dicetak `pnpm db:seed` bila variabel itu kosong. Untuk akun yang **sudah ada**, seed tidak mengubah password — pakai `pnpm db:reset-admin-passwords`
 - Customer: tidak di-seed — dibuat lewat `/register`
 - Guest phone: `+628123456789` (OTP via Twilio Verify)
 
@@ -1064,6 +1066,7 @@ Catatan produksi:
 | 2026-10-11 | Penyelarasan dengan implementasi: `proxy.ts` (Next.js 16), invoice HTML siap-cetak (bukan `@react-pdf/renderer`), status Resend, MOD-NOTIF 4.9 (tujuh jenis email, Resend lewat `fetch`, preferensi CUST-02, non-blocking), pemisahan ketat Store Admin/Site Admin, nama model (`StoreSetting`, `PlatformSetting`, `CancellationReason`) + model PH-07/PH-08, paritas struktur (`(auth)`, `site-admin`) dan perintah verifikasi manual | Sinkronisasi dokumen | `docs/04` bagian 10 (2026-10-11) |
 | 2026-10-11 | Perbaikan UI akun + notifikasi in-app (PH-10, rencana): 4.8 dipisah menjadi halaman profil akun (CUST-03) dan halaman alamat (CUST-01), 4.9 memuat pusat notifikasi in-app (dialog dari ikon navbar, daftar dari lima kejadian pesanan, badge lewat Redis `notif:last-seen`), struktur bagian 5 diperbarui, PRD naik ke v1.3 | Kebutuhan baru (keputusan pengguna) | `docs/04` bagian 10 dan 15; `docs/01` revisi 1.3 |
 | 2026-10-13 | Penyelarasan PH-06/PH-07: data dictionary bagian 6.2 menambah `CANCEL_REQUESTED`, field pemenuhan/pembatalan `Order`, dan entitas `Address`, `NotificationPreference`, `Refund`, `StoreSetting`, `CancellationReason`; `BrandSetting` dicatat sebagai sudah ada (PH-09); contoh kontrak bagian 8 menambah `PATCH /api/admin/orders/[id]`, `POST /api/orders/[id]/cancel`, `POST /api/orders/[id]/reorder`, `POST /api/auth/forgot-password` | Sinkronisasi dokumen (utang bagian 12.5 `docs/04`) | `docs/04` bagian 9.2, 12.5; `docs/01` revisi 1.6 |
+| 2026-10-15 | Skrip rotasi password akun admin: struktur bagian 5 menambah `prisma/reset-admin-passwords.ts`, tabel perintah bagian 12 menambah `pnpm db:reset-admin-passwords`, catatan test data diperjelas (seed create-only) | Rotasi kredensial admin yang lemah (`docs/04` bagian 10) | `docs/04` bagian 10, 4.9; `docs/06` bagian 8; `.env.example` |
 
 ---
 

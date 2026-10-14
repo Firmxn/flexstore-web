@@ -364,8 +364,9 @@ kali di terminal — salin saat itu juga, karena tidak ditampilkan lagi. Mengisi
 
 **Kalau akun admin sudah ada, seed tidak mengubah passwordnya.** `pnpm db:seed`
 melewati pembuatan admin ketika email di `SEED_ADMIN_EMAIL` sudah terdaftar, jadi
-mengubah `SEED_ADMIN_PASSWORD` setelahnya tidak berpengaruh. Untuk memakai password
-baru, ubah dulu password akun itu (atau hapus akunnya) sebelum menjalankan seed lagi.
+mengubah `SEED_ADMIN_PASSWORD` setelahnya tidak berpengaruh. Seed bersifat
+*create-only* dan sengaja tidak dijadikan alat rotasi — untuk mengganti password akun
+yang sudah ada, pakai skrip khusus di bagian **"Rotasi password akun admin"** di bawah.
 
 ### Akun dan Konfigurasi Site Admin (PH-08)
 
@@ -380,7 +381,8 @@ SEED_SITE_ADMIN_PASSWORD=""
 
 - Aturan password sama seperti `SEED_ADMIN_*`: nilai kosong membuat seed menerbitkan password
   acak dan mencetaknya sekali di terminal; mengubah nilainya tidak berpengaruh bila akun
-  tersebut sudah ada (`seedSiteAdmin` melewatinya).
+  tersebut sudah ada (`seedSiteAdmin` melewatinya). Rotasi akun yang sudah ada lewat
+  `pnpm db:reset-admin-passwords` (lihat bagian di bawah).
 - Di area `/site-admin` Site Admin dapat: mengatur mode pemeliharaan dan status pendaftaran
   (`/site-admin/settings`), mengubah konfigurasi Xendit (`/site-admin/payment`), mengubah
   konfigurasi RajaOngkir (`/site-admin/shipping`), dan mengelola akun Store Admin
@@ -390,6 +392,37 @@ SEED_SITE_ADMIN_PASSWORD=""
   `docs/04` bagian 13.2). Sakelar dan mode di UI berlaku sebagai lapisan di atas nilai env.
 - Akun Site Admin tambahan tidak dibuat lewat aplikasi, hanya lewat seed (di luar cakupan
   PRD 2.4).
+
+### Rotasi password akun admin (Store Admin dan Site Admin)
+
+Akun yang **sudah terdaftar** tidak dapat diubah passwordnya lewat `pnpm db:seed`.
+Untuk merotasi password akun lama (misalnya password dev yang lemah atau bocor), pakai
+skrip khusus `pnpm db:reset-admin-passwords`:
+
+```powershell
+$env:RESET_ADMIN_PASSWORD="<password Store Admin baru>"
+$env:RESET_SITE_ADMIN_PASSWORD="<password Site Admin baru>"
+pnpm db:reset-admin-passwords
+Remove-Item Env:RESET_ADMIN_PASSWORD
+Remove-Item Env:RESET_SITE_ADMIN_PASSWORD
+```
+
+Aturan skrip:
+
+- **Satu variabel per peran:** `RESET_ADMIN_PASSWORD` (Store Admin) dan
+  `RESET_SITE_ADMIN_PASSWORD` (Site Admin). Keduanya wajib diisi; skrip merotasi kedua
+  akun dalam satu transaksi.
+- **Kedua password wajib berbeda.** Skrip menolak bila kedua nilai sama persis — dua akun
+  tidak boleh memakai password identik.
+- Minimal 12 karakter. Pakai password manager. Jangan tulis password ke dokumen, pesan
+  commit, atau riwayat terminal.
+- Akun dicari berdasarkan `SEED_ADMIN_EMAIL` / `SEED_SITE_ADMIN_EMAIL` (default
+  `storeadmin@flexstore.local` / `siteadmin@flexstore.local`) **dan** role yang sesuai.
+- **Tidak membuat akun baru.** Bila salah satu akun tidak ditemukan atau role-nya tidak
+  cocok, seluruh rotasi dibatalkan tanpa perubahan.
+- Skrip tidak pernah mencetak password maupun hash — hanya email dan role yang diubah.
+- Setelah selesai, hapus variabel `RESET_*` dari environment. Nilai itu tidak perlu
+  disimpan di `.env.local`; kalau tetap ditulis di sana, jangan di-commit.
 
 ### Daftar periksa setelah setup
 
