@@ -12,7 +12,7 @@
 ## 1. Identitas dan indeks fitur
 
 - **Versi / tanggal:** v2.1 / 2026-10-11
-- **Versi PRD / SDD:** PRD v1.5, SDD v1.0
+- **Versi PRD / SDD:** PRD v1.6, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
 ### Indeks Fitur (MVP) â€” Phase Bertahap
@@ -74,7 +74,7 @@
 - **Phase 7:** Alamat tersimpan, re-order, set/reset password, preferensi notifikasi âœ“ Customer management ready
 - **Phase 8:** Akses Site Admin, pengaturan platform, konfigurasi payment/shipping, kelola Store Admin âœ“ platform configuration ready
 - **Phase 9:** Kustomisasi brand oleh Site Admin (identitas, palet warna, banner) âœ“ terimplementasi dan disetujui (2026-10-11)
-- **Phase 10:** Halaman akun mandiri (`/profile`), halaman alamat khusus (`/profile/addresses`), pusat notifikasi in-app (daftar + pengaturan) lewat ikon navbar â€” spek selesai, implementasi menyusul
+- **Phase 10:** Halaman akun mandiri (`/profile`), halaman alamat khusus (`/profile/addresses`), pusat notifikasi in-app (daftar + pengaturan) lewat ikon navbar - terimplementasi dan disetujui (2026-10-11)
 
 **Catatan indeks:**
 - "Terimplementasi (PH-XX)" berarti fitur sudah jalan dan terverifikasi; buktinya ada di `docs/04`.
@@ -3232,7 +3232,7 @@ Daftar dibatasi **20 entri terbaru** (urut terbaru dulu); entri yang lebih lama 
 **Status:** Spesifikasi Fitur v2.1 - PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) **terimplementasi dan Disetujui** (2026-10-11, pengguna: "approve" - bukti `docs/04` bagian 15.5) beserta revisi UI CUST-01/CUST-02. Bagian 1A (aturan karakter input semua field, v2.1) terimplementasi di commit `40dcb41`. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`).
 
 **Next steps:**
-1. Tulis bagian rinci fitur yang belum berspesifikasi (utang dokumentasi; daftar di catatan indeks bagian 1 dan `docs/04` bagian 10)
-2. Tautkan bukti implementasi SITE-05 saat PH-09 dikerjakan
-3. Tautkan bukti implementasi CUST-03, NOTIF-02, dan revisi UI CUST-01/CUST-02 saat PH-10 dikerjakan
+1. Tulis bagian rinci 17 fitur yang belum berspesifikasi (utang dokumentasi; daftar di catatan indeks bagian 1 dan `docs/04` bagian 10)
+2. (Selesai 2026-10-11) Tautkan bukti implementasi SITE-05 - PH-09 terimplementasi & disetujui (`docs/04` bagian 14.5)
+3. (Selesai 2026-10-11) Tautkan bukti implementasi CUST-03, NOTIF-02, dan revisi UI CUST-01/CUST-02 - PH-10 terimplementasi & disetujui (`docs/04` bagian 15.5)
 4. Jaga indeks fitur tetap sinkron setiap fase selesai (pola penyelarasan 2026-10-11)
