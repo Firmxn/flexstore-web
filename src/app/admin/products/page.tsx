@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { DeleteButton } from "@/components/admin/DeleteButton";
 import { PageHeader } from "@/components/admin/PageHeader";
+import { ProductRowActions } from "@/components/admin/ProductRowActions";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { ProductStatusFilterSelect } from "@/components/admin/ProductStatusFilterSelect";
@@ -110,19 +110,11 @@ async function ProductTable({
                   {formatRupiah(minPrice)}
                 </TableCell>
                 <TableCell className="text-sm">{product.totalStock}</TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-1">
-                    <Link
-                      href={`/admin/products/${product.id}/edit`}
-                      className="inline-flex h-9 items-center rounded-md border border-input px-3 text-sm hover:bg-accent"
-                    >
-                      Ubah
-                    </Link>
-                    <DeleteButton
-                      url={`/api/admin/products/${product.id}`}
-                      confirmMessage={`Hapus produk "${product.name}"?`}
-                    />
-                  </div>
+                <TableCell className="w-80">
+                  <ProductRowActions
+                    productId={product.id}
+                    productName={product.name}
+                  />
                 </TableCell>
               </TableRow>
             );
