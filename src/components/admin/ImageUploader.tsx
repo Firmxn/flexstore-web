@@ -155,9 +155,14 @@ function GalleryPreview({
           alt={`${productName} gambar utama`}
           className="h-full w-full object-cover"
         />
+        {/* Kotak gambar utama memakai radius lebih besar (`rounded-xl`, mengikuti
+            carousel storefront) sehingga lengkungan sudutnya lebih masuk; tombol
+            digeser 1px supaya jarak visualnya ke border seimbang dengan slot lain
+            (keputusan pengguna 2026-10-15). */}
         <ImageRemoveButton
           label="Hapus gambar utama"
           onClick={() => onRemove(current)}
+          className="right-[5px] top-[5px]"
         />
       </div>
 
@@ -179,9 +184,14 @@ function GalleryPreview({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" className="h-full w-full object-cover" />
               </button>
+              {/* Wrapper thumbnail tidak berborder (border-nya ada di tombol di
+                  dalamnya), jadi tombol digeser 1px supaya jaraknya ke border
+                  sama dengan slot lain yang berborder (keputusan pengguna
+                  2026-10-15). */}
               <ImageRemoveButton
                 label={`Hapus gambar ${itemIndex + 1}`}
                 onClick={() => onRemove(url)}
+                className="right-[5px] top-[5px]"
               />
             </div>
           ))}
