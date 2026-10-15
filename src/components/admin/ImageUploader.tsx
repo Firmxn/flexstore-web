@@ -14,6 +14,7 @@ import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
 import { ImagePreview } from "@/components/ui/image-preview";
+import { ImageRemoveButton } from "@/components/ui/image-remove-button";
 import { Lookbook } from "@/components/products/EditorialSections";
 import { MAX_PRODUCT_IMAGES } from "@/lib/products/validation";
 import { useUploadThing } from "@/lib/uploadthing/client";
@@ -96,7 +97,7 @@ export function ImageUploader({
           urls={urls}
           productName={productName}
           renderAction={(url, index) => (
-            <RemoveOverlay
+            <ImageRemoveButton
               label={`Hapus foto lookbook ${index + 1}`}
               onClick={() => removeUrl(url)}
             />
@@ -160,7 +161,7 @@ function GalleryPreview({
           alt={`${productName} gambar utama`}
           className="h-full w-full object-cover"
         />
-        <RemoveOverlay
+        <ImageRemoveButton
           label="Hapus gambar utama"
           onClick={() => onRemove(current)}
           className="right-2 top-2 text-xs"
@@ -185,7 +186,7 @@ function GalleryPreview({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" className="h-full w-full object-cover" />
               </button>
-              <RemoveOverlay
+              <ImageRemoveButton
                 label={`Hapus gambar ${itemIndex + 1}`}
                 onClick={() => onRemove(url)}
               />
@@ -194,32 +195,5 @@ function GalleryPreview({
         </div>
       ) : null}
     </div>
-  );
-}
-
-// Tombol Hapus kecil yang menempel di sudut gambar (dipakai pratinjau galeri
-// dan lookbook supaya tata letaknya sama dengan storefront).
-function RemoveOverlay({
-  label,
-  onClick,
-  className,
-}: {
-  label: string;
-  onClick: () => void;
-  className?: string;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={onClick}
-      className={cn(
-        "absolute right-1 top-1 rounded bg-background/85 px-1.5 py-0.5 text-[10px] font-medium shadow-sm backdrop-blur transition-colors hover:bg-background",
-        className,
-      )}
-    >
-      Hapus
-    </button>
   );
 }

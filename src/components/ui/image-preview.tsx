@@ -2,10 +2,12 @@
 
 // Preview gambar seragam (teman `ImageDropzone`, docs/03 bagian 1C): kartu
 // bergaris sama di seluruh titik unggah — kotak media netral berisi gambar dan
-// tombol "Hapus" pada baris yang sama. Tanpa keadaan kosong (dropzone di
-// bawahnya sudah menjadi penanda). Ukuran kotak media diatur pemanggil lewat
-// `mediaClassName`.
-import { Button } from "@/components/ui/button";
+// tombol "Hapus" yang menempel di sudut kanan atas gambar. Gaya tombolnya sama
+// dengan pratinjau galeri dan lookbook (`ImageRemoveButton`, keputusan pengguna
+// 2026-10-15), jadi tidak ada baris tombol terpisah yang menggeser tata letak.
+// Tanpa keadaan kosong (dropzone di bawahnya sudah menjadi penanda). Ukuran
+// kotak media diatur pemanggil lewat `mediaClassName`.
+import { ImageRemoveButton } from "@/components/ui/image-remove-button";
 import { cn } from "@/lib/utils/cn";
 
 type ImagePreviewProps = {
@@ -39,7 +41,7 @@ export function ImagePreview({
     >
       <div
         className={cn(
-          "flex items-center justify-center overflow-hidden rounded bg-muted",
+          "relative flex items-center justify-center overflow-hidden rounded bg-muted",
           mediaClassName,
         )}
       >
@@ -54,19 +56,11 @@ export function ImagePreview({
             fit === "cover" ? "object-cover" : "object-contain",
           )}
         />
-      </div>
 
-      {onClear ? (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 self-end text-xs"
-          onClick={onClear}
-        >
-          Hapus
-        </Button>
-      ) : null}
+        {onClear ? (
+          <ImageRemoveButton label="Hapus gambar" onClick={onClear} />
+        ) : null}
+      </div>
     </div>
   );
 }
