@@ -597,7 +597,8 @@ Schema: `loginSchema` (`src/lib/auth/validation.ts`), dipakai di `authorize(cred
 | Kondisi | Perilaku | Hasil |
 | --- | --- | --- |
 | Cancel | Confirm discard, return | No changes |
-| Delete with orders | Show error | Soft delete only |
+| Delete with orders | `409 PRODUCT_IN_USE` "Produk tidak bisa dihapus karena sudah pernah dipesan" — FK Restrict `OrderItem.variantId` + snapshot `OrderItem` | Riwayat pesanan tetap utuh |
+| Delete while product in shopper carts (belum pernah dipesan) | `409 PRODUCT_IN_CART` "Produk tidak bisa dihapus karena masih ada di keranjang N pembeli" — guard `countCartItemsForProduct` di route DELETE (keputusan 2026-10-15, `docs/04` bagian 10) | Sembunyikan lewat status `DISCONTINUED` |
 
 ### 8. Kondisi gagal
 
@@ -607,6 +608,10 @@ Schema: `loginSchema` (`src/lib/auth/validation.ts`), dipakai di `authorize(cred
 | SKU duplicate | "SKU sudah digunakan" | Change SKU |
 | Image upload fail | "Gagal upload" | Retry |
 | No variants | "Minimal 1 variant" | Add variant |
+
+**Status bug ditemukan (dilaporkan pengguna 2026-10-15, belum diimplementasikan):** mengubah status produk menjadi `DISCONTINUED` gagal dengan pesan `400 INVALID_REFERENCE` "Data terkait tidak ditemukan". Bukti log pengguna: `Invalid tx.productVariant.deleteMany() ... Foreign key constraint violated: order_items_variantId_fkey`, endpoint `PATCH /api/admin/products/[id]` 400. Akar masalah dari kode: `updateProduct` (`src/lib/products/mutations.ts:62-78`) untuk sembarang edit — termasuk ubah status — **menghapus seluruh varian lalu membuat ulang** (`tx.productVariant.deleteMany` + create), belum ada endpoint ubah status saja. Konsekuensinya tiga keadaan: (a) produk yang pernah dipesan **selalu gagal** — `OrderItem.variantId` ber-`Restrict` (`prisma/schema.prisma:341`), FK `P2003` dibungkus `prismaErrorResponse` (`src/lib/utils/prisma-error.ts:21-27`) jadi pesan `400 INVALID_REFERENCE` yang generik tanpa menyebut aksinya; (b) produk yang hanya ada di keranjang *tidak gagal*, tetapi `CartItem.variantId` Cascade (`prisma/schema.prisma:206`) membuat `deleteMany` varian ikut menghapus item keranjang pembeli senyap — guard `409 PRODUCT_IN_CART` hanya dipasang di route DELETE, bukan PATCH — jalur ini menghapus keranjang diam-diam; (c) produk bersih sukses. Jadi ini **bukan** bug spesifik produk di keranjang: semua produk yang pernah dipesan gagal mengubah status dengan pesan serupa, dan semua produk yang ada di keranjang berisiko kehilangan item keranjang di tiap edit.
+
+**Rencana perbaikan (belum diimplementasikan):** (1) PATCH tidak menghapus varian yang tetap sama — varian yang tidak berubah di-upsert/dibiarkan sehingga FK `OrderItem`/`CartItem` tak tersentuh untuk edit ringan (status, nama, deskripsi, harga); (2) bila varian memang harus dibuang dan ada `OrderItem` yang menunjuknya, tolak dengan kode spesifik berisi SKU varian yang dipakai riwayat pesanan (bukan pesan generik "Data terkait tidak ditemukan"); (3) jalur PATCH memakai guard yang sama dengan DELETE — hitung `countCartItemsForProduct` untuk varian yang akan dihapus, tolak `409 PRODUCT_IN_CART` bila >0; (4) pertimbangkan endpoint status-saja (PATCH ringan) agar ubah status tidak melalui rebuild varian. Tindak lanjut implementasi mengubah status butir ini dengan bukti verifikasi di `docs/04`.
 
 ### 9. Perilaku UI
 
@@ -628,8 +633,11 @@ Schema: `loginSchema` (`src/lib/auth/validation.ts`), dipakai di `authorize(cred
 | --- | --- | --- | --- |
 | AC-PROD-01-01 | Store Admin | Fill valid, save | Product created |
 | AC-PROD-01-02 | Product exists | Edit, save | Product updated |
-| AC-PROD-01-03 | Product, no orders | Delete | Hard deleted |
-| AC-PROD-01-04 | Product, has orders | Delete | Soft delete only |
+| AC-PROD-01-03 | Product belum pernah dipesan dan tidak ada di keranjang pembeli | Delete | Hard delete; `ProductImage` dan `ProductVariant` ikut kaskade |
+| AC-PROD-01-04 | Product pernah dipesan | Delete | `409 PRODUCT_IN_USE`, produk tetap ada; riwayat pesanan utuh via snapshot `OrderItem` |
+| AC-PROD-01-09 | Product belum pernah dipesan tetapi ada `CartItem` menunjuk variannya | Delete | `409 PRODUCT_IN_CART` dengan jumlah pembeli di pesan; item keranjang dan varian tidak terhapus |
+| AC-PROD-01-10 | Product pernah dipesan | Ubah status ke `DISCONTINUED` | Berhasil tanpa menyentuh varian/FK (menunggu rencana perbaikan bagian 8 — belum diimplementasikan) |
+| AC-PROD-01-11 | Product ada di keranjang pembeli | Ubah status ke `DISCONTINUED` via PATCH | Item keranjang tidak terhapus; bila varian diganti, tolak `409 PRODUCT_IN_CART` (menunggu rencana perbaikan bagian 8 — belum diimplementasikan) |
 | AC-PROD-01-05 | Admin | Duplicate slug | Error, not saved |
 | AC-PROD-01-06 | Admin | 0 variants | Error, not saved |
 | AC-PROD-01-07 | Customer/Guest | Access admin | 403 Forbidden |
