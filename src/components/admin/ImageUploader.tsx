@@ -63,9 +63,9 @@ export function ImageUploader({
               }
               // Bagan ukuran mengikuti tampilan storefront (`aspect-[4/3]`
               // sm:aspect-[16/9] + object-contain) — rasio horizontal, tanpa
-              // krop, karena isinya detail tabel; kartunya dibuat lebih besar
-              // dari preview lain (`max-w-xl`) agar detail terbaca.
-              className={max === 1 ? "w-full max-w-xl" : "w-48"}
+              // krop, karena isinya detail tabel; kartunya selebar dropzone
+              // (`w-full`) sesuai permintaan pengguna.
+              className={max === 1 ? "w-full" : "w-48"}
               // Bagan ukuran mengikuti tampilan storefront (`aspect-[4/3]`
               // sm:aspect-[16/9] + object-contain) — rasio horizontal, tanpa
               // krop, karena isinya detail tabel.
