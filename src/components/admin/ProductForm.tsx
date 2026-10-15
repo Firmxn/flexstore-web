@@ -295,51 +295,55 @@ export function ProductForm({
         </div>
       </section>
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
-        <h2 className="font-semibold">Gambar Produk</h2>
-        <ImageUploader
-          layout="gallery"
-          productName={values.name || "Produk"}
-          urls={values.images}
-          setUrls={(action) => {
-            setValues((previous) => ({
-              ...previous,
-              images:
-                typeof action === "function" ? action(previous.images) : action,
-            }));
-          }}
-        />
-      </section>
+      {/* Gambar Produk dan Bagan Ukuran berdampingan: satu baris dua kolom
+          (keputusan pengguna 2026-10-15); menumpuk kembali di layar sempit. */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
+          <h2 className="font-semibold">Gambar Produk</h2>
+          <ImageUploader
+            layout="gallery"
+            productName={values.name || "Produk"}
+            urls={values.images}
+            setUrls={(action) => {
+              setValues((previous) => ({
+                ...previous,
+                images:
+                  typeof action === "function" ? action(previous.images) : action,
+              }));
+            }}
+          />
+        </section>
 
-      <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="font-semibold">Bagan Ukuran</h2>
-          <p className="text-sm text-muted-foreground">
-            Opsional. Satu gambar bagan ukuran yang tampil di halaman produk.
-          </p>
-        </div>
-        <ImageUploader
-          max={1}
-          layout="single"
-          fit="contain"
-          productName={values.name || "Produk"}
-          // Mengikuti dialog "Bagan Ukuran" storefront: kotak 3:4 (rasio
-          // deklarasi tampilan storefront) dengan object-contain, jadi gambar
-          // tampil tanpa krop persis seperti di halaman produk.
-          mediaClassName="aspect-[3/4] w-full max-w-sm mx-auto"
-          urls={values.sizeChartUrl ? [values.sizeChartUrl] : []}
-          setUrls={(action) => {
-            setValues((previous) => {
-              const current = previous.sizeChartUrl
-                ? [previous.sizeChartUrl]
-                : [];
-              const next =
-                typeof action === "function" ? action(current) : action;
-              return { ...previous, sizeChartUrl: next[0] ?? "" };
-            });
-          }}
-        />
-      </section>
+        <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
+          <div className="flex flex-col gap-1">
+            <h2 className="font-semibold">Bagan Ukuran</h2>
+            <p className="text-sm text-muted-foreground">
+              Opsional. Satu gambar bagan ukuran yang tampil di halaman produk.
+            </p>
+          </div>
+          <ImageUploader
+            max={1}
+            layout="single"
+            fit="contain"
+            productName={values.name || "Produk"}
+            // Mengikuti dialog "Bagan Ukuran" storefront: kotak 3:4 (rasio
+            // deklarasi tampilan storefront) dengan object-contain, jadi gambar
+            // tampil tanpa krop persis seperti di halaman produk.
+            mediaClassName="aspect-[3/4] w-full max-w-sm mx-auto"
+            urls={values.sizeChartUrl ? [values.sizeChartUrl] : []}
+            setUrls={(action) => {
+              setValues((previous) => {
+                const current = previous.sizeChartUrl
+                  ? [previous.sizeChartUrl]
+                  : [];
+                const next =
+                  typeof action === "function" ? action(current) : action;
+                return { ...previous, sizeChartUrl: next[0] ?? "" };
+              });
+            }}
+          />
+        </section>
+      </div>
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
         <div className="flex flex-col gap-1">
