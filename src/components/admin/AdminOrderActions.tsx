@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
+import { ImagePreview } from "@/components/ui/image-preview";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";
@@ -90,6 +91,12 @@ function RefundCompleteForm({
     <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
       <div className="flex flex-col gap-2">
         <Label htmlFor={`refund-proof-${refundId}`}>Bukti refund (gambar)</Label>
+        <ImagePreview
+          url={proofUrl}
+          alt="Bukti refund"
+          mediaClassName="h-32 w-32"
+          onClear={() => setProofUrl("")}
+        />
         <ImageDropzone
           inputId={`refund-proof-${refundId}`}
           uploading={isUploading}
@@ -97,9 +104,6 @@ function RefundCompleteForm({
           typesText="Satu berkas gambar, maksimal 4MB."
           className="p-4"
         />
-        {proofUrl ? (
-          <p className="text-xs text-muted-foreground">Bukti terunggah.</p>
-        ) : null}
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor={`refund-note-${refundId}`}>Catatan (opsional)</Label>

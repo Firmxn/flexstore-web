@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
+import { ImagePreview } from "@/components/ui/image-preview";
 import { MAX_PRODUCT_IMAGES } from "@/lib/products/validation";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";
@@ -48,35 +48,20 @@ export function ImageUploader({
       <FormErrorAlert message={error} />
 
       {urls.length > 0 ? (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {urls.map((url, index) => (
-            <li
+            <ImagePreview
               key={url}
-              className="flex flex-col gap-2 rounded-lg border border-border p-2"
-            >
-              {/* URL berasal dari Uploadthing; pakai img biasa agar tidak
-                  bergantung pada allowlist domain next/image. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={url}
-                alt={`Gambar produk ${index + 1}`}
-                className="aspect-square w-full rounded object-cover"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() =>
-                  setUrls((previous) =>
-                    previous.filter((item) => item !== url),
-                  )
-                }
-              >
-                Hapus
-              </Button>
-            </li>
+              url={url}
+              alt={`Gambar produk ${index + 1}`}
+              onClear={() =>
+                setUrls((previous) =>
+                  previous.filter((item) => item !== url),
+                )
+              }
+            />
           ))}
-        </ul>
+        </div>
       ) : (
         <p className="text-sm text-muted-foreground">Belum ada gambar.</p>
       )}
