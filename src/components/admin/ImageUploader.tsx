@@ -135,6 +135,12 @@ function GalleryPreview({
   const [active, setActive] = useState(0);
   const index = Math.min(active, urls.length - 1);
   const current = urls[index];
+  // Strip = gambar selain yang sedang tampil di kotak besar. Dengan begitu
+  // jumlah kotak sama dengan jumlah gambar (5 gambar = 1 besar + 4 kecil) dan
+  // pratinjau tidak terlihat seperti punya slot tambahan.
+  const thumbs = urls
+    .map((url, itemIndex) => ({ url, itemIndex }))
+    .filter((item) => item.itemIndex !== index);
 
   return (
     <div className="flex flex-col gap-3">
@@ -152,26 +158,20 @@ function GalleryPreview({
         />
       </div>
 
-      {urls.length > 1 ? (
+      {thumbs.length > 0 ? (
         <div
           className={cn(
             "grid gap-3",
-            urls.length === 5 ? "grid-cols-5" : "grid-cols-4",
+            thumbs.length === 5 ? "grid-cols-5" : "grid-cols-4",
           )}
         >
-          {urls.map((url, itemIndex) => (
+          {thumbs.map(({ url, itemIndex }) => (
             <div key={`${itemIndex}-${url}`} className="relative">
               <button
                 type="button"
                 aria-label={`Tampilkan gambar ${itemIndex + 1}`}
-                aria-current={itemIndex === index}
                 onClick={() => setActive(itemIndex)}
-                className={cn(
-                  "relative aspect-square w-full overflow-hidden rounded-lg border bg-muted",
-                  itemIndex === index
-                    ? "border-foreground ring-2 ring-ring"
-                    : "border-border opacity-80 hover:opacity-100",
-                )}
+                className="relative aspect-square w-full overflow-hidden rounded-lg border border-border bg-muted opacity-80 hover:opacity-100"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" className="h-full w-full object-cover" />

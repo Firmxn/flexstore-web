@@ -159,6 +159,13 @@ function ProductGallery({
       index: (active + 1) % slides.length,
     });
 
+  // Strip thumbnail = slide selain yang sedang tampil (keputusan pengguna
+  // 2026-10-15): 5 gambar tampil sebagai 1 besar + 4 kecil, bukan 1 besar + 5
+  // kecil yang membuat jumlah kotak terlihat lebih banyak dari jumlah gambar.
+  const thumbs = slides
+    .map((slide, index) => ({ slide, index }))
+    .filter((item) => item.index !== active);
+
   return (
     <div className="flex flex-col gap-3">
       <div className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-muted">
@@ -193,27 +200,25 @@ function ProductGallery({
         ) : null}
       </div>
 
-      {slides.length > 1 ? (
-        // 4 gambar tetap satu baris (tata letak lama); 5 gambar utama (kapasitas
-        // baru) juga dijejerkan satu baris supaya tidak ada sisa menggantung.
+      {thumbs.length > 0 ? (
+        // Strip = slide selain yang sedang tampil di kotak besar, supaya jumlah
+        // kotak sama dengan jumlah gambar (5 gambar = 1 besar + 4 kecil) dan
+        // tidak ada gambar yang tampil dua kali (keputusan pengguna 2026-10-15).
+        // 4 gambar tetap satu baris (tata letak lama); 5 kotak dijejerkan satu
+        // baris juga supaya tidak ada sisa menggantung.
         <div
           className={cn(
             "grid gap-3",
-            slides.length === 5 ? "grid-cols-5" : "grid-cols-4",
+            thumbs.length === 5 ? "grid-cols-5" : "grid-cols-4",
           )}
         >
-          {slides.map((slide, index) => (
+          {thumbs.map(({ slide, index }) => (
             <button
               key={slide.key}
               type="button"
               aria-label={`Gambar ${index + 1}`}
-              aria-current={index === active}
               onClick={() => setManual({ seq: selection.seq, index })}
-              className={`relative aspect-square overflow-hidden rounded-lg border bg-muted ${
-                index === active
-                  ? "border-foreground ring-2 ring-ring"
-                  : "border-border opacity-80 hover:opacity-100"
-              }`}
+              className="relative aspect-square overflow-hidden rounded-lg border border-border bg-muted opacity-80 hover:opacity-100"
             >
               <Image
                 src={slide.url}
