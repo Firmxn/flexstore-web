@@ -8,8 +8,10 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Info } from "lucide-react";
 import {
   PRODUCT_STATUSES,
   productSchema,
@@ -326,7 +328,35 @@ export function ProductForm({
               className="grid gap-3 rounded-lg border border-border p-4 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] sm:items-end"
             >
               <div className="flex flex-col gap-2">
-                <Label htmlFor={`variant-sku-${index}`}>SKU</Label>
+                <div className="flex items-center gap-1">
+                  <Label htmlFor={`variant-sku-${index}`}>SKU</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                        aria-label="Ketentuan penulisan SKU"
+                      >
+                        <Info className="h-3.5 w-3.5" aria-hidden />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-64">
+                      <p className="font-semibold">Ketentuan SKU</p>
+                      <ul className="mt-1 list-disc space-y-1 pl-4 text-muted-foreground">
+                        <li>
+                          Huruf, angka, titik, minus, garis bawah; maksimal 64
+                          karakter.
+                        </li>
+                        <li>Wajib unik antar semua produk.</li>
+                        <li>
+                          Pola disarankan INISIAL-PROD-VARIAN, contoh: KP-30S-M.
+                        </li>
+                      </ul>
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 <Input
                   id={`variant-sku-${index}`}
                   required
@@ -336,11 +366,6 @@ export function ProductForm({
                     updateVariant(index, { sku: event.target.value })
                   }
                 />
-                <p className="text-xs text-muted-foreground">
-                  Huruf, angka, titik, minus, garis bawah (maks 64), wajib unik
-                  antar semua produk. Format disarankan INISIAL-PROD-VARIAN,
-                  contoh: KP-30S-M.
-                </p>
               </div>
 
               <div className="flex flex-col gap-2">
