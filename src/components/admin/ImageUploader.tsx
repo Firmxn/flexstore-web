@@ -186,7 +186,7 @@ function GalleryPreview({
               <ImageRemoveButton
                 label={`Hapus gambar ${itemIndex + 1}`}
                 onClick={() => onRemove(url)}
-                className="right-[7px] top-[7px]"
+                className="right-[9px] top-[9px]"
               />
             </div>
           ))}
