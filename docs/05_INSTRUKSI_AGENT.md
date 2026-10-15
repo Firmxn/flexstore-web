@@ -10,7 +10,7 @@
 | Bahasa komunikasi | Bahasa Indonesia |
 | Gaya laporan | Ringkas, jelas, sertakan bukti (hasil verifikasi aktual) dan cara mencoba (langkah demo), no fluff |
 | Pemilik keputusan produk / reviewer | Development Team / Product Owner |
-| Versi / tanggal instruksi | v1.2 / 2026-10-10 |
+| Versi / tanggal instruksi | v1.3 / 2026-10-15 |
 
 ## 2. Acuan dan tanggung jawab dokumen
 
@@ -268,9 +268,9 @@ BREAKING CHANGE: guest orders without a verified phone are now rejected
 
 ---
 
-**Status:** Instruksi Agent v1.2 — menambahkan aturan komunikasi (jawab pertanyaan sederhana/brainstorming tanpa eksekusi) dan aturan tidak memfinalkan dokumentasi sebelum kode direview.
+**Status:** Instruksi Agent v1.3 - menambahkan aturan perintah terminal untuk bash dan aturan rotasi password admin lewat `pnpm db:reset-admin-passwords` (2026-10-15). Sebelumnya v1.2: aturan komunikasi (jawab pertanyaan sederhana/brainstorming tanpa eksekusi) dan aturan tidak memfinalkan dokumentasi sebelum kode direview.
 
 **Reminder:**
-- Fase aktif: PH-01 **Disetujui**; PH-02 belum dimulai (Implementation Plan section 1)
-- Langkah berikutnya: menunggu instruksi user untuk mulai PH-02
-- Agent baca Implementation Plan section 4 sebelum mulai task PH-02
+- Fase aktif: tidak ada - PH-01 sampai PH-10 semua **Disetujui**, MVP selesai (Implementation Plan section 1)
+- Langkah berikutnya: menunggu instruksi user; pekerjaan lanjutan hanya opsional atau pasca-MVP (Implementation Plan bagian 11)
+- Agent baca Implementation Plan section 1, 10, dan 11 sebelum memulai pekerjaan apa pun

@@ -36,12 +36,12 @@
 | | | ORDER-02 | Create Order (Customer) | Terimplementasi (PH-03) | [ORDER-02](#order-02) |
 | | | ORDER-03 | Order History | Terimplementasi (PH-03) | [ORDER-03](#order-03) |
 | | | ORDER-04 | Track Order (Public) | Terimplementasi (PH-03) | [ORDER-04](#order-04) |
-| **Phase 4** | **MOD-PAY** | PAY-01 | Create Payment (Xendit) | Terimplementasi | [PAY-01](#pay-01) |
-| | | PAY-02 | Webhook Handler (Xendit) | Terimplementasi | [PAY-02](#pay-02) |
-| **Phase 5** | **MOD-VOUCH** | VOUCH-01 | Apply Voucher | Terimplementasi | `docs/04` bagian 8 |
-| | | VOUCH-02 | Voucher CRUD (Admin) | Terimplementasi | `docs/04` bagian 8 |
-| | **MOD-NOTIF** | NOTIF-01 | Send Email Notification | Terimplementasi | `docs/04` bagian 8 |
-| | **MOD-INV** | INV-01 | Generate Invoice (HTML siap-cetak) | Terimplementasi | `docs/04` bagian 8 |
+| **Phase 4** | **MOD-PAY** | PAY-01 | Create Payment (Xendit) | Terimplementasi (PH-04) | [PAY-01](#pay-01) |
+| | | PAY-02 | Webhook Handler (Xendit) | Terimplementasi (PH-04) | [PAY-02](#pay-02) |
+| **Phase 5** | **MOD-VOUCH** | VOUCH-01 | Apply Voucher | Terimplementasi (PH-05) | `docs/04` bagian 8 |
+| | | VOUCH-02 | Voucher CRUD (Admin) | Terimplementasi (PH-05) | `docs/04` bagian 8 |
+| | **MOD-NOTIF** | NOTIF-01 | Send Email Notification | Terimplementasi (PH-05) | `docs/04` bagian 8 |
+| | **MOD-INV** | INV-01 | Generate Invoice (HTML siap-cetak) | Terimplementasi (PH-05) | `docs/04` bagian 8 |
 | **Phase 6** | **MOD-SHIP** | SHIP-02 | Track Shipment | Terimplementasi (PH-06) | `docs/04` bagian 9 dan 10 |
 | | | SHIP-03 | Pickup (Ambil di Toko) | Terimplementasi (PH-06) | `docs/04` bagian 9 dan 10 |
 | | **MOD-ORDER** | ORDER-05 | Cancel Order Request | Terimplementasi (PH-06) | `docs/04` bagian 9 dan 10 |
@@ -52,14 +52,14 @@
 | | **MOD-CONFIG** | CONFIG-01 | Store Settings + template alasan penolakan | Terimplementasi (PH-06) | `docs/04` bagian 9 dan 10 |
 | **Phase 7** | **MOD-CUST** | CUST-01 | Alamat Tersimpan | Terimplementasi (PH-07); halaman dipindah ke `/profile/addresses` (alamat saja) di PH-10 | [CUST-01](#cust-01) |
 | | | CUST-02 | Preferensi Notifikasi | Terimplementasi (PH-07); formulir dipindah ke dialog notifikasi di PH-10 | [CUST-02](#cust-02) |
-| | **MOD-AUTH** | AUTH-04 | Set Password (Guest â†’ Customer) | Terimplementasi | [AUTH-04](#auth-04) |
-| | | AUTH-05 | Reset Password | Terimplementasi | [AUTH-05](#auth-05) |
-| | **MOD-ORDER** | ORDER-03B | Re-order (lanjutan ORDER-03) | Terimplementasi | [ORDER-03B](#order-03b) |
-| **Phase 8** | **MOD-AUTH** | SITE-00 | Akses Site Admin (role baru) | Terimplementasi | [SITE-00](#site-00) |
-| | **MOD-CONFIG** | SITE-01 | Platform Settings | Terimplementasi | [SITE-01](#site-01) |
-| | | SITE-02 | Payment Gateway Configuration (Xendit) | Terimplementasi | [SITE-02](#site-02) |
-| | | SITE-03 | Shipping Provider Configuration (RajaOngkir) | Terimplementasi | [SITE-03](#site-03) |
-| | | SITE-04 | User Management (Store Admin) | Terimplementasi | [SITE-04](#site-04) |
+| | **MOD-AUTH** | AUTH-04 | Set Password (Guest â†’ Customer) | Terimplementasi (PH-07) | [AUTH-04](#auth-04) |
+| | | AUTH-05 | Reset Password | Terimplementasi (PH-07) | [AUTH-05](#auth-05) |
+| | **MOD-ORDER** | ORDER-03B | Re-order (lanjutan ORDER-03) | Terimplementasi (PH-07) | [ORDER-03B](#order-03b) |
+| **Phase 8** | **MOD-AUTH** | SITE-00 | Akses Site Admin (role baru) | Terimplementasi (PH-08) | [SITE-00](#site-00) |
+| | **MOD-CONFIG** | SITE-01 | Platform Settings | Terimplementasi (PH-08) | [SITE-01](#site-01) |
+| | | SITE-02 | Payment Gateway Configuration (Xendit) | Terimplementasi (PH-08) | [SITE-02](#site-02) |
+| | | SITE-03 | Shipping Provider Configuration (RajaOngkir) | Terimplementasi (PH-08) | [SITE-03](#site-03) |
+| | | SITE-04 | User Management (Store Admin) | Terimplementasi (PH-08) | [SITE-04](#site-04) |
 | **Phase 9** | **MOD-CONFIG** | SITE-05 | Brand Customization (identitas, palet, banner) | Terimplementasi (PH-09, 2026-10-11) | [SITE-05](#site-05) |
 | **Phase 10** | **MOD-CUST** | CUST-03 | Profil Akun (halaman mandiri) | Terimplementasi (PH-10, Disetujui; revisi 2026-10-11: ganti email wajib verifikasi) | [CUST-03](#cust-03) |
 | | **MOD-NOTIF** | NOTIF-02 | Pusat Notifikasi In-App (ikon navbar) | Terimplementasi (PH-10, Disetujui) | [NOTIF-02](#notif-02) |
