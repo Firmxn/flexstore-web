@@ -16,6 +16,11 @@ export const PRODUCT_STATUSES = [
 
 export const MAX_PRODUCT_IMAGES = 4;
 
+// PROD-07: batas seksi editorial.
+export const MAX_STORY_TEXT = 2000;
+export const MAX_STORY_IMAGES = 1;
+export const MAX_LOOKBOOK_IMAGES = 4;
+
 export const productImageSchema = z.object({
   url: z
     .string({
@@ -108,6 +113,40 @@ export const productSchema = z.object({
     ])
     .optional()
     .transform((value) => (value ? value : undefined)),
+  // PROD-07 — tiga isian editorial opsional; semuanya tidak pernah memblok simpan.
+  videoHeroUrl: z
+    .union([
+      z.string().trim().url("URL video tidak valid").max(500),
+      z.literal(""),
+    ])
+    .optional()
+    .transform((value) => (value ? value : undefined)),
+  videoHeroAutoplay: z.boolean().optional().default(true),
+  storyText: z
+    .string()
+    .trim()
+    .max(MAX_STORY_TEXT, "Narasi maksimal 2000 karakter")
+    .refine(isControlCharFree, "Narasi memuat karakter yang tidak diizinkan")
+    .optional()
+    .or(z.literal("")),
+  storyImageUrl: z
+    .union([
+      z.string().trim().url("URL gambar narasi tidak valid").max(500),
+      z.literal(""),
+    ])
+    .optional()
+    .transform((value) => (value ? value : undefined)),
+  lookbookUrls: z
+    .array(
+      z
+        .string({ invalid_type_error: "URL foto lookbook tidak valid" })
+        .trim()
+        .url("URL foto lookbook tidak valid")
+        .max(500),
+      { invalid_type_error: "Foto lookbook tidak valid" },
+    )
+    .max(MAX_LOOKBOOK_IMAGES, `Maksimal ${MAX_LOOKBOOK_IMAGES} foto lookbook`)
+    .optional(),
   variants: z
     .array(productVariantSchema, { required_error: "Minimal 1 variant" })
     .min(1, "Minimal 1 variant"),

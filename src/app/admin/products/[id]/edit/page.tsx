@@ -52,11 +52,20 @@ export default async function EditProductPage({
           brandId: product.brandId ?? "",
           status: product.status,
           images: product.images
-            .filter((image) => image.role !== "SIZE_CHART")
+            .filter((image) => image.role === "GALLERY")
             .map((image) => image.url),
           sizeChartUrl:
             product.images.find((image) => image.role === "SIZE_CHART")?.url ??
             "",
+          videoHeroUrl: product.videoHeroUrl ?? "",
+          videoHeroAutoplay: product.videoHeroAutoplay,
+          storyText: product.storyText ?? "",
+          storyImageUrl:
+            product.images.find((image) => image.role === "STORY")?.url ?? "",
+          lookbookUrls: product.images
+            .filter((image) => image.role === "LOOKBOOK")
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((image) => image.url),
           variants: product.variants.map((variant) => ({
             sku: variant.sku,
             name: variant.name,

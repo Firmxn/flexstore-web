@@ -12,7 +12,8 @@ function calculateMinPrice(variants: { price: number }[]) {
   return Math.min(...variants.map((variant) => variant.price));
 }
 
-// Baris gambar (galeri + bagan ukuran) untuk nested create ProductImage.
+// Baris gambar (galeri + bagan ukuran + seksi editorial PROD-07) untuk
+// nested create ProductImage.
 function imageRows(input: ProductInput) {
   const galleryImages = input.images.map((image, index) => ({
     url: image.url,
@@ -24,8 +25,17 @@ function imageRows(input: ProductInput) {
   const sizeChart = input.sizeChartUrl
     ? [{ url: input.sizeChartUrl, role: "SIZE_CHART" as const, sortOrder: 0 }]
     : [];
+  // Seksi editorial: STORY maks 1, LOOKBOOK maks 4 (batas di Zod).
+  const story = input.storyImageUrl
+    ? [{ url: input.storyImageUrl, role: "STORY" as const, sortOrder: 0 }]
+    : [];
+  const lookbook = (input.lookbookUrls ?? []).map((url, index) => ({
+    url,
+    role: "LOOKBOOK" as const,
+    sortOrder: index,
+  }));
 
-  return [...galleryImages, ...sizeChart];
+  return [...galleryImages, ...sizeChart, ...story, ...lookbook];
 }
 
 // Field scalar Product (tanpa nested write) — dipakai create dan update.
@@ -34,6 +44,9 @@ function productScalars(input: ProductInput) {
     name: input.name,
     slug: input.slug,
     description: input.description || null,
+    videoHeroUrl: input.videoHeroUrl || null,
+    videoHeroAutoplay: input.videoHeroAutoplay ?? true,
+    storyText: input.storyText || null,
     status: input.status,
     categoryId: input.categoryId,
     brandId: input.brandId || null,

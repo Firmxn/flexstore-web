@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Badge } from "@/components/ui/badge";
 import { ProductShowcase } from "@/components/products/ProductShowcase";
+import { EditorialSections } from "@/components/products/EditorialSections";
 import { getBrandSetting } from "@/lib/brand";
 import { getPublishedProductBySlug } from "@/lib/products";
 
@@ -56,8 +57,14 @@ export default async function ProductDetailPage({ params }: DetailProps) {
   if (!product) notFound();
 
   // Bagan ukuran punya peran sendiri dan dipisahkan dari galeri (PRD 3.1.A).
-  const gallery = product.images.filter((image) => image.role !== "SIZE_CHART");
+  // PROD-07: STORY/LOOKBOOK juga di luar galeri — hanya GALLERY yang masuk carousel.
+  const gallery = product.images.filter((image) => image.role === "GALLERY");
   const sizeChart = product.images.find((image) => image.role === "SIZE_CHART");
+  const storyImage = product.images.find((image) => image.role === "STORY");
+  const lookbookUrls = product.images
+    .filter((image) => image.role === "LOOKBOOK")
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((image) => image.url);
 
   return (
     <PageContainer>
@@ -116,6 +123,16 @@ export default async function ProductDetailPage({ params }: DetailProps) {
           </p>
         ) : null}
       </ProductShowcase>
+
+      <EditorialSections
+        videoHeroUrl={product.videoHeroUrl}
+        videoHeroAutoplay={product.videoHeroAutoplay}
+        storyText={product.storyText}
+        storyImageUrl={storyImage?.url ?? null}
+        lookbookUrls={lookbookUrls}
+        productName={product.name}
+        description={product.description}
+      />
     </PageContainer>
   );
 }

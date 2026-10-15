@@ -17,7 +17,7 @@ export function ProductCard({
   cartQuantities?: Record<string, number>;
 }) {
   // Bagan ukuran bukan foto produk; jangan dipakai sebagai sampul (PRD 3.1.A).
-  const cover = product.images.find((image) => image.role !== "SIZE_CHART")?.url;
+  const cover = product.images.find((image) => image.role === "GALLERY")?.url;
   const hasSizeChart = product.images.some((image) => image.role === "SIZE_CHART");
   const prices = product.variants.map((variant) => Number(variant.price));
   const minPrice = prices.length ? Math.min(...prices) : 0;

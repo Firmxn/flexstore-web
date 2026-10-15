@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ImageUploader } from "@/components/admin/ImageUploader";
 import { VariantImagePicker } from "@/components/admin/VariantImagePicker";
+import { VideoHeroUploader } from "@/components/admin/VideoHeroUploader";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Info } from "lucide-react";
 import {
+  MAX_LOOKBOOK_IMAGES,
+  MAX_STORY_TEXT,
   PRODUCT_STATUSES,
   productSchema,
 } from "@/lib/products/validation";
@@ -40,6 +43,11 @@ export type ProductFormValues = {
   status: string;
   images: string[];
   sizeChartUrl: string;
+  videoHeroUrl: string;
+  videoHeroAutoplay: boolean;
+  storyText: string;
+  storyImageUrl: string;
+  lookbookUrls: string[];
   variants: VariantRow[];
 };
 
@@ -74,6 +82,11 @@ export function ProductForm({
       status: "DRAFT",
       images: [],
       sizeChartUrl: "",
+      videoHeroUrl: "",
+      videoHeroAutoplay: true,
+      storyText: "",
+      storyImageUrl: "",
+      lookbookUrls: [],
       variants: [{ ...EMPTY_VARIANT }],
     },
   );
@@ -120,6 +133,11 @@ export function ProductForm({
       status: values.status,
       images: values.images.map((url, index) => ({ url, sortOrder: index })),
       sizeChartUrl: values.sizeChartUrl,
+      videoHeroUrl: values.videoHeroUrl,
+      videoHeroAutoplay: values.videoHeroAutoplay,
+      storyText: values.storyText,
+      storyImageUrl: values.storyImageUrl,
+      lookbookUrls: values.lookbookUrls,
       variants: values.variants.map((variant) => ({
         sku: variant.sku,
         name: variant.name,
@@ -301,6 +319,90 @@ export function ProductForm({
             });
           }}
         />
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-semibold">Seksi Editorial (opsional)</h2>
+          <p className="text-sm text-muted-foreground">
+            Semuanya opsional — isi hanya yang ingin ditampilkan di halaman
+            produk. Seksi yang kosong tidak dirender sama sekali.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label>Video Hero (opsional)</Label>
+            <p className="text-sm text-muted-foreground">
+              Banner video full-width di bawah grid produk.
+            </p>
+            <VideoHeroUploader
+              url={values.videoHeroUrl}
+              autoplay={values.videoHeroAutoplay}
+              onUrlChange={(url) => setField("videoHeroUrl", url)}
+              onAutoplayChange={(autoplay) =>
+                setField("videoHeroAutoplay", autoplay)
+              }
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="product-story-text">
+                Narasi Produk (opsional)
+              </Label>
+              <Textarea
+                id="product-story-text"
+                rows={5}
+                maxLength={MAX_STORY_TEXT}
+                placeholder="Kosongkan untuk memakai deskripsi produk sebagai narasi."
+                value={values.storyText}
+                onChange={(event) => setField("storyText", event.target.value)}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label>Gambar Narasi (opsional)</Label>
+              <p className="text-sm text-muted-foreground">
+                Satu gambar editorial, tampil di kiri narasi.
+              </p>
+              <ImageUploader
+                max={1}
+                urls={values.storyImageUrl ? [values.storyImageUrl] : []}
+                setUrls={(action) => {
+                  setValues((previous) => {
+                    const current = previous.storyImageUrl
+                      ? [previous.storyImageUrl]
+                      : [];
+                    const next =
+                      typeof action === "function" ? action(current) : action;
+                    return { ...previous, storyImageUrl: next[0] ?? "" };
+                  });
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Lookbook (opsional)</Label>
+            <p className="text-sm text-muted-foreground">
+              Maksimal {MAX_LOOKBOOK_IMAGES} foto, tampil di grid paling bawah.
+            </p>
+            <ImageUploader
+              max={MAX_LOOKBOOK_IMAGES}
+              urls={values.lookbookUrls}
+              setUrls={(action) => {
+                setValues((previous) => ({
+                  ...previous,
+                  lookbookUrls:
+                    typeof action === "function"
+                      ? action(previous.lookbookUrls)
+                      : action,
+                }));
+              }}
+            />
+          </div>
+        </div>
       </section>
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
