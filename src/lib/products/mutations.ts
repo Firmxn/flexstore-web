@@ -82,3 +82,10 @@ export function deleteProduct(id: string) {
   // ProductImage & ProductVariant ikut terhapus (onDelete: Cascade).
   return prisma.product.delete({ where: { id } });
 }
+
+export function countCartItemsForProduct(productId: string) {
+  // Jumlah CartItem (keranjang Customer) yang menunjuk varian produk ini.
+  // Dipakai delete route untuk menolak penghapusan yang akan menghapus
+  // item keranjang pembeli secara diam-diam lewat kaskade FK.
+  return prisma.cartItem.count({ where: { variant: { productId } } });
+}

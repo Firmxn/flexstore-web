@@ -3,7 +3,12 @@ import { Prisma } from "@prisma/client";
 import { requireStoreAdmin } from "@/lib/auth/guard";
 import { getBrandById } from "@/lib/brands";
 import { getCategoryById } from "@/lib/categories";
-import { deleteProduct, getProductById, updateProduct } from "@/lib/products";
+import {
+  countCartItemsForProduct,
+  deleteProduct,
+  getProductById,
+  updateProduct,
+} from "@/lib/products";
 import { productSchema } from "@/lib/products/validation";
 import { apiError, apiSuccess, notFound, validationError } from "@/lib/utils/api";
 import { prismaErrorResponse } from "@/lib/utils/prisma-error";
@@ -75,6 +80,17 @@ export async function DELETE(_request: Request, context: Context) {
   }
 
   try {
+    // Keputusan 2026-10-15 (docs/04 bagian 10): produk yang masih tersimpan
+    // di keranjang pembeli tidak boleh dihapus — kaskade FK akan menghapus
+    // CartItem secara senyap. Admin diarahkan ke jalur lunak DISCONTINUED.
+    const cartItemCount = await countCartItemsForProduct(id);
+    if (cartItemCount > 0) {
+      return apiError(
+        "PRODUCT_IN_CART",
+        `Produk tidak bisa dihapus karena masih ada di keranjang ${cartItemCount} pembeli. Ubah status produk ke DISCONTINUED bila ingin disembunyikan.`,
+        409,
+      );
+    }
     await deleteProduct(id);
     return apiSuccess({ deleted: true });
   } catch (error) {

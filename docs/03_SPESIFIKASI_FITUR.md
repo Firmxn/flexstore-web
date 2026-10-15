@@ -574,7 +574,8 @@ Schema: `loginSchema` (`src/lib/auth/validation.ts`), dipakai di `authorize(cred
 | Kondisi | Perilaku | Hasil |
 | --- | --- | --- |
 | Cancel | Confirm discard, return | No changes |
-| Delete with orders | Show error | Soft delete only |
+| Delete with orders | `409 PRODUCT_IN_USE` "Produk tidak bisa dihapus karena sudah pernah dipesan" | Sembunyikan lewat status `DISCONTINUED` |
+| Delete with product in shopper cart (belum pernah dipesan) | `409 PRODUCT_IN_CART` "Produk tidak bisa dihapus karena masih ada di keranjang N pembeli" | Sembunyikan lewat status `DISCONTINUED` (keputusan 2026-10-15, `docs/04` bagian 10) |
 
 ### 8. Kondisi gagal
 
@@ -584,6 +585,8 @@ Schema: `loginSchema` (`src/lib/auth/validation.ts`), dipakai di `authorize(cred
 | SKU duplicate | "SKU sudah digunakan" | Change SKU |
 | Image upload fail | "Gagal upload" | Retry |
 | No variants | "Minimal 1 variant" | Add variant |
+| Delete product pernah dipesan | `409 PRODUCT_IN_USE` "Produk tidak bisa dihapus karena sudah pernah dipesan" | Ubah status ke `DISCONTINUED` |
+| Delete product masih dalam keranjang pembeli | `409 PRODUCT_IN_CART` "Produk tidak bisa dihapus karena masih ada di keranjang N pembeli" | Ubah status ke `DISCONTINUED` |
 
 ### 9. Perilaku UI
 
@@ -605,8 +608,9 @@ Schema: `loginSchema` (`src/lib/auth/validation.ts`), dipakai di `authorize(cred
 | --- | --- | --- | --- |
 | AC-PROD-01-01 | Store Admin | Fill valid, save | Product created |
 | AC-PROD-01-02 | Product exists | Edit, save | Product updated |
-| AC-PROD-01-03 | Product, no orders | Delete | Hard deleted |
-| AC-PROD-01-04 | Product, has orders | Delete | Soft delete only |
+| AC-PROD-01-03 | Product belum pernah dipesan dan tidak ada di keranjang pembeli | Delete | Hard delete; `ProductImage` dan `ProductVariant` ikut kaskade |
+| AC-PROD-01-04 | Product pernah dipesan | Delete | `409 PRODUCT_IN_USE`, produk tetap ada; riwayat pesanan utuh via snapshot `OrderItem` |
+| AC-PROD-01-09 | Product belum pernah dipesan tetapi ada `CartItem` menunjuk variannya | Delete | `409 PRODUCT_IN_CART` dengan jumlah pembeli di pesan; item keranjang dan varian tidak terhapus |
 | AC-PROD-01-05 | Admin | Duplicate slug | Error, not saved |
 | AC-PROD-01-06 | Admin | 0 variants | Error, not saved |
 | AC-PROD-01-07 | Customer/Guest | Access admin | 403 Forbidden |
