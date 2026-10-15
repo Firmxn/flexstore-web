@@ -8,6 +8,8 @@ import {
   deleteProduct,
   getProductById,
   updateProduct,
+  VariantInCartError,
+  VariantInOrderError,
 } from "@/lib/products";
 import { productSchema } from "@/lib/products/validation";
 import { apiError, apiSuccess, notFound, validationError } from "@/lib/utils/api";
@@ -63,6 +65,24 @@ export async function PATCH(request: Request, context: Context) {
     const product = await updateProduct(id, input);
     return apiSuccess({ product });
   } catch (error) {
+    // Varian yang dibuang masih dipakai riwayat pesanan (FK Restrict):
+    // tolak dengan daftar SKU spesifik, bukan pesan generik.
+    if (error instanceof VariantInOrderError) {
+      return apiError(
+        "VARIANT_IN_ORDER",
+        `Varian dengan SKU ${error.skus.join(", ")} sudah dipakai pada riwayat pesanan dan tidak bisa dihapus. Pertahankan SKU varian tersebut atau buat produk baru.`,
+        409,
+      );
+    }
+    // Varian yang dibuang masih di keranjang pembeli (FK Cascade akan
+    // menghapus CartItem senyap) — guard sama dengan route DELETE.
+    if (error instanceof VariantInCartError) {
+      return apiError(
+        "PRODUCT_IN_CART",
+        `Varian yang dihapus masih tersimpan di keranjang ${error.cartItemCount} pembeli. Pertahankan varian tersebut atau minta pembeli menghapusnya dari keranjang.`,
+        409,
+      );
+    }
     return prismaErrorResponse(error, "api/admin/products/[id]:PATCH", {
       slug: "Slug sudah digunakan",
       sku: "SKU sudah digunakan",
