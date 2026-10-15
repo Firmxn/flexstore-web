@@ -2,59 +2,57 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 
+// Tombol hapus dengan konfirmasi dialog aplikasi (docs/03 bagian 1B) —
+// galat penghapusan tampil di dalam dialog, bukan di bawah tombol.
 export function DeleteButton({
   url,
-  confirmMessage,
+  confirmTitle,
+  confirmDescription = "Data yang dihapus tidak bisa dikembalikan.",
   successRedirect,
   label = "Hapus",
 }: {
   url: string;
-  confirmMessage: string;
+  confirmTitle: string;
+  confirmDescription?: string;
   successRedirect?: string;
   label?: string;
 }) {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  async function handleDelete() {
-    if (!window.confirm(confirmMessage)) return;
-
-    setError(null);
-    setSubmitting(true);
-
+  async function handleConfirm() {
     try {
       await apiRequest(url, { method: "DELETE" });
-
-      if (successRedirect) router.push(successRedirect);
-      router.refresh();
     } catch (caught) {
-      setError(toErrorMessage(caught));
-    } finally {
-      setSubmitting(false);
+      throw new Error(toErrorMessage(caught));
     }
+
+    if (successRedirect) router.push(successRedirect);
+    router.refresh();
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <>
       <Button
         variant="ghost"
         size="sm"
-        disabled={submitting}
-        onClick={handleDelete}
+        onClick={() => setOpen(true)}
         className="text-destructive hover:bg-destructive/10"
       >
-        {submitting ? "Menghapus..." : label}
+        {label}
       </Button>
-      {error ? (
-        <Alert variant="destructive" className="max-w-64 py-1.5 text-xs">
-          {error}
-        </Alert>
-      ) : null}
-    </div>
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={confirmTitle}
+        description={confirmDescription}
+        confirmLabel={label}
+        onConfirm={handleConfirm}
+      />
+    </>
   );
 }

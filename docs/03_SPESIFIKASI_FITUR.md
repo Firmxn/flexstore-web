@@ -125,7 +125,7 @@ Catatan pelaksanaan:
 
 Aturan bersama untuk seluruh pesan konfirmasi yang menuntut keputusan pengguna (hapus item, tolak pesanan, cabut voucher, dsb). Diambil dari keputusan pengguna 2026-10-15: pesan konfirmasi tidak boleh memakai dialog bawaan browser (`window.confirm`) — tampilan mengikuti browser/OS, tidak bisa diberi komponen, dan tidak selaras dengan sistem UI yang sudah menyeragamkan galat lewat `Alert`/`FormErrorAlert`.
 
-**Status: BELUM diimplementasikan** — aturan ini ditulis dahulu (pola "dokumen dulu"); jalur `window.confirm` yang sudah ada boleh bertahan sampai tindak lanjut implementasi, dan kode baru dilarang menambah `window.confirm`.
+**Status: TERIMPLEMENTASI 2026-10-15** — komponen `src/components/ui/confirm-dialog.tsx` (`ConfirmDialog`) berdiri di atas shadcn `AlertDialog` (`src/components/ui/alert-dialog.tsx`, Radix `@radix-ui/react-alert-dialog`); ketiga pemakai pertama sudah ditukar (`DeleteButton` tombol hapus voucher, `ProductRowActions` aksi baris tabel produk, `TaxonomyManager` hapus kategori/brand) dan seluruh `window.confirm` di kode dicabut. Keputusan pengguna saat implementasi: memakai `AlertDialog` (bukan `Dialog`) sebagai dasar konfirmasi — fokus bawaan Radix jatuh ke tombol batal sehingga aksi destruktif tidak sengaja terpencet; dialog konten biasa (varian CART-05, pusat notifikasi, dst.) tetap memakai `Dialog`.
 
 | Butir | Aturan |
 | --- | --- |

@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { slugSchema } from "@/lib/categories/validation";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { slugify } from "@/lib/utils/slug";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
 export type TaxonomyItem = {
@@ -39,6 +40,8 @@ export function TaxonomyManager({
   const [editSlug, setEditSlug] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // Item yang menunggu konfirmasi hapus (dialog aplikasi, docs/03 bagian 1B).
+  const [pendingDelete, setPendingDelete] = useState<TaxonomyItem | null>(null);
 
   function validate(nameValue: string, slugValue: string): string | null {
     if (nameValue.trim().length === 0) return "Nama wajib diisi";
@@ -115,19 +118,20 @@ export function TaxonomyManager({
     }
   }
 
-  async function handleDelete(item: TaxonomyItem) {
-    if (!window.confirm(`Hapus ${singularLabel} "${item.name}"?`)) return;
+  async function handleDelete() {
+    if (!pendingDelete) return;
 
-    setError(null);
-    setSubmitting(true);
     try {
-      await apiRequest(`/api/admin/${resource}/${item.id}`, { method: "DELETE" });
-      setItems((previous) => previous.filter((entry) => entry.id !== item.id));
+      await apiRequest(`/api/admin/${resource}/${pendingDelete.id}`, {
+        method: "DELETE",
+      });
     } catch (caught) {
-      setError(toErrorMessage(caught));
-    } finally {
-      setSubmitting(false);
+      // Galat tampil di dalam dialog konfirmasi.
+      throw new Error(toErrorMessage(caught));
     }
+    setItems((previous) =>
+      previous.filter((entry) => entry.id !== pendingDelete.id),
+    );
   }
 
   return (
@@ -237,9 +241,8 @@ export function TaxonomyManager({
                   <Button
                     size="sm"
                     variant="ghost"
-                    disabled={submitting}
                     className="text-destructive hover:bg-destructive/10"
-                    onClick={() => handleDelete(item)}
+                    onClick={() => setPendingDelete(item)}
                   >
                     Hapus
                   </Button>
@@ -249,6 +252,21 @@ export function TaxonomyManager({
           </li>
         ))}
       </ul>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(next) => {
+          if (!next) setPendingDelete(null);
+        }}
+        title={
+          pendingDelete
+            ? `Hapus ${singularLabel} "${pendingDelete.name}"?`
+            : `Hapus ${singularLabel}?`
+        }
+        description={`${singularLabel} akan dihapus permanen dari daftar dan tidak bisa dikembalikan.`}
+        confirmLabel="Hapus"
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

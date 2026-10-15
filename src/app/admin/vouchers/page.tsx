@@ -127,7 +127,8 @@ async function VoucherTable({
                     </Link>
                     <DeleteButton
                       url={`/api/admin/vouchers/${voucher.id}`}
-                      confirmMessage={`Hapus voucher "${voucher.code}"?`}
+                      confirmTitle={`Hapus voucher "${voucher.code}"?`}
+                      confirmDescription="Voucher akan dihapus permanen dan tidak bisa dipakai lagi."
                     />
                   </div>
                 </TableCell>
