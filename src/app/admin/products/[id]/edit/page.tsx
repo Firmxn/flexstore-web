@@ -59,6 +59,7 @@ export default async function EditProductPage({
             "",
           videoHeroUrl: product.videoHeroUrl ?? "",
           videoHeroAutoplay: product.videoHeroAutoplay,
+          heroImageUrl: product.heroImageUrl ?? "",
           storyText: product.storyText ?? "",
           storyImageUrl:
             product.images.find((image) => image.role === "STORY")?.url ?? "",

@@ -45,6 +45,7 @@ export type ProductFormValues = {
   sizeChartUrl: string;
   videoHeroUrl: string;
   videoHeroAutoplay: boolean;
+  heroImageUrl: string;
   storyText: string;
   storyImageUrl: string;
   lookbookUrls: string[];
@@ -84,6 +85,7 @@ export function ProductForm({
       sizeChartUrl: "",
       videoHeroUrl: "",
       videoHeroAutoplay: true,
+      heroImageUrl: "",
       storyText: "",
       storyImageUrl: "",
       lookbookUrls: [],
@@ -91,6 +93,11 @@ export function ProductForm({
     },
   );
   const [slugTouched, setSlugTouched] = useState(Boolean(initial));
+  // Jenis banner hero dipilih admin (gambar atau video); disimpan sebagai state
+  // terpisah supaya pilihan tetap terlihat sebelum berkas diunggah.
+  const [heroType, setHeroType] = useState<"none" | "image" | "video">(
+    initial?.videoHeroUrl ? "video" : initial?.heroImageUrl ? "image" : "none",
+  );
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -135,6 +142,7 @@ export function ProductForm({
       sizeChartUrl: values.sizeChartUrl,
       videoHeroUrl: values.videoHeroUrl,
       videoHeroAutoplay: values.videoHeroAutoplay,
+      heroImageUrl: values.heroImageUrl,
       storyText: values.storyText,
       storyImageUrl: values.storyImageUrl,
       lookbookUrls: values.lookbookUrls,
@@ -332,18 +340,63 @@ export function ProductForm({
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label>Video Hero (opsional)</Label>
+            <Label htmlFor="product-hero-type">Banner Hero (opsional)</Label>
             <p className="text-sm text-muted-foreground">
-              Banner video full-width di bawah grid produk.
+              Banner panorama full-width di bawah grid produk. Pilih salah satu
+              sumber: gambar atau video.
             </p>
-            <VideoHeroUploader
-              url={values.videoHeroUrl}
-              autoplay={values.videoHeroAutoplay}
-              onUrlChange={(url) => setField("videoHeroUrl", url)}
-              onAutoplayChange={(autoplay) =>
-                setField("videoHeroAutoplay", autoplay)
-              }
-            />
+            <Select
+              value={heroType}
+              onValueChange={(value) => {
+                const next = value as "none" | "image" | "video";
+                setHeroType(next);
+                // Hanya satu sumber yang disimpan: pilihan baru mengosongkan
+                // sumber lain agar tidak ada dua banner bersaing.
+                if (next !== "image") setField("heroImageUrl", "");
+                if (next !== "video") setField("videoHeroUrl", "");
+              }}
+            >
+              <SelectTrigger id="product-hero-type" className="sm:max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Tanpa banner</SelectItem>
+                <SelectItem value="image">Gambar</SelectItem>
+                <SelectItem value="video">Video</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {heroType === "image" ? (
+              <div className="flex flex-col gap-2">
+                <ImageUploader
+                  max={1}
+                  urls={values.heroImageUrl ? [values.heroImageUrl] : []}
+                  setUrls={(action) => {
+                    setValues((previous) => {
+                      const current = previous.heroImageUrl
+                        ? [previous.heroImageUrl]
+                        : [];
+                      const next =
+                        typeof action === "function"
+                          ? action(current)
+                          : action;
+                      return { ...previous, heroImageUrl: next[0] ?? "" };
+                    });
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {heroType === "video" ? (
+              <VideoHeroUploader
+                url={values.videoHeroUrl}
+                autoplay={values.videoHeroAutoplay}
+                onUrlChange={(url) => setField("videoHeroUrl", url)}
+                onAutoplayChange={(autoplay) =>
+                  setField("videoHeroAutoplay", autoplay)
+                }
+              />
+            ) : null}
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

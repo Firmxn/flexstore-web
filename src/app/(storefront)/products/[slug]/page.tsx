@@ -127,6 +127,7 @@ export default async function ProductDetailPage({ params }: DetailProps) {
       <EditorialSections
         videoHeroUrl={product.videoHeroUrl}
         videoHeroAutoplay={product.videoHeroAutoplay}
+        heroImageUrl={product.heroImageUrl}
         storyText={product.storyText}
         storyImageUrl={storyImage?.url ?? null}
         lookbookUrls={lookbookUrls}

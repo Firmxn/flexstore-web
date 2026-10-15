@@ -46,6 +46,7 @@ function productScalars(input: ProductInput) {
     description: input.description || null,
     videoHeroUrl: input.videoHeroUrl || null,
     videoHeroAutoplay: input.videoHeroAutoplay ?? true,
+    heroImageUrl: input.heroImageUrl || null,
     storyText: input.storyText || null,
     status: input.status,
     categoryId: input.categoryId,

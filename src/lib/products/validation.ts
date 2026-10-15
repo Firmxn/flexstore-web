@@ -122,6 +122,14 @@ export const productSchema = z.object({
     .optional()
     .transform((value) => (value ? value : undefined)),
   videoHeroAutoplay: z.boolean().optional().default(true),
+  // Banner hero boleh gambar sebagai alternatif video (keputusan pengguna).
+  heroImageUrl: z
+    .union([
+      z.string().trim().url("URL gambar hero tidak valid").max(500),
+      z.literal(""),
+    ])
+    .optional()
+    .transform((value) => (value ? value : undefined)),
   storyText: z
     .string()
     .trim()

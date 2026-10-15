@@ -60,7 +60,7 @@ export function VideoHeroUploader({
             muted
             playsInline
             controls
-            className="aspect-video w-full rounded-lg border border-border bg-muted object-cover"
+            className="aspect-video w-full sm:aspect-[4/1] rounded-lg border border-border bg-muted object-cover"
           />
           <div>
             <Button
@@ -78,7 +78,7 @@ export function VideoHeroUploader({
           type="button"
           disabled={isUploading}
           onClick={() => inputRef.current?.click()}
-          className="flex aspect-video w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-muted text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
+          className="flex aspect-video w-full sm:aspect-[4/1] flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-muted text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-60"
         >
           <span className="font-medium text-foreground">
             {isUploading ? "Mengunggah..." : "Pilih berkas video"}

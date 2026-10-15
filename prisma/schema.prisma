@@ -126,10 +126,12 @@ model Product {
   name        String
   slug        String        @unique
   description String?
-  // PROD-07 (seksi editorial, opsional per produk): video hero + kontrol
-  // autoplay-nya, serta narasi ProductStory (fallback bila kosong = description).
+  // PROD-07 (seksi editorial, opsional per produk): banner hero berupa video
+  // (plus kontrol autoplay) ATAU gambar, serta narasi ProductStory (fallback
+  // bila kosong = description).
   videoHeroUrl       String?
   videoHeroAutoplay  Boolean   @default(true)
+  heroImageUrl       String?
   storyText          String?
   status      ProductStatus @default(DRAFT)
   totalStock  Int           @default(0)

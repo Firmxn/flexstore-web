@@ -11,6 +11,7 @@ import { useState } from "react";
 export type EditorialData = {
   videoHeroUrl: string | null;
   videoHeroAutoplay: boolean;
+  heroImageUrl: string | null;
   storyText: string | null;
   storyImageUrl: string | null;
   lookbookUrls: string[];
@@ -21,25 +22,32 @@ export type EditorialData = {
 export function EditorialSections({
   videoHeroUrl,
   videoHeroAutoplay,
+  heroImageUrl,
   storyText,
   storyImageUrl,
   lookbookUrls,
   productName,
   description,
 }: EditorialData) {
-  const hasVideo = Boolean(videoHeroUrl);
+  // Banner hero: gambar diprioritaskan bila keduanya terisi (admin hanya bisa
+  // memilih satu lewat form; aturan ini jaring pengaman).
+  const hasHero = Boolean(heroImageUrl || videoHeroUrl);
   // Narasi tampil bila storyText terisi; storyText kosong tapi gambar STORY ada
   // → jatuh ke description (keputusan pengguna, docs/04 bagian 10).
   const narrative = storyText || (!storyImageUrl ? "" : description) || "";
   const hasStory = Boolean(storyImageUrl) || Boolean(storyText);
   const hasLookbook = lookbookUrls.length > 0;
 
-  if (!hasVideo && !hasStory && !hasLookbook) return null;
+  if (!hasHero && !hasStory && !hasLookbook) return null;
 
   return (
     <div className="flex flex-col gap-8 pt-4">
-      {hasVideo ? (
-        <VideoHero url={videoHeroUrl!} autoplay={videoHeroAutoplay} />
+      {hasHero ? (
+        heroImageUrl ? (
+          <HeroImage url={heroImageUrl} productName={productName} />
+        ) : (
+          <VideoHero url={videoHeroUrl!} autoplay={videoHeroAutoplay} />
+        )
       ) : null}
 
       {hasStory ? (
@@ -81,13 +89,33 @@ export function EditorialSections({
   );
 }
 
+// Banner hero berupa gambar (alternatif video, keputusan pengguna): rasio
+// panorama mengikuti referensi pengguna (4:1 di layar lebar); di ponsel tetap
+// 16:9 supaya tidak terlalu tipis.
+function HeroImage({ url, productName }: { url: string; productName: string }) {
+  return (
+    <section
+      aria-label="Banner produk"
+      className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted sm:aspect-[4/1]"
+    >
+      <Image
+        src={url}
+        alt={`Banner ${productName}`}
+        fill
+        sizes="100vw"
+        className="object-cover"
+      />
+    </section>
+  );
+}
+
 function VideoHero({ url, autoplay }: { url: string; autoplay: boolean }) {
   const [failed, setFailed] = useState(false);
 
   return (
     <section
       aria-label="Video produk"
-      className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted"
+      className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted sm:aspect-[4/1]"
     >
       {failed ? (
         // URL mati: bingkai bg-muted tetap, tanpa galat besar (AC bagian 8).
