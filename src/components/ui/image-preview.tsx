@@ -1,12 +1,12 @@
 "use client";
 
-// Preview gambar seragam (teman `ImageDropzone`, docs/03 bagian 1C): kartu
-// bergaris sama di seluruh titik unggah — kotak media netral berisi gambar dan
-// tombol "Hapus" yang menempel di sudut kanan atas gambar. Gaya tombolnya sama
-// dengan pratinjau galeri dan lookbook (`ImageRemoveButton`, keputusan pengguna
-// 2026-10-15), jadi tidak ada baris tombol terpisah yang menggeser tata letak.
-// Tanpa keadaan kosong (dropzone di bawahnya sudah menjadi penanda). Ukuran
-// kotak media diatur pemanggil lewat `mediaClassName`.
+// Preview gambar seragam (teman `ImageDropzone`, docs/03 bagian 1C): satu kotak
+// bergaris berisi gambar dan tombol "Hapus" yang menempel di sudut kanan atas
+// gambar — bentuknya persis seperti gambar pada pratinjau galeri dan lookbook
+// (tanpa kartu pembungkus berpadding), jadi seluruh pratinjau gambar admin
+// seragam (keputusan pengguna 2026-10-15). Tanpa keadaan kosong (dropzone di
+// bawahnya sudah menjadi penanda). Ukuran kotak diatur pemanggil lewat
+// `mediaClassName`, dan `className` untuk penempatan (mis. `w-48 mx-auto`).
 import { ImageRemoveButton } from "@/components/ui/image-remove-button";
 import { cn } from "@/lib/utils/cn";
 
@@ -17,6 +17,8 @@ type ImagePreviewProps = {
   fit?: "cover" | "contain";
   // Ukuran kotak media; default kotak persegi penuh lebar.
   mediaClassName?: string;
+  // Penempatan/ukuran kotak (mis. `w-48 mx-auto`); digabung dengan
+  // `mediaClassName` lewat `cn` sehingga kelas yang belakangan menang.
   className?: string;
 };
 
@@ -35,32 +37,26 @@ export function ImagePreview({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-lg border border-border bg-background p-2",
+        "relative flex items-center justify-center overflow-hidden rounded-lg border border-border bg-muted",
+        mediaClassName,
         className,
       )}
     >
-      <div
+      {/* URL berasal dari Uploadthing; pakai img biasa agar tidak bergantung
+          pada allowlist domain next/image. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={url}
+        alt={alt}
         className={cn(
-          "relative flex items-center justify-center overflow-hidden rounded bg-muted",
-          mediaClassName,
+          "h-full w-full",
+          fit === "cover" ? "object-cover" : "object-contain",
         )}
-      >
-        {/* URL berasal dari Uploadthing; pakai img biasa agar tidak bergantung
-            pada allowlist domain next/image. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={url}
-          alt={alt}
-          className={cn(
-            "h-full w-full",
-            fit === "cover" ? "object-cover" : "object-contain",
-          )}
-        />
+      />
 
-        {onClear ? (
-          <ImageRemoveButton label="Hapus gambar" onClick={onClear} />
-        ) : null}
-      </div>
+      {onClear ? (
+        <ImageRemoveButton label="Hapus gambar" onClick={onClear} />
+      ) : null}
     </div>
   );
 }

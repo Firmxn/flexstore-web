@@ -164,7 +164,6 @@ function GalleryPreview({
         <ImageRemoveButton
           label="Hapus gambar utama"
           onClick={() => onRemove(current)}
-          className="right-2 top-2 text-xs"
         />
       </div>
 
