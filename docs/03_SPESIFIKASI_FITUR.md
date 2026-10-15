@@ -1,4 +1,4 @@
-﻿# Spesifikasi Fitur â€” FlexStore
+# Spesifikasi Fitur â€” FlexStore
 
 > Fungsi dokumen: menjelaskan perilaku setiap fitur secara terperinci, termasuk alur berhasil, validasi, hak akses, kondisi gagal, dan kriteria penerimaan. Task implementasi ditempatkan di Implementation Plan.
 
@@ -11,7 +11,7 @@
 
 ## 1. Identitas dan indeks fitur
 
-- **Versi / tanggal:** v2.1 / 2026-10-11
+- **Versi / tanggal:** v2.4 / 2026-10-15
 - **Versi PRD / SDD:** PRD v1.6, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
@@ -31,6 +31,7 @@
 | | | CART-02 | Update Cart Item | Terimplementasi (PH-02) | [CART-02](#cart-02) |
 | | | CART-03 | Remove from Cart | Terimplementasi (PH-02) | [CART-03](#cart-03) |
 | | | CART-04 | Merge Guest Cart on Login (tambahan) | Terimplementasi (PH-02) | [CART-04](#cart-04) |
+| | | CART-05 | Pemilihan Varian dari Kartu Produk (tambahan pasca-MVP) | Terimplementasi (2026-10-15, pasca-MVP; termasuk stok efektif TASK-114) | [CART-05](#cart-05) |
 | | **MOD-SHIP** | SHIP-01 | Calculate Shipping Cost | Terimplementasi (PH-02) | [SHIP-01](#ship-01) |
 | **Phase 3** | **MOD-ORDER** | ORDER-01 | Create Order (Guest Checkout) | Terimplementasi (PH-03) | [ORDER-01](#order-01) |
 | | | ORDER-02 | Create Order (Customer) | Terimplementasi (PH-03) | [ORDER-02](#order-02) |
@@ -63,6 +64,7 @@
 | **Phase 9** | **MOD-CONFIG** | SITE-05 | Brand Customization (identitas, palet, banner) | Terimplementasi (PH-09, 2026-10-11) | [SITE-05](#site-05) |
 | **Phase 10** | **MOD-CUST** | CUST-03 | Profil Akun (halaman mandiri) | Terimplementasi (PH-10, Disetujui; revisi 2026-10-11: ganti email wajib verifikasi) | [CUST-03](#cust-03) |
 | | **MOD-NOTIF** | NOTIF-02 | Pusat Notifikasi In-App (ikon navbar) | Terimplementasi (PH-10, Disetujui) | [NOTIF-02](#notif-02) |
+| Pasca-MVP | **MOD-CART** | CART-05 | Pemilihan Varian dari Kartu Produk (dialog) | Terimplementasi (2026-10-15, pasca-MVP) | [CART-05](#cart-05) |
 
 **Phase Checkpoint:**
 - **Phase 1:** Admin CRUD products, customer register/login/view products âœ“ Foundation ready
@@ -78,11 +80,10 @@
 
 **Catatan indeks:**
 - "Terimplementasi (PH-XX)" berarti fitur sudah jalan dan terverifikasi; buktinya ada di `docs/04`.
-- Rujukan `docs/04` dipakai untuk fitur yang belum punya bagian rinci di `docs/03` (PH-01:
-  AUTH-02/03, PROD-03/04/05; PH-05: VOUCH-01/02, NOTIF-01, INV-01; PH-06: SHIP-02/03,
-  ORDER-05..08, REPORT-01, CONFIG-01). Bagian rinci fitur-fitur ini dicatat sebagai utang
-  dokumentasi `docs/03` dan akan ditulis dalam satu batch setelah PH-09 atau saat penutupan MVP
-  (keputusan di `docs/04` bagian 10).
+- Rujukan `docs/04` dipakai untuk fitur yang belum punya bagian rinci di `docs/03`. Bagian rinci PH-01
+  (AUTH-02/03, PROD-03/04/05; PROD-03 sebagai fitur storefront), PH-05 (VOUCH-01/02, NOTIF-01, INV-01),
+  dan PH-06 (SHIP-02/03, ORDER-05..08, REPORT-01, CONFIG-01) telah ditulis lengkap di dokumen ini
+  (ditulis retroaktif dari kode terimplementasi, 2026-10-15) — utang dokumentasi untuk 17 fitur itu selesai.
 - CUST-01 dan CUST-02 tetap berstatus "Terimplementasi (PH-07)"; pemindahan UI-nya (alamat ke
   `/profile/addresses`, preferensi ke dialog notifikasi) bersama fitur baru CUST-03 dan NOTIF-02
   dijadwalkan di **PH-10** (keputusan `docs/04` bagian 10 dan 15).
@@ -239,6 +240,263 @@ Tidak ada â€” ready for implementation.
 
 ---
 
+## <a name="auth-02"></a>AUTH-02 — Customer Registration
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | AUTH-02 — Customer Registration |
+| Modul | MOD-AUTH |
+| Tujuan | Menyediakan pendaftaran akun Customer manual dengan email + password, tanpa verifikasi, langsung berlanjut ke sesi aktif |
+| Aktor utama | Pengunjung publik (belum login) |
+| Status | Terimplementasi (PH-01) |
+| Referensi PRD | PRD 2.2 ("Dapat registrasi manual"), PRD 4.1 |
+| Referensi SDD | SDD 10 (OWASP A07 — bcrypt, pesan duplikat spesifik), SDD 8 (format respons API seragam) |
+
+Bukti `docs/04` bagian 4.x: TASK-06 ("Selesai — `POST /api/auth/register` → `201`, user dibuat, bisa login"), AC-AUTH-02-01; keputusan perubahan scope 2026-10-10 (input nomor HP dihapus dari form registrasi, `docs/04` bagian 10).
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** link "Daftar sekarang" dari `/login`, atau langsung `/register`
+- **Pemicu:** pengunjung mengisi form "Buat Akun {brand.brandName}" lalu klik "Daftar"
+- **Jika tidak terpenuhi:** `platform.registrationEnabled = false` → tampil Alert `variant="destructive"` "Pendaftaran sedang ditutup. Silakan coba lagi nanti." (form tidak dirender); API mengembalikan `403 REGISTRATION_DISABLED`
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Pengunjung publik | Registrasi | `POST /api/auth/register` (tanpa sesi) | `403 REGISTRATION_DISABLED` bila pendaftaran ditutup Site Admin |
+| Semua role yang sudah login | Registrasi ulang | - | Email/HP duplikat ditolak `409 EMAIL_TAKEN` / `409 PHONE_TAKEN` |
+
+### 4. Input dan validasi
+
+Schema: `registerSchema` (`src/lib/auth/validation.ts`). Catatan: field `phone` tetap ada di schema (`.optional()`, backward compatible) tapi **tidak ada input HP di form** sejak keputusan 2026-10-10.
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| name | String | Ya | `personNameSchema`: trim, 1..100, `PERSON_NAME_REGEX` (`/^[A-Za-z\u00C0-\u024F' .-]+$/`, huruf + `' .-`), harus mengandung huruf | "Nama wajib diisi" / "Nama hanya boleh berisi huruf" / "Nama maksimal 100 karakter" |
+| email | String | Ya | trim, lowercase, `.email()`, maks 255 | "Email wajib diisi" / "Email tidak valid" / "Email maksimal 255 karakter" |
+| password | String | Ya | min 8, maks 72 | "Password wajib diisi" / "Password minimal 8 karakter" / "Password maksimal 72 karakter" |
+| confirmPassword | String (klien) | Ya (klien saja) | dicocokkan di `RegisterForm` sebelum kirim; tidak dikirim ke API | "Konfirmasi password tidak cocok" |
+| phone | String (API only) | Tidak | `phoneSchema`: regex `[\d+()\-. ]+`, normalisasi `normalizePhone`, refine `/^\+62\d{8,11}$/` | "Nomor HP wajib diisi" / "Nomor HP tidak valid" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Pengunjung buka `/register` | Halaman membaca `getPlatformSettings()` + `getBrandSetting()` | Form tampil bila pendaftaran terbuka |
+| 2 | Klik "Daftar" | `registerSchema.safeParse` di klien; gagal → pesan issue pertama | Tidak ada request keluar |
+| 3 | | `POST /api/auth/register` → `201 {"id","name","email"}` | User dibuat, `password` di-hash bcrypt (10 rounds), `role: "CUSTOMER"` |
+| 4 | Form lanjut `signIn("credentials", { identifier: email, password, redirect: false })` | Sesi dibuat | Akun langsung login |
+| 5 | `POST /api/cart/sync` (dilewati bila gagal, `.catch(() => null)`) | - | Keranjang guest digabung (MOD-CART) |
+| 6 | `router.replace("/")` + `router.refresh()` | - | Masuk ke beranda sebagai Customer |
+
+### 6. Output dan perubahan data
+
+- **Data dibuat:** baris `User` (`name`, `email`, `phone` opsional null, `password` hash bcrypt, `role: "CUSTOMER"`) via `createCustomer`
+- **Data tidak diubah:** `PlatformSettings.registrationEnabled` hanya dibaca
+- **Kondisi akhir:** sesi NextAuth aktif, cookie session terbentuk
+- **Setelah reload:** navbar menampilkan akun Customer; akses fitur customer terbuka
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| `registrationEnabled = false` | Halaman menampilkan Alert merah, form disembunyikan | Tidak bisa mendaftar |
+| `signIn` gagal sesudah `201` | Pesan "Akun dibuat, silakan masuk lewat halaman login" | Akun tetap ada; user diarahkan ke `/login` |
+| Keranjang sync gagal | `.catch(() => null)` — diabaikan | Login tetap berhasil |
+| Dua request mendaftar email sama bersamaan (race) | Prisma error `P2002` tertangkap, `meta.target` membedakan field | `409 EMAIL_TAKEN` / `409 PHONE_TAKEN` |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Pendaftaran ditutup | `403 REGISTRATION_DISABLED` "Pendaftaran sedang ditutup" | Coba lagi nanti |
+| Body bukan JSON / field tidak valid | `400 VALIDATION_ERROR` (pesan Zod issue pertama, `field` berisi path) | Perbaiki form |
+| Email sudah dipakai | `409 EMAIL_TAKEN` "Email sudah terdaftar" (`field: "email"`) | Gunakan email lain / login |
+| Nomor HP sudah dipakai | `409 PHONE_TAKEN` "Nomor HP sudah terdaftar" (`field: "phone"`) | Gunakan nomor lain |
+| Error tak terduga | `500 INTERNAL_ERROR` "Terjadi kesalahan, coba lagi" (detail hanya ke log) | Coba lagi |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/register` (Server Component, `metadata.title = "Daftar"`, `instant = false`)
+- **Elemen:** Nama Lengkap (`autoComplete="name"`, max 100), Email (`type="email"`, max 255), Password (min 8, max 72, `autoComplete="new-password"`), Konfirmasi Password, tombol "Daftar" / "Memproses..."
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal | Form aktif | Isi lalu kirim |
+| Kirim | Tombol nonaktif "Memproses..." | Tunggu |
+| Duplikat/galat | `FormErrorAlert` dengan pesan API (Bahasa Indonesia) | Perbaiki lalu coba lagi |
+| Sukses dan auto-login gagal | Pesan "Akun dibuat, silakan masuk lewat halaman login" | Ke `/login` |
+| Sukses penuh | Alihkan ke `/` | Selesai |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-AUTH-02-01 | Pendaftaran terbuka | Submit data valid | `201 {"id","name","email"}`; akun langsung bisa login (sudah diverifikasi via curl, `docs/04` bagian 4.x) |
+| AC-AUTH-02-02 | Email sudah terdaftar | Registrasi ulang | `409 EMAIL_TAKEN` "Email sudah terdaftar" |
+| AC-AUTH-02-03 | Password 7 karakter | Submit | `400 VALIDATION_ERROR` "Password minimal 8 karakter" |
+| AC-AUTH-02-04 | Pendaftaran ditutup | Buka `/register` | Alert "Pendaftaran sedang ditutup...", tanpa form |
+| AC-AUTH-02-05 | Password hash tersimpan | Cek DB | Kolom `password` bcrypt (10 rounds), bukan plaintext |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Valid | `{"name":"Customer Uji","email":"customer.uji@example.com","password":"rahasia123"}` | `201` + sesi | AC-AUTH-02-01 |
+| Duplikat | email sama dengan akun lain | `409 EMAIL_TAKEN` | AC-AUTH-02-02 |
+| Nama tak wajar | `name: "0812xxx"` | `400 VALIDATION_ERROR` "Nama hanya boleh berisi huruf" | - |
+
+### 12. Batas fitur
+
+- **Termasuk:** registrasi email+password, hashing bcrypt, cek duplikat email/HP (cek Prisma + race P2002), auto sign-in setelah daftar, gerbang `registrationEnabled`
+- **Tidak termasuk:** verifikasi email (`POST /api/auth/verify-email`, CUST-03/PH-10), OTP nomor HP (AUTH-01), set password dari guest checkout (AUTH-04), lupa/reset password (AUTH-05), field phone di form (dihapus 2026-10-10)
+- **Ketergantungan:** MOD-PLATFORM (`getPlatformSettings`), MOD-BRAND (`getBrandSetting` untuk judul kartu), MOD-CART (sync keranjang)
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada (keputusan 2026-10-10 soal input HP sudah tuntas; `phone` di schema API dipertahankan untuk backward compatibility).
+
+**Rujukan kode:**
+
+- `src/app/api/auth/register/route.ts` — handler `POST`, kode error exact (`REGISTRATION_DISABLED`, `EMAIL_TAKEN`, `PHONE_TAKEN`), penanganan race P2002.
+- `src/lib/auth/validation.ts` — `registerSchema` dan semua pesan Zod.
+- `src/components/auth/RegisterForm.tsx` — alur klien: validasi confirmPassword, auto `signIn`, cart sync, redirect `/`.
+- `src/app/(auth)/register/page.tsx` — halaman, gerbang `registrationEnabled`, teks Alert.
+- `src/lib/auth/queries.ts` — `createCustomer` (hash + `role: "CUSTOMER"`), `findUserByEmail`/`findUserByPhone`.
+- `src/lib/utils/validation.ts` — `PERSON_NAME_REGEX`, `personNameSchema`, `phoneSchema`, `normalizePhone`.
+
+---
+
+## <a name="auth-03"></a>AUTH-03 — Customer Login
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | AUTH-03 — Customer Login |
+| Modul | MOD-AUTH |
+| Tujuan | Autentikasi Customer (dan admin) dengan identifier email atau nomor HP + password, lalu mengarahkan ke halaman sesuai role |
+| Aktor utama | Customer; Store Admin dan Site Admin memakai form yang sama |
+| Status | Terimplementasi (PH-01) |
+| Referensi PRD | PRD 2.2 ("Harus login untuk akses fitur customer"), PRD 4.1 |
+| Referensi SDD | SDD 10 (OWASP A07 — pesan generik anti-enumeration, bcrypt) |
+
+Bukti `docs/04` bagian 4.x: TASK-04 ("Setup auth: NextAuth.js v5 ... Login admin & customer → `302` + sesi berisi `role`"), TASK-07 ("Login customer → sesi `role: CUSTOMER`"), AC-AUTH-03-01; keputusan 2026-10-12 atribut `autoComplete` (`docs/04` bagian 10).
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** `/login` (tautan "Daftar sekarang", "Lupa password?"), serta redirect saat mengakses halaman terproteksi
+- **Pemicu:** submit form "Masuk ke {brand.brandName}"
+- **Jika tidak terpenuhi:** kredensial salah / akun tidak ada / akun `GUEST` / akun dinonaktifkan (`deactivatedAt` terisi) → pesan "Email/No. HP atau password salah"
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Customer dengan password | Login | NextAuth provider `credentials` (`signIn("credentials", { redirect: false })`) | - |
+| Akun GUEST | Login | - | Ditolak (`return null` di `authorize`) |
+| Akun dinonaktifkan Site Admin | Login | - | Ditolak (`user.deactivatedAt` → null) |
+
+### 4. Input dan validasi
+
+Schema: `loginSchema` (`src/lib/auth/validation.ts`), dipakai di `authorize(credentials)`.
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| identifier | String | Ya | trim, 1..255; mengandung `@` → `{ kind: "email" }` (lowercase); selain itu dicoba dengan `phoneSchema` (normalisasi +62, refine `/^\+62\d{8,11}$/`); keduanya gagal → `kind: "invalid"` | "Email atau nomor HP wajib diisi" / "Format email atau nomor HP tidak valid" |
+| password | String | Ya | min 1 | "Password wajib diisi" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Isi identifier + password, klik "Masuk" | `loginSchema.safeParse` di `authorize` | Data valid |
+| 2 | System | `findUserByEmail` atau `findUserByPhone` sesuai `kind` (nomor dinormalisasi `normalizePhone` agar cocok format `+62` tersimpan) | User ditemukan |
+| 3 | System | `verifyPassword` (bcrypt.compare); bila user tidak punya `password` → `wasteTimeLikeVerify` (hash dummy, anti time-based enumeration) | Password terverifikasi |
+| 4 | System | Role bermakna; token JWT berisi `id`, `role`, `name`, `email` (callback `jwt`) | Sesi terbentuk |
+| 5 | Klien | `getSession()` → `POST /api/cart/sync` (dilewati bila gagal) | Keranjang guest digabung (CART-04) |
+| 6 | Klien | `router.replace(role === "STORE_ADMIN" ? "/admin/products" : role === "SITE_ADMIN" ? "/site-admin" : "/")` + `router.refresh()` | Masuk sesuai role |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** sesi NextAuth (cookie) berisi `{ id, name, email, role }`
+- **Data dibaca:** `User` (email/phone/password/role/`deactivatedAt`); tidak ada penulisan data pengguna
+- **Setelah reload:** `session.user.role` diakses server; guard (`requireStoreAdmin` dll.) membaca ulang `role` dan `deactivatedAt` dari DB (`findUserAccessById`)
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Keranjang guest ada | `POST /api/cart/sync` dipanggil setelah `getSession()` | Digabung ke keranjang customer |
+| Role STORE_ADMIN login | Redirect ke `/admin/products` | Panel admin |
+| Role SITE_ADMIN login | Redirect ke `/site-admin` | Panel platform |
+| Sync keranjang gagal | `.catch(() => null)` — diabaikan | Login tetap berhasil |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Identifier/password tidak lolos Zod | `authorize` return `null` → `result.error` | Pesan "Email/No. HP atau password salah" |
+| Email/nomor tidak terdaftar | `wasteTimeLikeVerify` lalu `null` (waktu respons seragam, OWASP A07) | Pesan sama generik |
+| Password salah | `null` | Pesan sama generik |
+| Akun GUEST atau dinonaktifkan | `null` | Pesan sama generik |
+| Error jaringan | `catch` → `setError("Terjadi kesalahan, coba lagi")` | Coba lagi |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/login` (metadata title "Masuk"; judul kartu "Masuk ke {brand.brandName}"; deskripsi "Gunakan email atau nomor HP yang terdaftar.")
+- **Elemen:** label "Email atau Nomor HP" (`autoComplete="username"`, `maxLength={255}`), "Password" (`type="password"`, `autoComplete="current-password"`), tombol "Masuk" / "Memproses..."
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal | Form aktif | Isi lalu kirim |
+| Kirim | Tombol nonaktif "Memproses..." | Tunggu |
+| Salah kredensial | `FormErrorAlert` "Email/No. HP atau password salah" | Coba lagi |
+| Berhasil | Redirect sesuai role | Lanjut belanja/admin |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-AUTH-03-01 | Akun Customer valid | Login | `302` → `/`; sesi berisi `name`, `role: "CUSTOMER"`, `id` (diverifikasi via curl, `docs/04` bagian 4.x) |
+| AC-AUTH-03-02 | Password salah | Login | Pesan "Email/No. HP atau password salah" — tidak membedakan identifier vs password |
+| AC-AUTH-03-03 | Akun GUEST (hanya OTP) | Login | Ditolak dengan pesan yang sama |
+| AC-AUTH-03-04 | Login via nomor HP "0812-xxx" | Login | Dinormalisasi `+62...`, cocok kolom `phone` |
+| AC-AUTH-03-05 | Customer login dengan keranjang guest | Login | `POST /api/cart/sync` dipanggil; item tampil di keranjang |
+| AC-AUTH-03-06 | Akun dinonaktifkan (`deactivatedAt` terisi) | Login | Ditolak |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Valid email | `identifier: "customer.uji@example.com"` + password | Sesi CUSTOMER, redirect `/` | AC-AUTH-03-01 |
+| Valid nomor | `identifier: "0812xxxx5678"` + password | Dinormalisasi `+62...`, sesi terbentuk | AC-AUTH-03-04 |
+| Salah | password salah | "Email/No. HP atau password salah" | AC-AUTH-03-02 |
+
+### 12. Batas fitur
+
+- **Termasuk:** login credentials email atau nomor HP + password, redirect berbasis role, merge keranjang guest, perlindungan anti-enumeration
+- **Tidak termasuk:** login OTP (AUTH-01 guest), lupa/reset password (AUTH-05), set password guest (AUTH-04), penyegaran kontak sesi milik CUST-03 (callback `jwt trigger "update"`, PH-10)
+- **Ketergantungan:** NextAuth v5, MOD-CART (CART-04), MOD-BRAND (judul kartu), MOD-PLATFORM (penonaktifan akun SITE-04)
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada.
+
+**Rujukan kode:**
+
+- `src/lib/auth/index.ts` — provider `credentials`, `authorize`, callback `jwt`, token `role`/`id`.
+- `src/lib/auth/validation.ts` — `loginSchema` lengkap dengan transform `{ kind }` dan pesan exact.
+- `src/lib/auth/queries.ts` — `findUserByEmail` / `findUserByPhone` (pencocokan per kolom).
+- `src/lib/auth/password.ts` — `verifyPassword`, `wasteTimeLikeVerify`, `BCRYPT_ROUNDS`, `DUMMY_HASH` (alasan anti-enumeration di komentar).
+- `src/components/auth/LoginForm.tsx` — alur klien `signIn` redirect false, `getSession`, cart sync, redirect role-based, pesan error exact, atribut `autoComplete`.
+- `src/app/(auth)/login/page.tsx` — halaman Masuk, tautan `/forgot-password` dan `/register`.
+
+---
+
 ## <a name="prod-01"></a>PROD-01 â€” Product CRUD (Store Admin)
 
 ### 1. Identitas dan tujuan
@@ -370,6 +628,396 @@ Tidak ada â€” ready for implementation.
 ### 13. Pertanyaan terbuka
 
 Tidak ada.
+
+---
+
+## <a name="prod-03"></a>PROD-03 — Product Detail (Storefront)
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | PROD-03 — Product Detail Page (storefront) |
+| Modul | MOD-PROD |
+| Tujuan | Menampilkan detail produk ACTIVE di storefront: kategori, brand, badge stok, deskripsi, galeri, bagan ukuran, dan AddToCartForm per varian |
+| Aktor utama | Guest dan Customer (publik, tanpa sesi) |
+| Status | Terimplementasi (PH-01) |
+| Referensi PRD | PRD 2.1 ("Melihat detail produk dan variant"), PRD 3.1.A (data produk, gambar, size chart, dual stock) |
+| Referensi SDD | SDD 5 (App Router `(storefront)/products/[slug]/page.tsx`), SDD 10 (slug dicek sebelum streaming) |
+
+Bukti `docs/04` bagian 4.x: TASK-13 ("Selesai — `/products/kaos-polos-katun-combed-30s` → `200` dengan varian, harga, stok, gambar"), AC-PROD-03-01.
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** link dari `/products` (PROD-02) atau breadcrumb "Beranda / Produk"
+- **Pemicu:** request `GET /products/[slug]`
+- **Jika tidak terpenuhi:** `getPublishedProductBySlug` tidak menemukan produk ACTIVE dengan slug itu → `notFound()` → UI not-found; di produksi respons tetap `200` dengan `<meta name="robots" content="noindex">` (PPR + `cacheComponents`; perilaku terdokumentasi di komentar kode dan telah diuji saat build, status produksi tetap 200)
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Publik (Guest/Customer) | Melihat detail | `getPublishedProductBySlug` (Server Component, tanpa API) | `notFound()` bila slug tidak ada / bukan ACTIVE |
+| Semua | Melihat produk Draft/Inactive/Discontinued | - | Tidak tampil (filter `status: "ACTIVE"`) |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| slug (path) | String | Ya | Dicocokkan ke kolom `Product.slug` + `status = "ACTIVE"` di `getPublishedProductBySlug` | `notFound()` (UI not-found; judul metadata "Produk tidak ditemukan") |
+| Tidak ada input lain | - | - | - | - |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Akses `/products/[slug]` | Server Component | `getProduct = cache(getPublishedProductBySlug)` — satu query dibagikan ke `generateMetadata` dan render |
+| 2 | `generateMetadata` | `<title>` = `product.name`; description = 160 karakter pertama `product.description`, fallback `Beli {product.name} di {brand.brandName}.` | SEO |
+| 3 | Render page | Breadcrumb: Beranda → Produk → `product.name` | Navigasi |
+| 4 | Kolom kiri galeri | `images` diurutkan `sortOrder` asc; gambar `role === "SIZE_CHART"` dikeluarkan (PRD 3.1.A: bagan ukuran dipisah); gambar pertama `priority`, sisanya thumbnail grid 4 kolom bila lebih dari 1 | Galeri |
+| 5 | Kolom kanan | `{category.name} - {brand.name}` (brand bisa kosong → hanya `category.name`), `h1` nama, Badge: `totalStock > 0` → `variant="secondary"` "Stok tersedia {totalStock}", selain itu `variant="destructive"` "Stok habis"; deskripsi `whitespace-pre-line` | Informasi produk |
+| 6 | `AddToCartForm` | `variants` (id, name, sku, `price: Number(variant.price)`, stock) tampil sebagai list radio | Memilih varian lalu add to cart (CART-01) |
+| 7 | Bagian "Bagan Ukuran" | `<h2>Bagan Ukuran</h2>` + gambar `aspect-[4/3] sm:aspect-[16/9]`, `object-contain` — hanya bila ada image `SIZE_CHART` | Informasi ukuran |
+
+### 6. Output dan perubahan data
+
+- **Data dibaca:** `Product` + include `category`, `brand`, `images` (order `sortOrder`), `variants` (order `createdAt`); `getBrandSetting()` untuk fallback metadata
+- **Data diubah:** tidak ada (read-only); interaksi add to cart adalah urusan CART-01 (`POST /api/cart`)
+- **Kondisi akhir:** halaman ter-render; tidak ada mutasi data/cookie
+- **Setelah reload:** sama; cache React hanya berlaku per request
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Produk tanpa gambar | Kotak dashed "Tanpa gambar" (aspect-square) | Tetap tampil |
+| Produk tanpa deskripsi | Paragraf deskripsi dilewati | Layout tetap rapi |
+| Produk tanpa varian | `AddToCartForm` → "Produk belum punya varian." | Tidak bisa di-add |
+| Varian dengan stok 0 | Radio `disabled` + opacity-50; varian pertama yang tersedia jadi default terpilih | Tidak bisa dipilih |
+| `totalStock = 0` | Badge "Stok habis" | Tetap informatif |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Slug tidak ada / produk non-ACTIVE | `notFound()` → UI not-found (produksi: `200` + noindex, lihat bagian 2) | Kembali ke `/products` |
+| Query gagal | Dimpulos error framework Next.js; tidak ada try/catch di level page (pembungkus `withRouteErrors` hanya untuk API Route) | Coba lagi |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/(storefront)/products/[slug]/page.tsx`, `export const instant = false` (PPR; slug dicek sebelum boundary Suspense agar UI not-found dirender dan slug tidak terindeks)
+- **Elemen:** breadcrumb, galeri (1 utama + thumbnail), badge stok, deskripsi pre-line, AddToCartForm (radio varian + qty + tombol submit via `POST /api/cart`), bagan ukuran
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal | Lengkap sesuai langkah 5 | Lanjut belanja |
+| Produk tidak ditemukan | not-found page | Kembali |
+| Varian stok 0 | Radio redup, disabled | Pilih varian lain |
+| Tambah ke keranjang | `POST /api/cart`, `router.refresh()` | Lihat keranjang |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-PROD-03-01 | Produk ACTIVE tersedia | Buka `/products/kaos-polos-katun-combed-30s` | `200` dengan varian, SKU, harga, stok, gambar (diverifikasi curl, `docs/04` bagian 4.x) |
+| AC-PROD-03-02 | Slug acak | Buka `/products/tidak-ada` | not-found; tidak ada konten produk |
+| AC-PROD-03-03 | Produk status Draft | Akses slug-nya | Tidak ditemukan (filter status) |
+| AC-PROD-03-04 | Produk dengan image `SIZE_CHART` | Buka detail | Section "Bagan Ukuran" tampil terpisah di bawah |
+| AC-PROD-03-05 | Semua varian `stock = 0` | Buka detail | Badge "Stok habis"; semua radio disabled |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Lengkap | produk ACTIVE, 3 varian (stock 5/2/0), 4 gambar + 1 SIZE_CHART | Galeri 4 + section Bagan Ukuran + badge "Stok tersedia 7" | AC-PROD-03-01 |
+| Minimal | hanya varian, tanpa gambar/deskripsi | Layout tetap rapi; AddToCartForm aktif | - |
+| Slug salah | `/products/xyz` | not-found | AC-PROD-03-02 |
+
+### 12. Batas fitur
+
+- **Termasuk:** render detail produk ACTIVE, galeri kurasi (size chart dipisah), badge stok dual-tracking, list radio varian, metadata dinamis per nama/deskripsi produk, breadcrumb
+- **Tidak termasuk:** review/ulasan, produk terkait/related, logika add-to-cart (CART-01), reservasi stok (ORDER-01/02)
+- **Ketergantungan:** PROD-01 (data produk), PROD-02, MOD-BRAND (`getBrandSetting`), CART-01
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada.
+
+**Rujukan kode:**
+
+- `src/app/(storefront)/products/[slug]/page.tsx` — seluruh UI detail, `generateMetadata`, galeri + pemisahan SIZE_CHART, badge stok, breadcrumb, `instant = false`.
+- `src/lib/products/queries.ts` — `getPublishedProductBySlug` (filter ACTIVE) dan `productInclude` (relasi + urutan).
+- `src/components/cart/AddToCartForm.tsx` — form radio varian, default varian pertama tersedia, `POST /api/cart`.
+- `docs/04_IMPLEMENTATION_PLAN.md` bagian 4.x — bukti TASK-13 & AC-PROD-03-01.
+
+---
+
+## <a name="prod-04"></a>PROD-04 — Category Management (Store Admin)
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | PROD-04 — Category Management (Store Admin) |
+| Modul | MOD-PROD |
+| Tujuan | CRUD kategori produk di admin (list, tambah, ubah, hapus) untuk pengelompokan produk di storefront |
+| Aktor utama | Store Admin |
+| Status | Terimplementasi (PH-01) |
+| Referensi PRD | PRD 2.3 ("Mengelola produk, kategori, brand, variant..."), PRD 3.1.A ("Kategori produk"), PRD 4.2 |
+| Referensi SDD | SDD 5 (route `admin/categories`), SDD 10 (guard OWASP A01) |
+
+Bukti `docs/04` bagian 4.x: TASK-09 ("Selesai — `GET /api/admin/categories` dengan sesi → `200`; `401` tanpa sesi. Data seed tampil di form produk").
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** menu `/admin/categories` (layout admin) dan pemilihan kategori di form produk
+- **Pemicu:** Store Admin membuka halaman "Kategori" (deskripsi halaman: "Kategori dipakai untuk mengelompokkan produk di storefront.")
+- **Jika tidak terpenuhi:** sesi tidak ada → `401 UNAUTHORIZED` "Anda harus masuk terlebih dahulu"; role bukan STORE_ADMIN (atau akun dinonaktifkan) → `403 FORBIDDEN` "Anda tidak memiliki akses"
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Store Admin | List / tambah / ubah / hapus kategori | `requireStoreAdmin()` (`src/lib/auth/guard.ts`; role + `deactivatedAt` dibaca ulang dari DB per request) | `401 UNAUTHORIZED` / `403 FORBIDDEN` |
+| Customer, Guest | - | - | `403 FORBIDDEN` via guard |
+| Site Admin | - | - | `403 FORBIDDEN` (guard hanya `STORE_ADMIN`) |
+
+### 4. Input dan validasi
+
+Schema: `categorySchema` / `categoryUpdateSchema` (`src/lib/categories/validation.ts`); `slugSchema` juga dipakai klien (TaxonomyManager) dan brand.
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| name (POST) | String | Ya | 1..100, `CATEGORY_NAME_REGEX` (`/^[A-Za-z0-9\u00C0-\u024F&.,'()\- ]+$/`), harus mengandung huruf | "Nama kategori wajib diisi" / "Nama maksimal 100 karakter" / "Nama kategori memuat karakter yang tidak diizinkan" / "Nama kategori harus mengandung huruf" |
+| slug (POST) | String | Ya | `slugSchema`: 1..200, lowercase, regex `/^[a-z0-9]+(?:-[a-z0-9]+)*$/` | "Slug wajib diisi" / "Slug maksimal 200 karakter" / "Slug hanya boleh huruf kecil, angka, dan tanda hubung" |
+| name, slug (PATCH `[id]`) | Partial | Tidak | `categoryUpdateSchema = categorySchema.partial()`; body kosong ditolak | Pesan sama dengan POST; body tanpa field → `400 EMPTY_UPDATE` |
+| id (path `[id]`) | UUID | Ya | `idSchema = z.string().uuid()` | `400 INVALID_ID` "ID tidak valid" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Buka `/admin/categories` (Server Component) | `getCategories()` di level halaman | Daftar kategori (`orderBy name asc` + `_count.products` sebagai `productCount`) dirender `TaxonomyManager` |
+| 2 | Isi Nama Kategori → slug terisi otomatis `slugify` sampai slug diubah manual (`slugTouched`) | - | Form terisi |
+| 3 | Klik "Tambah" | Validasi klien (nama kosong → "Nama wajib diisi"; slug via `slugSchema`) | - |
+| 4 | | `POST /api/admin/categories` dengan `{ name, slug }` | `201 {"category": {...}}` |
+| 5 | Item baru ditambahkan ke daftar (urut leksikal) di klien | - | Kategori muncul |
+| 6 | Ubah (edit inline lalu simpan) | `PATCH /api/admin/categories/[id]` | `200 {"category": {...}}` |
+| 7 | Hapus (konfirmasi `window.confirm("Hapus Kategori \"...\"?")`) | `DELETE /api/admin/categories/[id]` | `200 {"deleted": true}` |
+
+### 6. Output dan perubahan data
+
+- **Data dibaca:** `Category` + `_count.products` (`getCategories`, orderBy `name: "asc"`)
+- **Data dibuat:** baris `Category` (`createCategory` = `prisma.category.create({ data: input })`)
+- **Data diubah:** `updateCategory` (`prisma.category.update`); produk yang berelasi tidak ikut diubah
+- **Data dihapus:** `deleteCategory` (`prisma.category.delete`); error FK/ketidakadanya data diterjemahkan `prismaErrorResponse` (P2003/P2025)
+- **Kondisi akhir:** daftar kategori terbaru tampil; hitungan `productCount` segar setelah reload halaman
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Tidak ada kategori | `<li>` "Belum ada kategori." | Empty state |
+| Slug otomatis dari nama dan tidak diubah | `slugify(event.target.value)` saat mengetik nama, hanya sebelum `slugTouched` | Slug konsisten |
+| Hapus kategori yang masih direferensikan | `prismaErrorResponse`: P2003 → `400 INVALID_REFERENCE` "Data terkait tidak ditemukan" | Hapus ditolak (FK default `Restrict`; terverifikasi di `schema.prisma` — `Product.categoryId` wajib, tanpa `onDelete` eksplisit) |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Sesi tidak ada / akun nonaktif | `401 UNAUTHORIZED` "Anda harus masuk terlebih dahulu" | Login ulang di `/login` |
+| Role bukan STORE_ADMIN | `403 FORBIDDEN` "Anda tidak memiliki akses" | - |
+| Zod gagal | `400 VALIDATION_ERROR` + pesan exact di bagian 4 | Perbaiki form |
+| Nama duplikat (P2002 field `name`) | `409 DUPLICATE` "Nama kategori sudah digunakan" (`field: "name"`) | Ganti nama |
+| Slug duplikat (P2002 field `slug`) | `409 DUPLICATE` "Slug sudah digunakan" (`field: "slug"`) | Ganti slug |
+| ID bukan UUID | `400 INVALID_ID` "ID tidak valid" | Muat ulang daftar |
+| PATCH tanpa field | `400 EMPTY_UPDATE` "Tidak ada data yang diubah" | Isi minimal satu field |
+| Data tidak ada (P2025) | `404 NOT_FOUND` "Data tidak ditemukan" | Muat ulang |
+| Error tak terduga | `500 INTERNAL_ERROR` "Terjadi kesalahan, coba lagi" | Coba lagi |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/admin/categories` (`PageHeader` title "Kategori", `instant = false`), `TaxonomyManager` dengan `resource="categories"`, `singularLabel="Kategori"`
+- **Elemen:** form Tambah (input "Nama Kategori" + "Slug" + tombol "Tambah"), list per kategori dengan `productCount`, edit inline, tombol hapus dengan konfirmasi
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal | List + form tampil | CRUD |
+| Galat | `FormErrorAlert` dengan pesan API | Perbaiki |
+| Submit | Tombol disabled (`submitting`) | Tunggu |
+| Hapus | `window.confirm` | Setuju/batal |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-PROD-04-01 | Store Admin login | `GET /api/admin/categories` | `200` dengan kategori (`docs/04` bagian 4.x — TASK-09) |
+| AC-PROD-04-02 | Tanpa sesi | `GET /api/admin/categories` | `401 UNAUTHORIZED` (TASK-09) |
+| AC-PROD-04-03 | Nama kategori baru | POST | `201`; tampil di daftar dan di form produk |
+| AC-PROD-04-04 | Nama duplikat | POST | `409 DUPLICATE` "Nama kategori sudah digunakan" |
+| AC-PROD-04-05 | Kategori lama diubah via inline edit | `PATCH /api/admin/categories/[id]` | `200` + daftar ter-update di klien |
+| AC-PROD-04-06 | ID tidak dikenal | `DELETE /api/admin/categories/[id]` | `404 NOT_FOUND` |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Valid | `{"name":"Kaos","slug":"kaos"}` | `201 {"category":{...}}` | AC-PROD-04-03 |
+| Slug invalid | `{"name":"Kaos","slug":"Kaos!"}` | `400 VALIDATION_ERROR` "Slug hanya boleh huruf kecil, angka, dan tanda hubung" | - |
+| Duplikat | slug "kaos" sudah dipakai | `409 DUPLICATE` | AC-PROD-04-04 |
+
+### 12. Batas fitur
+
+- **Termasuk:** CRUD kategori flat (tanpa hierarki/parent), slug manual/otomatis, hitungan produk terkait, UI bersama TaxonomyManager dengan brand
+- **Tidak termasuk:** upload ikon kategori, pengurutan manual, delete cascade ke produk, kategori bertingkat
+- **Ketergantungan:** MOD-AUTH (guard + sesi), PROD-01 (form produk memakai kategori), unique constraint `name`/`slug` di `schema.prisma` (terverifikasi: `Category.name` dan `Category.slug` ber-`@unique`, diperketat juga oleh penanganan P2002 di route)
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada.
+
+**Rujukan kode:**
+
+- `src/app/api/admin/categories/route.ts` — `GET`/`POST`, guard, pesan duplikat exact.
+- `src/app/api/admin/categories/[id]/route.ts` — `PATCH`/`DELETE`, `idSchema` uuid, `EMPTY_UPDATE`, `INVALID_ID` 400.
+- `src/lib/categories/validation.ts` — `categorySchema`, `slugSchema`, semua pesan Zod.
+- `src/lib/categories/queries.ts` + `mutations.ts` — `getCategories` (count), `createCategory`, `updateCategory`, `deleteCategory`.
+- `src/components/admin/TaxonomyManager.tsx` — UI bersama (komentar "Dipakai bersama oleh PROD-04 (Kategori) dan PROD-05 (Brand)"), slugify, konfirmasi hapus.
+- `src/app/admin/categories/page.tsx` — Server Component, header "Kategori".
+- `src/lib/auth/guard.ts` — `requireStoreAdmin`, pesan `unauthorized()`/`forbidden()`.
+- `src/lib/utils/prisma-error.ts` — mapping P2002/P2003/P2025 + `DUPLICATE` 409.
+
+---
+
+## <a name="prod-05"></a>PROD-05 — Brand Management (Store Admin)
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | PROD-05 — Brand Management (Store Admin) |
+| Modul | MOD-PROD |
+| Tujuan | CRUD brand opsional untuk pelabelan produk; nama brand tampil di storefront detail produk (PROD-03) |
+| Aktor utama | Store Admin |
+| Status | Terimplementasi (PH-01) |
+| Referensi PRD | PRD 2.3 ("Mengelola produk, kategori, brand..."), PRD 3.1.A ("Brand"), PRD 4.2 ("Brand management") |
+| Referensi SDD | SDD 5 (route `admin/brands`), SDD 10 (guard) |
+
+Bukti `docs/04` bagian 4.x: TASK-10 ("Selesai — `401` tanpa sesi; 3 brand seed tampil di katalog").
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** `/admin/brands` (menu admin "Brand"; `PageHeader` title "Brand", deskripsi "Brand bersifat opsional pada produk.")
+- **Pemicu:** Store Admin membuka halaman atau mengirim operasi CRUD
+- **Jika tidak terpenuhi:** `401 UNAUTHORIZED` / `403 FORBIDDEN` sama seperti PROD-04
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Store Admin | List / tambah / ubah / hapus brand | `requireStoreAdmin()` | `401` / `403` |
+| Customer/Guest/Site Admin | - | - | `403 FORBIDDEN` |
+
+### 4. Input dan validasi
+
+Schema: `brandSchema` / `brandUpdateSchema` (`src/lib/brands/validation.ts`), memakai `slugSchema` dari validasi kategori.
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| name (POST) | String | Ya | 1..100, `CATEGORY_NAME_REGEX`, harus mengandung huruf | "Nama brand wajib diisi" / "Nama maksimal 100 karakter" / "Nama brand memuat karakter yang tidak diizinkan" / "Nama brand harus mengandung huruf" |
+| slug (POST) | String | Ya | Sama dengan `slugSchema` (1..200, lowercase, regex kebab-case) | "Slug wajib diisi" / "Slug maksimal 200 karakter" / "Slug hanya boleh huruf kecil, angka, dan tanda hubung" |
+| name, slug (PATCH `[id]`) | Partial | Tidak | `brandUpdateSchema = brandSchema.partial()`; body kosong ditolak | Pesan sama dengan POST; `400 EMPTY_UPDATE` |
+| id (path) | UUID | Ya | `z.string().uuid()` | `400 INVALID_ID` "ID tidak valid" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Buka `/admin/brands` | Data diambil `getBrands()` di level halaman | List dirender `TaxonomyManager` dengan `resource="brands"` |
+| 2 | Isi Nama Brand, slug terisi otomatis | - | Form terisi |
+| 3 | Klik "Tambah" | Validasi klien (nama + slogan) | - |
+| 4 | | `POST /api/admin/brands` | `201 {"brand": {...}}` |
+| 5 | Ubah / Hapus inline | `PATCH` / `DELETE /api/admin/brands/[id]` | `200` / `200 {"deleted": true}` |
+| 6 | Buat/ubah produk | Dropdown brand di form produk (PROD-01) | Brand terpakai pada produk |
+
+### 6. Output dan perubahan data
+
+- **Data dibaca:** `Brand` + `_count.products` (`getBrands()`)
+- **Data dibuat/diubah/dihapus:** baris `Brand` (`createBrand`, `updateBrand`, `deleteBrand` — bentuk sama dengan fungsi kategori)
+- **Kondisi akhir:** brand baru langsung muncul di daftar; produk yang memakai brand tidak berubah otomatis
+- **Setelah reload:** daftar fresh (Server Component)
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Tidak ada brand | "Belum ada brand." | Empty state |
+| Hapus brand yang masih dipakai produk | `Product.brandId` opsional, tanpa `onDelete` eksplisit di `schema.prisma` → default Prisma `SetNull` | Hapus berhasil; produk yang memakainya tetap ada dengan `brandId` null (terverifikasi di `schema.prisma`) |
+| Slug tidak diubah manual | `slugify` nama | Slug valid |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Sesi tidak ada | `401 UNAUTHORIZED` | Login ulang |
+| Bukan STORE_ADMIN | `403 FORBIDDEN` | - |
+| Zod gagal | `400 VALIDATION_ERROR` + pesan exact | Perbaiki |
+| Nama brand duplikat (P2002 `name`) | `409 DUPLICATE` "Nama brand sudah digunakan" | Ganti |
+| Slug duplikat (P2002 `slug`) | `409 DUPLICATE` "Slug sudah digunakan" | Ganti |
+| ID salah format | `400 INVALID_ID` "ID tidak valid" | - |
+| PATCH body kosong | `400 EMPTY_UPDATE` "Tidak ada data yang diubah" | Isi field |
+| Brand tidak ada (P2025) | `404 NOT_FOUND` "Data tidak ditemukan" | Muat ulang |
+| Internal | `500 INTERNAL_ERROR` "Terjadi kesalahan, coba lagi" | Coba lagi |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/admin/brands` (`instant = false`), `TaxonomyManager` dengan `resource="brands"`, `singularLabel="Brand"`
+- **Elemen:** form Tambah (label "Nama Brand", "Slug", tombol "Tambah"), list brand dengan `productCount`, edit inline, hapus dengan konfirmasi
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal | List + form | CRUD |
+| Galat | `FormErrorAlert` | Perbaiki |
+| Submit | Tombol disabled | Tunggu |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-PROD-05-01 | Store Admin login | `GET /api/admin/brands` | `200` list brand |
+| AC-PROD-05-02 | Tanpa sesi | `GET /api/admin/brands` | `401 UNAUTHORIZED` (TASK-10) |
+| AC-PROD-05-03 | Brand baru | POST | `201` + tampil di daftar dan katalog |
+| AC-PROD-05-04 | Nama duplikat | POST | `409 DUPLICATE` "Nama brand sudah digunakan" |
+| AC-PROD-05-05 | 3 brand seed | Buka katalog produk | Brand tampil (`docs/04` bagian 4.x — TASK-10) |
+| AC-PROD-05-06 | Brand dihapus | DELETE | `200 {"deleted": true}`; produk yang memakainya tetap ada dengan `brandId` null (`SetNull`, terverifikasi di `schema.prisma`) |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Valid | `{"name":"Acme","slug":"acme"}` | `201 {"brand": {...}}` | AC-PROD-05-03 |
+| Nama tanpa huruf | `{"name":"123","slug":"123"}` | `400 VALIDATION_ERROR` "Nama brand harus mengandung huruf" | - |
+| Duplikat | slug sama | `409 DUPLICATE` | AC-PROD-05-04 |
+
+### 12. Batas fitur
+
+- **Termasuk:** CRUD brand flat, slug otomatis/manual, hitungan produk, UI bersama dengan PROD-04
+- **Tidak termasuk:** logo brand, deskripsi brand, halaman storefront per brand (brand hanya label), penyesuaian identitas toko (SITE-05, milik Site Admin)
+- **Ketergantungan:** MOD-AUTH (guard), PROD-01 (form produk), PROD-03 (display brand di storefront)
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada (perilaku FK hapus brand sudah terverifikasi di `schema.prisma`: `Product.brandId` opsional → default `SetNull`, produk tidak ikut terhapus).
+
+**Rujukan kode:**
+
+- `src/app/api/admin/brands/route.ts` — `GET`/`POST`, guard, pesan duplikat exact ("Nama brand sudah digunakan", "Slug sudah digunakan").
+- `src/app/api/admin/brands/[id]/route.ts` — `PATCH`/`DELETE`, `INVALID_ID`, `EMPTY_UPDATE`, pesan duplikat (bentuk sama dengan kategori).
+- `src/lib/brands/validation.ts` — `brandSchema`, `brandUpdateSchema`, semua pesan Zod exact.
+- `src/lib/categories/validation.ts` — `slugSchema` diimpor lintas fitur brand.
+- `src/app/admin/brands/page.tsx` — Server Component, header "Brand".
+- `src/components/admin/TaxonomyManager.tsx` — UI bersama.
+- `src/lib/utils/prisma-error.ts` — mapping P2002/P2003/P2025 + `DUPLICATE` 409.
 
 ---
 
@@ -810,6 +1458,121 @@ Tidak ada.
 ### 13. Pertanyaan terbuka
 
 Tidak ada.
+
+---
+
+## <a name="cart-05"></a>CART-05 — Pemilihan Varian dari Kartu Produk (dialog)
+
+### 1. Identitas dan tujuan
+
+Modul: MOD-CART (berdekatan MOD-PROD tampilan katalog). Dipicu permintaan pengguna 2026-10-15: tombol "Keranjang" dan "Beli" pada kartu produk (beranda, katalog, hasil cari/filter) saat ini langsung memakai varian pertama yang stoknya tersedia, sehingga pembeli tidak sempat memilih varian. Tujuannya: bila produk punya lebih dari satu varian dengan stok efektif, klik tombol membuka dialog pemilihan varian terlebih dahulu — nama produk, gambar, daftar varian; ditambah tautan bergaya *back link* ke halaman detail untuk bagan ukuran dan detail lengkap.
+
+Dua tambahan 2026-10-15 (massukan pengguna kedua dan ketiga, keputusan `docs/04` bagian 10 dan 16):
+
+- **Stok efektif (dilaporkan lewat tangkapan layar kartu "bias"):** kartu tadinya tidak menghitung kuantitas varian yang sudah di keranjang pembeli, sehingga tombol tetap aktif lalu klik ditolak "Stok tidak cukup (tersisa 0)". Kartu kini menilai `stok efektif = stock - kuantitas di keranjang`; bila semua unit sudah di keranjang, tombol "Keranjang" mengarah langsung ke halaman keranjang dengan highlight baris itemnya.
+- **Keputusan tampilan:** tombol keadaan itu cukup berlabel "Keranjang" (bukan "Semua stok ada di keranjang"), tanpa dialog tambahan — klik menuju halaman keranjang dan men-highlight baris varian (termasuk yang unitnya tinggal satu / *last-only stock*).
+
+### 2. Prasyarat dan pemicu
+
+- Layar memakai `ProductCard` dengan `canShop = true` (Guest/Customer).
+- Data varian sudah disertakan server saat render (`ProductWithRelations.variants`), jadi tidak ada API baru.
+- Komponen dialog tersedia (`src/components/ui/dialog.tsx`, Radix).
+- **Stok efektif:** halaman beranda/katalog membaca kuantitas keranjang pembeli (`getCartQuantities` — guest Redis / customer `CartItem`) sekali per render dan meneruskannya ke kartu.
+
+Pemicu: klik tombol "Keranjang" atau "Beli" pada kartu.
+
+### 3. Entitas terkait
+
+Read-only terhadap `ProductVariant` dan gambar `ProductImage` (role `SIZE_CHART` untuk tautan); penulisan data hanya lewat CART-01 (`POST /api/cart`).
+
+### 4. Input, validasi, kegagalan (data)
+
+Tidak ada input baru. Pilihan varian = `variantId` dari dialog; validasi server tetap milik CART-01: cek varian ada, produk tersedia, dan stok cukup (`400 INSUFFICIENT_STOCK` dengan `remaining = stock - kuantitas di keranjang`). Server penentu akhir. Pesan galat yang masih mungkin (stok berubah di antara render dan klik) ditampilkan lewat komponen `Alert` destruktif — di dalam dialog lewat `FormErrorAlert`, dan pada kartu satu varian sebagai `Alert` destruktif, bukan teks merah mentah.
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Klik "Keranjang"/"Beli" pada kartu multi-varian | state lokal | Dialog "Pilih Varian" terbuka, varian pertama yang stok efektifnya tersedia terpilih |
+| 2 | Pilih varian | state lokal | Ringkasan harga mengikuti varian terpilih |
+| 3 | Klik "Keranjang" / "Beli" | `POST /api/cart` | Item masuk keranjang; "Beli" lanjut ke `/checkout?variantIds=...` |
+| 4 | Dialog tutup | `router.refresh()` | Kartu segar; kuantitas baru di keranjang ikut mengubah stok efektif |
+
+Pada produk satu varian berstok-efektif, langkah 1 langsung ke langkah 3 tanpa dialog.
+
+### 6. Output dan perubahan data
+
+- **Data diubah:** hanya via CART-01 (keranjang guest Redis / `CartItem` customer), kuantitas 1 per klik.
+- **Tidak mengubah:** produk, varian, stok gudang.
+
+### 7. Alur alternatif
+
+- Produk punya **satu varian** yang stok efektifnya tersedia: klik langsung tanpa dialog.
+- Klik gambar atau nama produk: menuju detail tanpa dialog.
+- Semua varian stok gudang 0: tombol "Stok habis" disabled, tanpa dialog.
+- Semua unit varian sudah di keranjang pembeli (stok gudang > 0, stok efektif 0): tombol berganti satu tombol outline berlabel **"Keranjang"**; klik `router.push("/cart?hilite=<variantId>")` — halaman keranjang men-highlight baris item varian itu dan menggulirnya ke pandangan (bagian 9), tanpa permintaan ke server.
+
+### 8. Perilaku kegagalan
+
+| Kondisi | Sumber | Respons |
+| --- | --- | --- |
+| Stok varian berkurang saat dialog terbuka | `POST /api/cart` | `400 INSUFFICIENT_STOCK`, pesan tampil di dalam dialog, dialog tetap terbuka |
+| Semua varian stok 0 | — | Tombol "Stok habis" disabled, tanpa navigasi |
+| Semua unit varian sudah di keranjang pembeli | — | Tombol "Keranjang" aktif; klik menuju halaman keranjang dengan highlight, tanpa permintaan ke server |
+| Role bukan pembeli | — | Tombol tidak dirender |
+
+### 9. Perilaku UI
+
+- **Kartu:** dua tombol `sm` sejajar ("Keranjang" outline, "Beli" default); keadaan penuh di keranjang diganti satu tombol outline "Keranjang".
+- **Dialog** (`VariantPickerDialog`, `max-w-md`): judul "Pilih Varian"; ringkasan gambar 64px + nama + harga varian terpilih; daftar varian radio dengan harga dan keterangan (`Stok {efektif}` / "Stok habis" / "Sudah di keranjang" untuk yang sudah di keranjang penuh); CTA "Keranjang" dan "Beli" (nonaktif bila varian terpilih tidak berstok efektif atau pending); `FormErrorAlert`; tautan "Lihat bagan ukuran & detail lengkap" hanya bila produk punya gambar `SIZE_CHART`.
+- **Halaman keranjang:** parameter `hilite=<variantId>` (dipisah koma bila beberapa) membuat baris `CartItemRow` yang cocok di-highlight (latar `bg-accent/40` + cincin `ring-2 ring-primary`) dan digulir ke tengah pandangan saat pertama tampil; parameter tidak memengaruhi pengecekan item untuk checkout.
+- Pilihan kembali ke varian pertama yang tersedia setiap dialog dibuka ulang (remount lewat `key`, bukan setState dalam effect).
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-CART-05-01 | Produk multi-varian | Klik "Keranjang" | Dialog terbuka, daftar varian, varian pertama tersedia terpilih |
+| AC-CART-05-02 | Dialog terbuka | Pilih varian, klik "Keranjang" | Item varian terpilih masuk keranjang |
+| AC-CART-05-03 | Dialog terbuka | Klik "Beli" | Item masuk keranjang lalu pindah ke `/checkout?variantIds=...` |
+| AC-CART-05-04 | Produk satu varian berstok | Klik "Keranjang"/"Beli" | Langsung tanpa dialog |
+| AC-CART-05-05 | Varian dengan stok 0 | Lihat daftar | Baris disabled "Stok habis" |
+| AC-CART-05-06 | Semua varian habis | Klik tombol | Tidak ada dialog; tombol "Stok habis" disabled |
+| AC-CART-05-07 | Produk punya gambar `SIZE_CHART` | Lihat dialog | Tautan "Lihat bagan ukuran & detail lengkap" menuju detail produk |
+| AC-CART-05-08 | Dialog terbuka, stok varian berkurang | Klik "Keranjang" | `400 INSUFFICIENT_STOCK`, pesan tampil di-dialog |
+| AC-CART-05-09 | Escape / backdrop | Tutup dialog | Tanpa perubahan keranjang |
+| AC-CART-05-10 | Semua unit varian sudah di keranjang (stok gudang > 0, stok efektif 0) — termasuk unit stok terakhir | Klik tombol kartu | Satu tombol "Keranjang" aktif; klik menuju `/cart?hilite=<variantId>`, baris item varian itu di-highlight dan digulir ke pandangan; tanpa permintaan tulis ke server |
+| AC-CART-05-11 | Varian yang semua unitnya sudah di keranjang pembeli | Lihat daftar dialog | Baris disabled berlabel "Sudah di keranjang"; CTA mati bila varian terpilih demikian; baris berstok efektif lain menampilkan `Stok {efektif}` |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Multi-varian | "Kaos Polos Katun Combed 30s" | Dialog dengan radio per varian, harga ikut terpilih | AC-01 |
+| Satu varian | produk varian tunggal berstok | Langsung tanpa dialog | AC-04 |
+| Habis | varian stok 0 | Baris disabled "Stok habis" | AC-05 |
+| Bagan ukuran | produk dengan gambar `role=SIZE_CHART` | Tautan muncul | AC-07 |
+| Stok efektif 0 (2026-10-15) | produk "bias" stok gudang 1, 1 unit sudah di keranjang | Tombol "Keranjang" → `/cart?hilite=<id varian roha>`, baris highlight | AC-10 |
+| Dialog "Sudah di keranjang" | kaos varian M stok 25, 25 unit di keranjang | Baris M disabled "Sudah di keranjang" | AC-11 |
+
+### 12. Batas fitur
+
+- **Termasuk:** dialog pemilihan varian dari kartu, stok efektif di kartu/dialog, arah ke halaman keranjang dengan highlight bila semua stok sudah di keranjang
+- **Tidak termasuk:** kuantitas > 1 per klik (naikkan di halaman keranjang, CART-02), duplikasi bagan ukuran dalam dialog, dialog tambahan untuk keadaan penuh di keranjang, perubahan API/skema
+- **Ketergantungan:** CART-01, PROD-05 (gambar `SIZE_CHART`), `ProductCard`/`ProductGrid`, `src/lib/cart/queries.ts` (`getCartQuantities`), halaman keranjang (`CartView`/`CartItemRow`)
+
+### 13. Pertanyaan terbuka
+
+Tidak ada.
+
+**Rujukan kode:**
+
+- `src/components/products/VariantPickerDialog.tsx` — dialog pemilihan varian + `stokEfektif` + tipe `CardVariantOption` (kolom `keranjang`).
+- `src/components/products/ProductCardActions.tsx` — tiga keadaan tombol: stok habis / penuh di keranjang (push `/cart?hilite=...`) / normal (dialog atau langsung).
+- `src/components/products/ProductCard.tsx`, `ProductGrid.tsx` — penerus `cartQuantities` (angka, bukan `Decimal`, aman lewat props RSC).
+- `src/lib/cart/queries.ts` — `getCartQuantities(identity)` kuantitas per varian.
+- `src/components/cart/CartView.tsx` + `CartItemRow.tsx` — penerimaan parameter `hilite` (highlight + menggulir).
+- Halaman beranda + katalog — `getCartQuantities` sekali per render.
 
 ---
 
@@ -1622,6 +2385,1610 @@ Tidak berlaku â€” background process.
 
 - Idempotensi memakai klaim baris `Payment` di database (`updateMany` bersyarat), bukan penanda Redis. Redis hanya dipakai fitur lain (OTP, keranjang guest, pembatasan lacak).
 - `404 PAYMENT_NOT_FOUND` membuat Xendit mengirim ulang webhook untuk pembayaran yang tidak dikenal. Dibiarkan sesuai tabel kondisi gagal; bisa diubah ke `200` bila kebisingan retry mengganggu.
+
+---
+
+## <a name="vouch-01"></a>VOUCH-01 — Apply Voucher
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | VOUCH-01 — Apply Voucher |
+| Modul | MOD-VOUCH |
+| Tujuan | Pembeli memasukkan kode voucher saat checkout, memperoleh pratinjau diskon yang dihitung server, dan diskon final diterapkan saat pesanan dibuat |
+| Aktor utama | Customer (login) dan Guest (keranjang + OTP) di `/checkout` |
+| Status | Terimplementasi (PH-05); lanjutan cakupan produk/kategori pada PH-06 |
+| Referensi PRD | PRD 5.4 (konfigurasi voucher), PRD 5.3 (mekanisme diskon), PRD 7.5 (maksimal 2 voucher) |
+| Referensi SDD | SDD 4.6; bukti `docs/04` bagian 8 (rincian PH-05: keputusan stacking, kuota, pratinjau server) dan bagian 9 (cakupan voucher) |
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** `/checkout` (dari ORDER-02); input voucher muncul setelah keranjang valid
+- **Pemicu:** pembeli mengetik kode lalu klik tombol tambah; setiap perubahan tarif ongkir atau metode pickup memicu validasi ulang (voucher ongkir bergantung tarif terpilih)
+- **Jika tidak terpenuhi:** tanpa keranjang/identitas → `403 FORBIDDEN` dari `getCartAccess()`
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Customer / Guest dengan keranjang | Pratinjau diskon voucher | `POST /api/vouchers/validate` (subtotal dihitung server dari keranjang) | `403 FORBIDDEN` bila akses keranjang gagal |
+| Guest / Customer | Terapkan diskon final | `POST /api/orders/create` dengan `voucherCodes` (field ORDER-01) | `400 INVALID_VOUCHER` bila kuota lewat di transaksi |
+| Store Admin | Membuat/mengelola voucher sumber | VOUCH-02 | - |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| codes | String[] | Tidak (default `[]`) | tiap kode 1..30 karakter, regex `^[A-Za-z0-9_-]+$`; array maksimal 2 | "Kode voucher wajib diisi" / "Kode voucher tidak valid" / "Maksimal 2 voucher per transaksi" |
+| variantIds | String[] | Ya | 1..50 UUID item yang ada di keranjang | "Pilih minimal satu produk" / "Terlalu banyak produk dipilih" |
+| shippingCost | Number | Tidak (default 0) | 0..1.000.000.000 (hanya untuk pratinjau voucher ongkir) | "Nilai tidak valid" |
+| phone | String | Tidak | `phoneSchema`: 1..20 karakter, hanya angka, dinormalisasi | "Nomor HP wajib diisi" / "Nomor HP hanya boleh berisi angka" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Pembeli ketik kode di `/checkout`, klik tambah | `POST /api/vouchers/validate` dengan `codes`, `variantIds`, `shippingCost`, `phone` | Kode masuk daftar chip (maksimal 2) |
+| 2 | Server hitung subtotal dari keranjang, bukan dari klien | - | Subtotal bersumber server (OWASP A03/A04) |
+| 3 | `resolveVouchers` memeriksa aturan PRD 5.4 | `200 {"valid": true, "subtotal", "discount": {productDiscount, shippingDiscount, totalDiscount, breakdown}, "errors": []}` | Diskon tampil di ringkasan |
+| 4 | Pembeli klik "Buat Pesanan" | `POST /api/orders/create` mengirim `voucherCodes`; `createOrder` menghitung ulang semuanya | `Order.discount` terisi, `VoucherUsage` terekam |
+| 5 | Server naikkan `usageCount` dengan `updateMany` bersyarat `usageCount < usageLimit` | - | Kuota aman dari pesanan berbarengan |
+| 6 | System | - | Ringkasan pesanan menampilkan baris "Diskon voucher" |
+
+### 6. Output dan perubahan data
+
+- **Data dibaca:** keranjang (variantId → quantity), `ProductVariant.price`, `Product.categoryId`, model `Voucher`, `VoucherProduct`, `VoucherCategory`, `VoucherCompatibility`, `VoucherUsage`
+- **Data dibuat:** baris `VoucherUsage` (`voucherId`, `orderId`, `phone`, `amount`) — hanya jika `breakdown` tidak kosong
+- **Data diubah:** `Voucher.usageCount` (+1 per voucher terpakai, dalam transaksi pesanan)
+- **Kondisi akhir:** `Order.discount` > 0 bila voucher valid; angka final selalu hasil perhitungan ulang server, bukan angka pratinjau
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Validasi gagal (kode tidak dikenal, kedaluwarsa, dst.) | `resolveVouchers` tetap `200` dengan `valid: false` dan daftar `errors: {code, reason}` | Pesan alasan tampil per chip voucher; angka diskon 0 |
+| Beberapa voucher, sebagian tidak valid | Semua voucher ditolak (reject-all), termasuk gagal kombinasi stacking | Tidak ada diskon sebagian |
+| Nominal/persentase melebihi dasar yang dicakup | `calculateDiscount` membatasi per voucher dengan total baris yang dicakup | Potongan tidak lebih besar dari dasar |
+| Metode pickup / ongkir berubah | Validasi ulang otomatis dengan nilai `shippingCost` baru (0 untuk pickup) | Voucher ongkir sesuai tarif terpilih |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Akses keranjang tidak valid | `403 FORBIDDEN` | Perbaiki sesi/keranjang |
+| Body bukan JSON valid / Zod gagal | `400 VALIDATION_ERROR` (pesan persis kolom 4) | Perbaiki input |
+| Tidak ada identitas keranjang atau item terpilih kosong | `400 CART_EMPTY` "Keranjang kosong" | Isi keranjang dulu |
+| Kuota habis di sela transaksi (`bumped.count === 0`) | `400 INVALID_VOUCHER` "Kuota voucher sudah habis" (di `createOrder`) | Hilangkan voucher; transaksi dibatalkan |
+| Kode tidak ditemukan/tidak aktif/belum berlaku/kedaluwarsa | `200 valid:false`; `reason` "Kode voucher tidak ditemukan" / "Voucher tidak aktif" / "Voucher belum berlaku" / "Voucher sudah kedaluwarsa" | Tampilkan di chip |
+| Minimal belanja / cakupan / kuota / per-HP / stacking tidak terpenuhi | `reason`: "Minimal belanja {nominal}" / "Voucher tidak berlaku untuk produk di keranjang" / "Kuota voucher sudah habis" / "Voucher sudah dipakai untuk nomor HP ini" / "Tidak bisa digabung dengan {kode}" (default menolak) | Tampilkan di chip |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/checkout`, blok **Voucher** — input "Kode voucher", tombol tambah nonaktif saat `voucherLoading`, input kosong, atau kode sudah mencapai 2
+- **Keterangan:** "Maksimal 2 voucher per transaksi."
+- **Setiap kode dirender sebagai chip** dengan tombol hapus dan pesan `reason` merah per chip bila ada
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Memeriksa voucher | "Memeriksa voucher..." | Tunggu |
+| Voucher valid | Baris "Diskon voucher" `-Rp...` di ringkasan; total berkurang | Lanjut buat pesanan |
+| Voucher gagal | Pesan `reason` per chip; diskon 0 | Hapus chip / pakai kode lain |
+| Slot penuh (2) | Tombol tambah nonaktif | Hapus chip untuk mengganti |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-VOUCH-01-01 | Voucher nominal aktif, keranjang memenuhi min transaksi | Masukkan kode di `/checkout` | Baris "Diskon voucher" muncul dengan angka dari server |
+| AC-VOUCH-01-02 | Dua voucher tanpa baris `VoucherCompatibility` | Masukkan keduanya | Keduanya ditolak dengan "Tidak bisa digabung dengan {kode}" (default menolak) |
+| AC-VOUCH-01-03 | `usageLimit` tercapai | Pratinjau / buat pesanan | "Kuota voucher sudah habis"; transaksi tidak dibuat |
+| AC-VOUCH-01-04 | `usageLimitPerPhone` tercapai untuk nomor HP pembeli | Validasi dengan `phone` | "Voucher sudah dipakai untuk nomor HP ini" |
+| AC-VOUCH-01-05 | Voucher hanya berlaku untuk kategori A, keranjang berisi kategori B | Validasi | "Voucher tidak berlaku untuk produk di keranjang" |
+| AC-VOUCH-01-06 | Pembeli sudah memasukkan 2 voucher | Klik tambah | Input dibatasi maksimal 2; tombol tambah nonaktif |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Pratinjau valid | `{"codes":["VOUCH10"],"variantIds":["<uuid>"],"shippingCost":10000,"phone":"08123456789"}` | `valid:true`, `totalDiscount` > 0 | AC-VOUCH-01-01 |
+| Kode tidak dikenal | `codes: ["SALAH123"]` | `valid:false`, `errors[0].reason` = "Kode voucher tidak ditemukan" | - |
+| Lebih dari 2 | `codes: [c1, c2, c3]` | `400 VALIDATION_ERROR` "Maksimal 2 voucher per transaksi" | AC-VOUCH-01-06 |
+
+### 12. Batas fitur
+
+- **Termasuk:** pratinjau voucher server-side, maksimal 2 voucher, breakdown diskon dari server, cakupan produk/kategori (PH-06), kuota per HP, matriks kompatibilitas
+- **Tidak termasuk:** CRUD voucher admin (VOUCH-02), penghitungan diskon di sisi klien
+- **Ketergantungan:** MOD-CART (keranjang), ORDER-01/ORDER-02 (pembuatan pesanan), VOUCH-02 (sumber data voucher)
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada.
+
+**Rujukan kode:**
+
+- `src/app/api/vouchers/validate/route.ts` — endpoint pratinjau, subtotal dihitung server.
+- `src/lib/vouchers/eligibility.ts` — pemeriksaan aturan PRD 5.4 + pesan `reason`.
+- `src/lib/vouchers/calculation.ts` — urutan nominal → persentase, cakupan, voucher ongkir terpisah.
+- `src/lib/vouchers/validation.ts` — `voucherValidateSchema` (kolom 4).
+- `src/lib/orders/mutations.ts` — penerapan final di `createOrder` + `VoucherUsage` + `usageCount`.
+- `src/components/checkout/CheckoutForm.tsx` — perilaku UI chip dan pemanggilan validasi.
+- `src/lib/orders/validation.ts` — `voucherCodes` pada skema order create.
+
+---
+
+## <a name="vouch-02"></a>VOUCH-02 — Voucher CRUD (Store Admin)
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | VOUCH-02 — Voucher CRUD |
+| Modul | MOD-VOUCH |
+| Tujuan | Store Admin membuat, melihat daftar/detail, mengubah, dan menghapus voucher beserta cakupan produk/kategori dan matriks kompatibilitas stacking |
+| Aktor utama | STORE_ADMIN |
+| Status | Terimplementasi (PH-05); cakupan produk/kategori di PH-06 |
+| Referensi PRD | PRD 5.4 (8 pengaturan per voucher + stacking compatibility) |
+| Referensi SDD | SDD 4.6; bukti `docs/04` bagian 8 (TASK-50, uji H1-H24, keputusan stacking default menolak) |
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** `/admin/vouchers`, `/admin/vouchers/new`, `/admin/vouchers/[id]/edit`
+- **Pemicu:** Store Admin membuka daftar, menekan Tambah, memilih voucher untuk edit, atau menjalankan tombol hapus
+- **Jika tidak terpenuhi:** tanpa sesi → `401 UNAUTHORIZED` (`requireStoreAdmin` → `unauthorized()`); role salah → `403 FORBIDDEN` (`forbidden()`)
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| STORE_ADMIN | Daftar + detail + buat + ubah + hapus | `GET/POST /api/admin/vouchers`, `GET/PATCH/DELETE /api/admin/vouchers/[id]` | - |
+| Customer / Guest / role lain | Akses endpoint mana pun | - | `401` / `403` |
+| Akun dinonaktifkan | Semua aksi | `findUserAccessById` memeriksa `deactivatedAt` | `401 UNAUTHORIZED` |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| code (body, POST/PATCH) | String | Ya | trim, upperCase, 3..30 karakter, regex `^[A-Z0-9_-]+$` | "Kode voucher wajib diisi" / "Kode minimal 3 karakter" / "Kode hanya boleh huruf, angka, minus, dan garis bawah" |
+| type | enum `PERCENTAGE` \| `NOMINAL` \| `SHIPPING` | Ya | `VOUCHER_TYPES` | "Jenis voucher wajib dipilih" / "Jenis voucher tidak valid" |
+| discountPercentage | Number | Ya bila PERCENTAGE | 0..100 (moneySchema: 0..1e9) | "Persentase wajib diisi" / "Persentase maksimal 100" |
+| discountAmount | Number | Ya bila NOMINAL/SHIPPING | 0..1e9 | "Nominal wajib diisi" |
+| maxDiscount | Number | Tidak | 0..1e9 | "Nilai terlalu besar" |
+| minTransaction | Number | Tidak (default 0) | 0..1e9 | "Nilai tidak boleh negatif" |
+| usageLimit, usageLimitPerPhone | Number \| null | Tidak | int 0..1.000.000 atau null | "Harus bilangan bulat" / "Tidak boleh negatif" |
+| validFrom, validUntil | Date (coerce) | Ya | `validUntil > validFrom` | "Tanggal mulai wajib diisi" / "Tanggal akhir harus setelah tanggal mulai" |
+| isActive | Boolean | Tidak (default `true`) | boolean | "Status tidak valid" |
+| compatibleVoucherIds | UUID[] | Tidak (default `[]`) | maks 50 UUID | "Voucher tidak valid" |
+| eligibleProductIds / excludedProductIds | UUID[] | Tidak (default `[]`) | maks 200 UUID | "Produk tidak valid" / "Terlalu banyak produk dipilih" |
+| categoryIds | UUID[] | Tidak (default `[]`) | maks 100 UUID | "Kategori tidak valid" / "Terlalu banyak kategori dipilih" |
+| id (param) | String | Ya | UUID | `400 INVALID_ID` "ID tidak valid" |
+| page, limit, search (GET list) | Number / String | Tidak | page≥1, limit 1..100 (default 20), search≤200 tanpa kontrol karakter | "Kata kunci tidak valid" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Admin buka `/admin/vouchers` | `GET /api/admin/vouchers?page&limit&search` | Daftar voucher terbaru dengan `_count.usages` |
+| 2 | Admin pilih Tambah / Edit | `VoucherForm` memuat opsi produk (maks 500), kategori, dan voucher lain (`getVoucherOptions`, `getVoucherScopeOptions`) | Form siap |
+| 3 | Admin isi form → simpan | `POST /api/admin/vouchers` atau `PATCH /api/admin/vouchers/[id]` | `201 {voucher}` / `200 {voucher}` |
+| 4 | Server transaksional | `createVoucher` / `updateVoucher` (Prisma `$transaction`) | Baris voucher dibuat/diubah, `VoucherCompatibility` dan cakupan diselangkan ulang |
+| 5 | Admin hapus | `DELETE /api/admin/vouchers/[id]` | `200 {deleted:true}` |
+| 6 | Admin kembali ke daftar | - | Voucher tampil di daftar; status/periode/kuota tercatat |
+
+### 6. Output dan perubahan data
+
+- **Data dibaca:** `Voucher`, `VoucherProduct`, `VoucherCategory`, `VoucherCompatibility`, opsi `Product`/`Category`
+- **Data dibuat:** `Voucher`, `VoucherCompatibility` (`voucherAId`, `voucherBId`, `isAllowed: true`), `VoucherProduct` (kind `ELIGIBLE`/`EXCLUDED`), `VoucherCategory`
+- **Data diubah:** field `voucherData()` — field yang tidak relevan dengan type dikosongkan (mis. `discountAmount = null` pada voucher persentase); sync compat dan scope memakai pola "deleteMany lalu createMany" supaya form menjadi satu-satunya sumber kebenaran; produk eligible menang atas produk yang sama di daftar excluded
+- **Data dihapus:** voucher + relasinya (`deleteVoucher`)
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| PATCH mengubah kode ke yang sudah dipakai voucher lain | Prisma `P2002` | `409 DUPLICATE` "Kode voucher sudah digunakan" |
+| POST dengan kode yang sudah ada | Prisma `P2002` | `409 DUPLICATE` "Kode voucher sudah digunakan" |
+| GET/POST dari bukan STORE_ADMIN | - | `401` / `403` |
+| GET/PATCH/DELETE ID tidak ada | - | `404 NOT_FOUND` "Voucher tidak ditemukan" |
+| Cakupan merujuk data yang tidak ada | Prisma `P2003` | `400 INVALID_REFERENCE` "Data terkait tidak ditemukan" |
+
+### 8. Kondisi gagal
+
+| Kondisi | Kode HTTP | Tindakan |
+| --- | --- | --- |
+| Tanpa sesi | `401 UNAUTHORIZED` | Login ulang sebagai admin |
+| Role bukan STORE_ADMIN | `403 FORBIDDEN` | Cek role |
+| Zod gagal | `400 VALIDATION_ERROR` + daftar path persis kolom 4 | Perbaiki input |
+| ID param bukan UUID | `400 INVALID_ID` "ID tidak valid" | Perbaiki URL |
+| Detail/PATCH/DELETE voucher tidak ada | `404 NOT_FOUND` "Voucher tidak ditemukan" | Muat ulang daftar |
+| Kode duplicate | `409 DUPLICATE` "Kode voucher sudah digunakan" | Pakai kode lain |
+| Error server tak terduga | `500 INTERNAL_ERROR` "Terjadi kesalahan, coba lagi" (detail hanya ke log, OWASP A09) | Cek log server |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/admin/vouchers` → tombol Tambah dan daftar dengan status aktif; `/admin/vouchers/new` dan `/admin/vouchers/[id]/edit` sama-sama memakai `VoucherForm`
+- **Form:** pilih jenis voucher, nilai diskon sesuai jenis, min transaksi, periode, kuota total, kuota per HP, status `isActive`, matriks kompatibilitas, cakupan (produk eligible, produk dikecualikan, kategori)
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Menyimpan | Tombol nonaktif / state loading | Tunggu |
+| Validasi gagal | Pesan per field dari Zod | Perbaiki |
+| Kode duplicate | "Kode voucher sudah digunakan" | Ganti kode |
+| Berhasil | Alihkan/refresh ke daftar; voucher tampil | Lanjut kelola voucher lain |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-VOUCH-02-01 | Admin login | `POST /api/admin/vouchers` dengan payload nominal valid | `201` dan voucher tampil di daftar |
+| AC-VOUCH-02-02 | Kode voucher sudah ada | `POST` dengan kode sama | `409 DUPLICATE` "Kode voucher sudah digunakan" |
+| AC-VOUCH-02-03 | Admin login | `GET /api/admin/vouchers` | `200` daftar + total, terurut `createdAt desc` |
+| AC-VOUCH-02-04 | Customer login | `GET /api/admin/vouchers` | `403 FORBIDDEN` |
+| AC-VOUCH-02-05 | Admin login | `PATCH /api/admin/vouchers/[id]` data valid | `200`, compat dan scope terganti utuh |
+| AC-VOUCH-02-06 | Admin login, voucher ada | `DELETE /api/admin/vouchers/[id]` | `200 {deleted:true}`; akses berikutnya `404` |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Nominal valid | `{"code":"GRATIS10K","type":"NOMINAL","discountAmount":10000,"minTransaction":50000,"validFrom":"2026-10-01","validUntil":"2026-10-31","usageLimit":100,"usageLimitPerPhone":1}` | `201` | AC-VOUCH-02-01 |
+| Persentase dengan cap | `{"code":"DISK20","type":"PERCENTAGE","discountPercentage":20,"maxDiscount":50000,"validFrom":"...","validUntil":"..."}` | Voucher dengan batas potongan | AC-VOUCH-02-05 |
+| Duplicate | `code: "GRATIS10K"` dikirim kedua kali | `409` "Kode voucher sudah digunakan" | AC-VOUCH-02-02 |
+
+### 12. Batas fitur
+
+- **Termasuk:** CRUD voucher, matriks `VoucherCompatibility` (default menolak), cakupan produk/kategori (`VoucherProduct.kind` `ELIGIBLE`/`EXCLUDED`), kuota total + per HP, batasan `maxDiscount` untuk voucher persentase
+- **Tidak termasuk:** penerapan voucher di checkout (VOUCH-01), bulk import/export voucher, arsip/riwayat voucher yang dihapus
+- **Ketergantungan:** MOD-AUTH (guard `requireStoreAdmin`), data produk/kategori untuk opsi cakupan
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada.
+
+**Rujukan kode:**
+
+- `src/app/api/admin/vouchers/route.ts`, `src/app/api/admin/vouchers/[id]/route.ts` — endpoint CRUD dan kode error.
+- `src/lib/vouchers/validation.ts` — `voucherSchema`, `voucherListQuerySchema`.
+- `src/lib/vouchers/queries.ts` — daftar/detail/opsi cakupan.
+- `src/lib/vouchers/mutations.ts` — transaksi create/update/delete + sync compat/scope.
+- `src/lib/utils/prisma-error.ts` — P2002 → `409 DUPLICATE` "Kode voucher sudah digunakan".
+- `src/app/admin/vouchers/page.tsx`, `src/app/admin/vouchers/new/page.tsx`, `src/app/admin/vouchers/[id]/edit/page.tsx` — halaman admin.
+
+---
+
+## <a name="notif-01"></a>NOTIF-01 — Send Email Notification
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | NOTIF-01 — Send Email Notification |
+| Modul | MOD-NOTIF |
+| Tujuan | Mengirim email transaksional berisi ringkasan pesanan kepada pembeli pada kejadian pesanan; hanya channel email (lewat HTTP API Resend), tanpa SMS/WhatsApp |
+| Aktor utama | System (Server) |
+| Status | Terimplementasi (PH-05); email lanjutan (shipped/cancel/refund) pada lanjutan NOTIF-01 di PH-06 |
+| Referensi PRD | PRD 3.1.I (notifikasi email) |
+| Referensi SDD | SDD 4.9; bukti `docs/04` bagian 8 (keputusan `EMAIL_FROM` dari env, jalur email non-blocking) dan bagian 9 (email shipped/cancel/refund — 2 dari 6 jenis jalan sejak PH-05) |
+
+### 2. Prasyarat dan pemicu
+
+- **Prasyarat:** `RESEND_API_KEY` terisi; tanpa nilai itu, `isEmailConfigured()` mengembalikan `false` dan seluruh pengiriman email **dilewati** tanpa menggagalkan alur pesanan/pembayaran (non-blocking, SDD 4.9)
+- **Pemicu (tabel kejadian):**
+
+| Kejadian | Fungsi | Template |
+| --- | --- | --- |
+| Pesanan dibuat | `sendOrderConfirmationEmail(orderId)` (dipanggil di `POST /api/orders/create`) | `buildOrderConfirmationEmail` |
+| Pembayaran `PAID` (webhook Xendit / rekonsiliasi) | `sendPaymentSuccessEmail(orderId)` lewat `applyPaidPayment` | `buildPaymentSuccessEmail` |
+| Pesanan dikirim (PH-06) | `sendOrderShippedEmail(orderId)` | `buildOrderShippedEmail` |
+| Pembatalan disetujui / ditolak (PH-06) | `sendCancellationEmail(orderId, decision)` dengan decision `"approved" | "rejected"` | `buildCancellationEmail` |
+| Refund selesai (PH-06) | `sendRefundCompletedEmail(orderId)` | `buildRefundCompletedEmail` |
+| (Terkait, bukan pesanan) | `src/lib/notifications/account-emails.ts` — email akun | - |
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| System (Server) | Kirim email transaksional | `sendEmail` → `POST https://api.resend.com/emails` dengan `Authorization: Bearer ${RESEND_API_KEY}` | `NOT_CONFIGURED` / `PROVIDER_ERROR` (hanya dicatat di log) |
+| Customer | Mengatur preferensi per jenis email | `shouldSendNotification(order.userId, "orderConfirmation")` dst. (PH-07/PH-10) | Preferensi menolak → email tidak dikirim |
+| Tidak ada endpoint publik | - | - | - |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| to (SendEmailInput) | String | Ya | `resolveRecipient` = `order.guestEmail ?? order.user?.email`; kosong → fungsi return tanpa kirim | - |
+| subject | String | Ya | dibangun template; contoh persis: `Konfirmasi Pesanan ${order.orderNumber} - ${brandName}` | - |
+| html | String | Ya | `renderLayout` (heading, intro, bodyHtml, footerHtml = brandName) | - |
+| Env `RESEND_API_KEY` | String | Ya (konfigurasi) | `process.env.RESEND_API_KEY?.trim()` tidak boleh kosong | `NOT_CONFIGURED` |
+| Env `EMAIL_FROM` | String | Tidak | default `getEmailFrom(brandName)` = `${brandName} <onboarding@resend.dev>` | `PROVIDER_ERROR` dari Resend bila domain belum terverifikasi |
+| Env `NEXT_PUBLIC_APP_URL` | String | Tidak | default `"http://localhost:3000"` untuk link `orderUrl` | - |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Kejadian terjadi (mis. pesanan dibuat) | - | Server memanggil fungsi pengiriman |
+| 2 | Cek konfigurasi | `isEmailConfigured()` `false` → return | Email dilewati tanpa memengaruhi alur |
+| 3 | Muat order + items + user | `prisma.order.findUnique` | Data order + brand dimuat |
+| 4 | Tentukan penerima (`resolveRecipient`) | `guestEmail` dulu, lalu `user.email` | Guest pun tetap dapat konfirmasi |
+| 5 | Cek preferensi | `shouldSendNotification` | Boleh kirim |
+| 6 | Kirim ke Resend | `fetch` `POST` dengan `Authorization: Bearer ${apiKey}` | Respons ok → `{ ok: true }` |
+| 7 | Tidak ada perubahan data | - | Alur utama (pesanan/pembayaran) tetap jalan |
+
+### 6. Output dan perubahan data
+
+- **Tidak ada perubahan data** — tidak ada tabel log email di database
+- **Side effect eksternal:** email terkirim ke penerima; jejak kegagalan hanya di log server `[notifications]`
+- **Data dibaca:** `Order` + items + `user.email` (+ `Payment.paidAt`, `Refund` terbaru, `trackingNumber`, `cancelReason`/`cancelRejectionReason`), brand (`getBrandSetting`) untuk nama pengirim dan footer
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Guest checkout | Email tetap terkirim, penerima `guestEmail` | Guest dapat konfirmasi ke email yang diisi saat checkout |
+| Pesanan tidak punya user dan email guest | `resolveRecipient` null → return | Tidak ada email terkirim, alur tetap jalan |
+| Domain uji Resend (`onboarding@resend.dev`) | Resend hanya menerima kirim ke alamat pemilik akun — `403` dicatat sebagai `PROVIDER_ERROR` di log, pesanan tetap `201` (bukti `docs/04` bagian 8, uji H15: jalur email terbukti non-blocking) | Pesanan tetap berhasil |
+| User menolak jenis email | `shouldSendNotification` false | Email tidak dikirim |
+
+### 8. Kondisi gagal
+
+| Kondisi | Kode HTTP | Tindakan |
+| --- | --- | --- |
+| `RESEND_API_KEY` kosong | (bukan HTTP — fail-safe) | `NOT_CONFIGURED` dicatat; fungsi return, order diproses seperti biasa |
+| Respons Resend non-2xx | (status Resend apa pun; log persis: `[notifications] Resend menolak (${response.status}): ${detail}`) | `PROVIDER_ERROR` dicatat, alur pemanggil tetap jalan |
+| Resend tidak bisa dihubungi (network/error) | log `[notifications] Resend gagal dihubungi` | `PROVIDER_ERROR`, tanpa melempar error |
+| Handler melempar error apa pun | (try/catch di luar setiap fungsi) | `console.error`, aplikasi tetap jalan — detail error hanya di log (OWASP A09) |
+
+### 9. Perilaku UI
+
+- **Tidak ada UI khusus** — output berupa email HTML yang diterima pembeli
+- **Template teks ringkas (konfirmasi):** heading "Pesanan Diterima", intro "Terima kasih, pesanan Anda sudah kami catat."; nomor pesanan + status + kurir; tabel item; ringkasan "Subtotal" / "Ongkos kirim" / ("Diskon voucher" bila > 0) / "Total"; bila `stockReservedUntil` ada: "Selesaikan pembayaran sebelum {tanggal} agar pesanan tidak dibatalkan otomatis"; tombol/link `Lihat Pesanan & Bayar` → `{appUrl}/orders/{id}`; footer = nama brand
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Order dibuat | Konfirmasi + link `/orders/{id}` | Lanjut bayar |
+| Pembayaran PAID | Email pembayaran (nomor pesanan, `total`, `paidAt`, link `/orders/{id}`) | - |
+| Shipped (PH-06) | Link pelacakan: user → `/orders/{id}/tracking`; guest → `/track-order` | Lacak |
+| Pembatalan approved/rejected (PH-06) | `decision` + `order.cancelReason` / `order.cancelRejectionReason` | - |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-NOTIF-01-01 | Pesanan dibuat (customer atau guest dengan email terisi) | Server menyelesaikan `POST /api/orders/create` | Email terkirim dengan subjek persis `Konfirmasi Pesanan {orderNumber} - {brandName}`; pesanan tetap dibuat walau email gagal |
+| AC-NOTIF-01-02 | Webhook Xendit atau rekonsiliasi menerapkan `PAID` | `applyPaidPayment` jalan | Email pembayaran terkirim; webhook tetap sukses |
+| AC-NOTIF-01-03 | `RESEND_API_KEY` kosong | Kejadian email mana pun | Tidak ada panggilan Resend; server tidak error |
+| AC-NOTIF-01-04 | `RESEND_API_KEY` terisi tetapi Resend menolak (403 domain uji) | Konfirmasi email | Log mencatat `Resend menolak (403)`, respons tetap `201`, order tetap jalan |
+| AC-NOTIF-01-05 | Pesanan tanpa `user` dan tanpa `guestEmail` | Kejadian email | Tidak ada eksekusi kirim; tidak error |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Konfirmasi guest | `orderId: "<uuid>"`, `guestEmail` terisi | `to = guestEmail`, subjek `Konfirmasi Pesanan FLEX-0000001 - FlexStore` | AC-NOTIF-01-01 |
+| Env default | `RESEND_API_KEY` terisi, `EMAIL_FROM` kosong, `NEXT_PUBLIC_APP_URL` kosong | from `FlexStore <onboarding@resend.dev>`, link `http://localhost:3000/orders/{id}` | bukti `docs/04` bagian 8 |
+| Email gagal but non-blocking | Resend menolak 403 | log `[notifications] Resend menolak (403): ...`, order tetap `201` | AC-NOTIF-01-04 |
+
+### 12. Batas fitur
+
+- **Termasuk:** email konfirmasi + pembayaran (PH-05), email shipped/cancel/refund (lanjutan NOTIF-01 PH-06), penerima guest maupun customer
+- **Tidak termasuk:** SMS/WhatsApp, email ke admin, editor template, retry/queue (fail-safe saja, bukan job)
+- **Terkait tapi di luar NOTIF-01:** NOTIF-02 pusat notifikasi in-app (PH-10)
+- **Ketergantungan:** MOD-ORDER (kejadian pesanan), MOD-PAY (kejadian webhook), MOD-CUST (`shouldSendNotification`, PH-07), env `RESEND_API_KEY` / `EMAIL_FROM` / `NEXT_PUBLIC_APP_URL`
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada. (Catatan `docs/04` bagian 8: email produksi butuh domain terverifikasi di Resend via `EMAIL_FROM`; dengan default `onboarding@resend.dev` hanya alamat pemilik akun Resend yang bisa menerima.)
+
+**Rujukan kode:**
+
+- `src/lib/notifications/email.ts` — `sendEmail` non-blocking, env `RESEND_API_KEY`, log "Resend menolak".
+- `src/lib/notifications/config.ts` — `isEmailConfigured`, `getEmailFrom` (`EMAIL_FROM`, default `onboarding@resend.dev`).
+- `src/lib/notifications/order-emails.ts` — fungsi per kejadian + `resolveRecipient` + `trackingUrlFor`.
+- `src/app/api/orders/create/route.ts` — pemicu `sendOrderConfirmationEmail` setelah pesanan dibuat.
+- `src/lib/payments/mutations.ts` — `sendPaymentSuccessEmail` pada `applyPaidPayment`.
+- `src/emails/order-confirmation.ts` — template teks ringkas + subjek persis.
+
+---
+
+## <a name="inv-01"></a>INV-01 — Generate Invoice (HTML siap-cetak)
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | INV-01 — Generate Invoice |
+| Modul | MOD-INV |
+| Tujuan | Menyediakan dokumen invoice untuk pesanan yang sudah lunas, dirender sebagai halaman HTML siap-cetak yang bisa disimpan sebagai PDF lewat dialog cetak browser |
+| Aktor utama | Customer (login) dan Guest (cookie bertanda-tangan) |
+| Status | Terimplementasi (PH-05); revisi akses 2026-10-11: invoice hanya untuk pesanan lunas |
+| Referensi PRD | PRD invoice (MOD-INV; rujukan SDD 4.10) |
+| Referensi SDD | SDD 4.10 — deviasi tercatat: **bukan** `@react-pdf/renderer`, tapi halaman HTML + `window.print()`; bukti `docs/04` bagian 8 (butir 7, deviasi) dan bagian 10 (keputusan "invoice hanya untuk lunas") |
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** `/orders/[id]` → tombol **Lihat Invoice** (hanya dirender bila `order.payment?.status === "PAID"`), atau URL langsung `/orders/[id]/invoice`
+- **Pemicu:** render Server Component (`await connection()`)
+- **Jika tidak terpenuhi:** order tidak ditemukan / akses tidak cocok / pembayaran belum `PAID` → `notFound()` (HTTP `404`) — URL langsung pun ditolak
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Customer (login) | Lihat invoice pesanannya | `getShopperUser()` + `getOrderDetail(user.id, id)` | Bukan miliknya → `404` (AC-ORDER-02-04) |
+| Guest | Lihat invoice pesanannya | `getGuestAccessPhone()` + `getGuestOrderDetail(id, guestPhone)` (cookie bertanda-tangan) | Tidak cocok → `404` |
+| Pesanan belum bayar / dibatalkan sebelum bayar / ID salah | Semua | - | `404` dari `notFound()` |
+| Pesanan lunas yang kemudian dibatalkan + refund | Lihat invoice (bukti transaksi tetap sah) | `payment.status` masih `PAID` | Tetap bisa diakses (keputusan `docs/04` bagian 10) |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| id (param URL) | String | Ya | harus cocok order milik pemanggil; guest divalidasi lewat `guestPhone` cookie | Tidak cocok → `notFound()` |
+| order.payment.status | enum Prisma | Ya (wajib `PAID`) | `order.payment?.status !== "PAID"` → `notFound()` | - |
+| order.shippingAddress | JSON | Tidak (bila kosong, field tampil kosong) | field opsional: `name, phone, street, city, province, district, subdistrict, postalCode` | - |
+| brand (SITE-05, PH-09) | brand setting | Tidak | `getBrandSetting()` — `brandName`, `logoUrl` untuk kop invoice | - |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Pembeli lunas buka `/orders/[id]` | Tombol "Lihat Invoice" tampil | Tautan ke `/orders/[id]/invoice` |
+| 2 | Pembeli klik tautan / buka URL langsung | Render page | `200` halaman dengan `metadata.title = "Invoice"` |
+| 3 | Page memeriksa akses (aturan sama dengan halaman pesanan) | `getShopperUser` / `getGuestAccessPhone` | Order valid milik pemanggil |
+| 4 | Cek `payment?.status === "PAID"` | `notFound()` bila tidak lunas | Hanya pesanan lunas yang bisa dibuka |
+| 5 | Halaman menampilkan kop `LUNAS` + rincian | - | Invoice sesuai kolom 9 |
+| 6 | Pembeli klik tombol **Cetak / Simpan PDF** | `window.print()` | Dialog cetak browser terbuka; PDF bisa disimpan |
+
+### 6. Output dan perubahan data
+
+- **Tidak ada perubahan data** — halaman read-only, tidak ada mutasi
+- **Data dibaca:** `Order` (orderNumber, status, subtotal, discount, shippingCost, total, shippingCourier, shippingService, shippingEtd, shippingAddress JSON, createdAt), `OrderItem` (productName, variantName, sku, quantity, price), `Payment.status`, brand setting
+- **Output:** halaman HTML dengan varian CSS cetak (`print:*`); elemen navigasi (`BackLink`, tombol cetak) disembunyikan saat mencetak (`print:hidden`)
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Pesanan lunas kemudian dibatalkan + refund | `payment.status` tetap `PAID`, halaman tidak menolak (bukti transaksi tetap sah) | Invoice tetap bisa diakses |
+| Guest kehilangan cookie akses | `getGuestAccessPhone()` null | `notFound()` |
+| `discount` = 0 | Baris "Diskon voucher" disembunyikan | Ringkasan hanya Subtotal / Ongkos kirim / Total |
+| `shippingAddress` kosong | Field alamat tampil kosong (tidak crash) | Page tetap dirender |
+| Logo brand tidak diatur | Fallback tampilkan nama brand sebagai teks | Kop tetap ada |
+
+### 8. Kondisi gagal
+
+| Kondisi | Kode HTTP | Tindakan |
+| --- | --- | --- |
+| ID tidak ada di DB | `404` (dari `notFound()`) | Halaman 404 Next.js default |
+| Order milik pengguna lain (customer) | `404` (bukan `403`, agar keberadaan tidak bocor — AC-ORDER-02-04) | Halaman 404 |
+| Guest tanpa cookie yang cocok | `404` | Akses ulang dari halaman pesanan guest |
+| Pembayaran belum `PAID` (WAITING_PAYMENT/EXPIRED, atau dibatalkan sebelum bayar) | `404` — URL langsung pun ditolak | Bayar pesanan dulu lewat "Bayar Sekarang" (PAY-01) |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/orders/[id]/invoice`, `metadata.title = "Invoice"`
+- **Kop:** logo (atau nama brand) di kiri; di kanan: teks status — `LUNAS` bila `isPaid`, label status pesanan sebagai cadangan; tanggal `formatDateTime(order.createdAt)`; teks `Invoice {order.orderNumber}`
+- **Ditagihkan kepada:** `address.name`, `address.phone`, `address.street`, gabungan koma dari `subdistrict, district, city, province, postalCode` (field kosong dibuang)
+- **Pengiriman:** `{courier} - {service}` atau `"-"`, plus `Estimasi {shippingEtd}` bila ada
+- **Tabel item:** kolom Item (nama produk + `variantName` + `SKU {item.sku}`) | Qty | Harga (`formatRupiah(price)`) | Jumlah (`formatRupiah(price * quantity)`)
+- **Ringkasan:** Subtotal, Diskon voucher (hanya bila > 0, bentuk `-Rp...`), Ongkos kirim, Total (tebal)
+- **Cetak:** `PrintButton` (`window.print()` teks tombol "Cetak / Simpan PDF"); kontainer memakai `print:max-w-none print:px-0 print:py-0`; baris `BackLink` + `PrintButton` diberi `print:hidden`
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Pesanan lunas | Invoice penuh + tombol `Cetak / Simpan PDF` + `Kembali ke pesanan` | Cetak/simpan PDF |
+| Pesanan belum bayar | `404 NOT_FOUND` | Tidak ada invoice; kembali ke pesanan |
+| Tautan di `/orders/[id]` pada pesanan belum lunas | Tombol "Lihat Invoice" tidak dirender | - |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-INV-01-01 | Pesanan lunas milik customer login | Buka `/orders/{id}/invoice` | Invoice tampil dengan kop `LUNAS`, item, dan Total; tombol `Cetak / Simpan PDF` menjalankan `window.print()` |
+| AC-INV-01-02 | Pesanan belum dibayar | Buka URL langsung `/orders/{id}/invoice` | `404 NOT_FOUND`; tombol `Lihat Invoice` tidak muncul di `/orders/[id]` |
+| AC-INV-01-03 | Pesanan dibatalkan sebelum bayar | Buka URL langsung | `404` — invoice hanya sah setelah lunas |
+| AC-INV-01-04 | Pesanan lunas milik customer lain | Buka URL invoice | `404` (bukan `403`); keberadaan tidak bocor |
+| AC-INV-01-05 | Guest punya cookie akses, pesanan lunas | Buka URL invoice | Invoice tampil |
+| AC-INV-01-06 | Pesanan lunas lalu dibatalkan + refund | Buka invoice | Tetap tampil (bukti transaksi tetap sah) |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Invoice tampil | `id: "<uuid-pesanan-lunas>"` | Kop `brand.brandName` + `Invoice FLEX-0000001`, `LUNAS` | AC-INV-01-01 |
+| Belum bayar | `payment.status = "PENDING"` | `notFound()` → halaman 404 Next.js | AC-INV-01-02 |
+| Pasca-refund | `payment.status = "PAID"`, `Order.status = "CANCELED"` | Invoice tetap tampil | AC-INV-01-06 |
+
+### 12. Batas fitur
+
+- **Termasuk:** akses lewat sesi customer / cookie guest, filter `payment.status === "PAID"`, cetak lewat `window.print()` + CSS `print:*`, tautan `Lihat Invoice` di `/orders/[id]` hanya untuk lunas, kop memakai `getBrandSetting` (SITE-05)
+- **Tidak termasuk:** PDF yang dibangkitkan server (`@react-pdf/renderer` ditolak sebagai deviasi tercatat), invoice untuk pesanan belum lunas, lampiran PDF di email
+- **Ketergantungan:** ORDER (data Order/OrderItem), PAY-01 (`Payment.status` untuk keputusan lunas), SITE-05 (`getBrandSetting` untuk logo + nama brand di kop)
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada.
+
+**Rujukan kode:**
+
+- `src/app/(storefront)/orders/[id]/invoice/page.tsx` — halaman, `notFound()`, filter pembayaran lunas, brand, field yang tampil.
+- `src/components/invoices/PrintButton.tsx` — tombol "Cetak / Simpan PDF" dengan `window.print()`.
+- `src/app/(storefront)/orders/[id]/page.tsx` — tautan "Lihat Invoice" dirender hanya bila `order.payment?.status === "PAID"`.
+- `src/lib/orders` (`getOrderDetail`, `getGuestOrderDetail`, `getGuestAccessPhone`) — aturan akses customer vs guest.
+
+---
+
+## <a name="ship-02"></a>SHIP-02 — Track Shipment
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | SHIP-02 — Track Shipment |
+| Modul | MOD-SHIP |
+| Tujuan | Membuat pelanggan (customer dan guest) bisa melihat status perjalanan pesanan: nomor resi dari Store Admin, kurir/layanan, dan riwayat milestone (dibuat → dibayar → dikirim → selesai), tanpa membuka keberadaan pesanan ke pihak luar |
+| Aktor utama | Customer (login), Guest (publik, dengan nomor pesanan + nomor HP) |
+| Status | Terimplementasi (PH-06) |
+| Referensi PRD | 2.2 ("Track shipping status", "Tracking order tanpa input data"), 4.9 ("Tracking link") |
+| Referensi SDD | 4.7 (shipping), 5 (rute `/api/orders/track`, `/orders/[id]/tracking`, `/track-order`) |
+
+### 2. Prasyarat dan pemicu
+
+- Sumber data: pesanan memasuki status `SHIPPED` via ORDER-07 (admin isi `trackingNumber`); field `Order.trackingNumber`, `shippedAt`, `shippingCourier`, `shippingService`, `shippingEtd`.
+- Pemicu guest: membuka `/track-order` lalu mengirim form lacak (`POST /api/orders/track`).
+- Pemicu customer: membuka `/track-order` (daftar pesanan dalam perjalanan) atau tombol **Lacak** di `/orders` menuju `/orders/[id]/tracking`.
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Guest (publik) | Lacak via form | Kepemilikan dibuktikan dengan pasangan `orderNumber` + `phone` yang cocok (`guestPhone` atau nomor HP akun customer) | Data salah → `404 NOT_FOUND` "Pesanan tidak ditemukan" (generik, `AC-ORDER-04-02`); >10 percobaan/IP/10 menit → `429 RATE_LIMITED` |
+| Customer (login) | Daftar pesanan dalam perjalanan + detail tracking | Sesi (`getShopperUser`), query dibatasi `userId` | Pesanan bukan miliknya / ID bukan UUID → `notFound()` (404 generik) |
+| Admin | Tidak memakai jalur ini; admin memakai `/admin/orders` (ORDER-07) | - | - |
+
+### 4. Input dan validasi
+
+Endpoint `POST /api/orders/track`, body divalidasi dengan `trackOrderSchema` (`src/lib/orders/validation.ts`):
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| orderNumber | String | Ya | `.trim().toUpperCase().regex(ORDER_NUMBER_PATTERN)` — pola `/^FS-\d{8}-[A-Z0-9]{6}$/` (`src/lib/orders/number.ts`) | "Nomor pesanan wajib diisi" / "Nomor pesanan tidak valid" |
+| phone | String | Ya | `phoneSchema`: min 1, maks 20 karakter, `PHONE_CHARS_REGEX`, dinormalisasi ke `+62…`, refine `/^\+62\d{8,11}$/` | "Nomor HP wajib diisi" / "Nomor HP hanya boleh berisi angka" / "Nomor HP tidak valid" / "Nomor HP maksimal 20 karakter" |
+
+Detail tracking per pesanan (halaman `/orders/[id]/tracking`) tidak menerima input selain parameter rute `id`.
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Guest buka `/track-order`, isi nomor pesanan + nomor HP, klik "Lacak Pesanan" | `POST /api/orders/track` | Form tampil; customer login tidak melihat form (hanya daftar) |
+| 2 | Server | Validasi Zod, lalu `allowTrackAttempt(getClientIp(request))` (Redis, kunci `track:limit:<ip>`, maks 10/600 detik) | Dibatasi atau lanjut |
+| 3 | Server | `findOrderForTracking(orderNumber, phone)` — `prisma.order.findFirst({ where: { orderNumber, OR: [{ guestPhone: phone }, { user: { phone } }] }, include: { items: true } })` | Pesanan cocok |
+| 4 | Server | `apiSuccess({ order: {...} })` | Status, ringkasan biaya, kurir/layanan/ETD, alamat, item dikembalikan (tanpa `userId`/`guestEmail`) |
+| 5 | Client | Kartu hasil dirender di `TrackOrderForm` | Pelanggan melihat status dan detail pesanan |
+| 6 | Customer login | Buka `/orders/[id]/tracking` | Riwayat Perjalanan (4 milestone dengan waktu nyata) + kartu Pengiriman (kurir, nomor resi, estimasi, tujuan) |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Tampilan status perjalanan; tidak ada perubahan data pesanan.
+- **Data dibaca:** Order (status, `createdAt`, subtotal, `shippingCost`, discount, total, `shippingCourier`, `shippingService`, `shippingEtd`, `shippingAddress`, `trackingNumber`, `shippedAt`, `payment.paidAt`, items) — hanya-baca.
+- **Data dibuat/diubah:** Tidak ada. `releaseExpiredReservations()` dipanggil sebagai efek samping housekeeping di awal query.
+- **Data dibuat di sisi rate limit:** kunci Redis `track:limit:<ip>` dengan `INCR` + `EXPIRE` 600 detik.
+- **Catatan:** riwayat hanya milestone dengan waktu nyata (tanpa tabel riwayat status di schema).
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Customer login membuka `/track-order` | Form disembunyikan; server memanggil `getInTransitOrdersForUser(user.id)` — `PROCESSING`/`SHIPPED` milik user, urut `createdAt` desc | Daftar "Pesanan Dalam Perjalanan" dengan tombol "Lacak" ke `/orders/[id]/tracking` |
+| Tidak ada pesanan dalam perjalanan | Teks "Tidak ada pesanan yang sedang diproses atau dikirim." | Bagian kosong informatif |
+| Redis gagal / tidak ada IP | `allowTrackAttempt` menangkap error, catat log `[orders] pembatasan lacak gagal, dilewati`, kembalikan `true` | Fitur tetap jalan (degrade gracefully) |
+| Pesanan belum memiliki resi | Tracking page menampilkan `-` untuk nomor resi; detail pesanan menampilkan resi hanya bila ada | Tampilan tetap konsisten |
+
+### 8. Kondisi gagal
+
+| Kondisi | Respons | Tindakan |
+| --- | --- | --- |
+| Body tidak valid (Zod gagal) | `400 VALIDATION_ERROR` (pesan per field bagian 4) | Perbaiki isian form |
+| Lebih dari 10 percobaan / 10 menit per IP | `429 RATE_LIMITED` — "Terlalu banyak percobaan, coba lagi nanti" | Tunggu jendela waktu |
+| `orderNumber` benar tapi `phone` tidak cocok | `404 NOT_FOUND` — "Pesanan tidak ditemukan" (sama persis dengan pesanan tidak ada) | Cek ulang data; keberadaan pesanan tidak bocor |
+| Customer membuka pesanan milik lain | Halaman `notFound()` (404) | Tidak ada tindakan |
+| Terjadi error server | Ditangani `withRouteErrors` | Tanggapan galat generik |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/track-order` (judul "Lacak Pesanan", metadata `{ title: "Lacak Pesanan" }`, `export const instant = false`).
+- **Komponen:** `TrackOrderForm` (`src/components/orders/TrackOrderForm.tsx`) — input `track-order-number` (placeholder `FS-20261010-AB12CD`), `track-phone` (filter `PHONE_INPUT_FILTER`), tombol "Lacak Pesanan" / "Mencari...".
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal (guest) | Form kosong | Isi lalu kirim |
+| Mencari | Tombol "Mencari...", disabled | Tunggu |
+| Ditemukan | Kartu hasil: nomor pesanan, waktu, badge status, daftar item, Subtotal/Ongkir/Total, "Kirim ke ..." | Baca |
+| Galat | `FormErrorAlert` dengan pesan dari server | Perbaiki lalu coba lagi |
+| Customer login | Section "Pesanan Dalam Perjalanan" + list dengan `OrderStatusBadge` | Klik "Lacak" |
+| Detail tracking | `/orders/[id]/tracking`: "Riwayat Perjalanan" (maks 4 milestone) + "Pengiriman" | Baca |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-SHIP-02-01 | Pesanan `PROCESSING` menjadi `SHIPPED` dengan resi (ORDER-07) | Customer buka `/orders/[id]/tracking` | Milestone "Dikirim" + nomor resi tampil |
+| AC-SHIP-02-02 | Guest punya pesanan dengan nomor HP yang sama | `POST /api/orders/track` dengan pasangan cocok | `200`, status + item + total dikembalikan tanpa `userId`/`guestEmail` |
+| AC-SHIP-02-03 | Nomor HP salah | `POST /api/orders/track` | `404 NOT_FOUND` "Pesanan tidak ditemukan", pesan sama dengan "pesanan tidak ada" |
+| AC-SHIP-02-04 | 10 percobaan gagal dari IP yang sama | Percobaan ke-11 | `429 RATE_LIMITED` "Terlalu banyak percobaan, coba lagi nanti" |
+| AC-SHIP-02-05 | Customer login membuka `/track-order` | Halaman dimuat | Daftar pesanan `PROCESSING`/`SHIPPED` tanpa input; tanpa form |
+| AC-SHIP-02-06 | Customer A membuka `/orders/<id-milik-B>/tracking` | Halaman dimuat | 404 generik |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Lacak valid | `{ "orderNumber": "FS-20261010-AB12CD", "phone": "08123456789" }` | `200 { order: { orderNumber, status, subtotal, shippingCost, discount, total, shippingCourier, shippingService, shippingEtd, shippingAddress, items[] } }` | AC-SHIP-02-02 |
+| Nomor pesanan salah format | `orderNumber: "ABC123"` | `400 VALIDATION_ERROR` "Nomor pesanan tidak valid" | AC-SHIP-02-03 |
+| Detail customer | `/orders/<uuid>/tracking` | Riwayat: "Pesanan dibuat" → "Pembayaran diterima" → "Dikirim" → "Selesai" | AC-SHIP-02-01 |
+
+### 12. Batas fitur
+
+- **Termasuk:** resi + kurir + milestone dari data internal (tampilan), lacak publik guest, daftar in-transit customer, rate limit IP.
+- **Tidak termasuk:** integrasi real-time ke sistem pelacakan kurir (RajaOngkir/cek resi langsung), riwayat checkpoint kurir pihak ketiga, notifikasi SMS.
+- **Ketergantungan:** ORDER-07 (admin memasukkan nomor resi, transisi `PROCESSING` → `SHIPPED`), MOD-ORDER (status pesanan), Redis (rate limit, degrade gracefully), email shipped (NOTIF-01 lanjutan).
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada.
+
+**Rujukan kode:**
+
+- `src/app/api/orders/track/route.ts` — endpoint `POST /api/orders/track`: validasi, rate limit, pencarian, pesan 404 generik.
+- `src/lib/orders/validation.ts` — `trackOrderSchema` dan pesan errornya.
+- `src/lib/orders/number.ts` — `ORDER_NUMBER_PATTERN = /^FS-\d{8}-[A-Z0-9]{6}$/`.
+- `src/lib/orders/queries.ts` — `findOrderForTracking` (pasangan nomor pesanan + HP).
+- `src/lib/orders/rate-limit.ts` — `allowTrackAttempt`, `getClientIp`, kunci `track:limit:<ip>`.
+- `src/lib/orders/admin.ts` — `getInTransitOrdersForUser`, `getTrackingOrderForUser`, `markOrderShipped` (sumber resi).
+- `src/app/(storefront)/track-order/page.tsx` — halaman dua jalur guest/customer.
+- `src/app/(storefront)/orders/[id]/tracking/page.tsx` — detail tracking session-scoped, milestone.
+- `src/components/orders/TrackOrderForm.tsx` — form lacak guest dan kartu hasil.
+- `docs/04_IMPLEMENTATION_PLAN.md` bagian 9.4/9.5 — bukti verifikasi PH-06 dan laporan review.
+
+---
+
+## <a name="ship-03"></a>SHIP-03 — Pickup / Ambil di Toko
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | SHIP-03 — Pickup / Ambil di Toko |
+| Modul | MOD-SHIP |
+| Tujuan | Menyediakan metode pemenuhan pesanan tanpa pengiriman: pembeli memilih "Ambil di toko" di checkout, tanpa kurir/tujuan dan tanpa ongkir, bila opsi diaktifkan Store Admin |
+| Aktor utama | Customer dan Guest (checkout), Store Admin (pengatur) |
+| Status | Terimplementasi (PH-06) |
+| Referensi PRD | 3.1.F ("Ambil di toko"), 3.1.J, 4.7 |
+| Referensi SDD | 4.7 (shipping), 4.11 (config), 5 (rute `/checkout`, `/api/orders/create`), 6.2 (status `Order.fulfillment`) |
+
+### 2. Prasyarat dan pemicu
+
+- `StoreSetting.pickupEnabled = true` (diatur di `/admin/settings`, CONFIG-01); opsi pickup tampil di `/checkout` hanya bila `getPickupSettings().enabled`.
+- Pemicu: pembeli memilih fulfillment `PICKUP` pada checkout, lalu mengirim `POST /api/orders/create` dengan `fulfillment: "PICKUP"`.
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Customer (login) | Membuat pesanan pickup | Sesi (`getCartAccess`) | Opsi tidak tampil bila pickup nonaktif |
+| Guest (OTP terverifikasi) | Membuat pesanan pickup | `guestPhone` + penanda `isPhoneVerified` di Redis | `403 PHONE_NOT_VERIFIED` bila belum verifikasi |
+| Admin | Membuat pesanan pickup | - | Tidak ada; admin bukan pembeli (jalur checkout menolak role lain) |
+| Store Admin | Mengaktifkan pickup + isi info | `requireStoreAdmin()` di `/api/admin/settings` | `401` tanpa sesi (bukti `docs/04` bagian 9.4 V6) |
+
+### 4. Input dan validasi
+
+Bagian dari `orderCreateSchema` (`src/lib/orders/validation.ts`); eksak:
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| fulfillment | Enum `"DELIVERY" \| "PICKUP"` | Tidak (default `"DELIVERY"`) | `z.enum(FULFILLMENT_METHODS)`, `FULFILLMENT_METHODS = ["DELIVERY", "PICKUP"]` | "Metode pemenuhan tidak valid" |
+| variantIds | UUID[] | Ya | min 1, maks 50 | "Pilih minimal satu produk" / "Terlalu banyak produk dipilih" / "Varian tidak valid" |
+| address | `shippingAddressSchema` | Ya (subset) | `name` (`personNameSchema`) dan `phone` (`phoneSchema`) wajib; untuk PICKUP hanya nama + nomor HP yang dipakai — `street`/`city`/`province`/`postalCode` opsional | "Nama wajib diisi", "Nomor HP wajib diisi", dsl. |
+| destinationId, courierCode, service | - | Tidak untuk PICKUP | `superRefine` hanya mewajibkan field kurir/alamat lengkap bila `fulfillment === "DELIVERY"`; komentar eksak: "Pickup tidak butuh kurir maupun alamat lengkap (SHIP-03)" | - |
+
+Di `POST /api/orders/create`: kewajiban `destinationId` ("Tujuan wajib dipilih") dilewati bila `isPickup`.
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Store Admin aktifkan pickup di `/admin/settings` | `PATCH /api/admin/settings` | `pickupEnabled = true`, `pickupInfo` tersimpan |
+| 2 | Pembeli buka `/checkout` | Halaman membaca `getPickupSettings()` + brand | Radio "Ambil di toko" tampil dengan label "Ambil di {brandName}", alamat toko, telepon, info |
+| 3 | Pembeli pilih "Ambil di toko" | `handleFulfillment("PICKUP")`: `setShipping(null)`, voucher ongkir divalidasi ulang dengan tarif 0 | Ongkir kosong; permintaan tarif kurir tidak dibuat |
+| 4 | Pembeli kirim form | `POST /api/orders/create` dengan `fulfillment: "PICKUP"` | Validasi Zod lolos tanpa field kurir/tujuan |
+| 5 | Server | `createOrder`: `isPickup` → `shippingCost = 0`, `courier`, `service`, `etd` tetap `null`; langkah `calculateShippingQuote` dan pencocokan opsi kurir di-skip | Ongkir nol (PRD 3.1.F) |
+| 6 | Server | Reservasi stok, pesanan dibuat dengan `fulfillment = PICKUP`, voucher tetap boleh dipakai | `201`, pesanan status `WAITING_PAYMENT` |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** Order dengan `fulfillment = PICKUP`, `shippingCost = 0`, `shippingCourier`/`shippingService`/`shippingEtd` = `null`, alamat hanya menyimpan nama + nomor HP.
+- **Data dibaca:** keranjang, varian, store settings (`getPickupSettings`), brand (`getBrandSetting`).
+- **Data dibuat:** Order + OrderItem seperti jalur DELIVERY.
+- **Data diubah:** `ProductVariant.stock`/`Product.totalStock` turun (reservasi sama seperti jalur biasa); item keranjang terpilih dihapus.
+- **Kondisi akhir:** total = subtotal − diskon voucher (tanpa ongkir).
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Pickup nonaktif (`pickupEnabled = false`) | Radio pickup tidak dirender di `CheckoutForm` | Pembeli hanya bisa DELIVERY |
+| Voucher ongkir dipilih lalu beralih ke PICKUP | Voucher divalidasi ulang dengan `cost 0` (`validateVouchers(voucherCodes, 0)`) | Voucher ongkir tidak menimbulkan potongan tanpa tarif |
+| Guest pickup tetap wajib OTP | `isPhoneVerified(guestPhone)` dicek di route | `403 PHONE_NOT_VERIFIED` bila belum |
+| Pickup dipilih lalu kembali ke DELIVERY | `handleFulfillment("DELIVERY")` memulihkan validasi voucher dengan tarif tersimpan | Keadaan form kembali konsisten |
+
+### 8. Kondisi gagal
+
+| Kondisi | Kode HTTP / respons | Tindakan |
+| --- | --- | --- |
+| Body tidak valid | `400 VALIDATION_ERROR` — pesan Zod per field | Perbaiki isian |
+| Telah masuk tanpa sesi/akses keranjang | `403` — `forbidden()` | Masuk sebagai customer/guest |
+| Keranjang kosong | `400 CART_EMPTY` — "Keranjang kosong" | Isi keranjang |
+| Stok tidak cukup | `400 INSUFFICIENT_STOCK` — "Stok {productName} tidak cukup" | Perbarui keranjang |
+| Voucher ditolak | `400 INVALID_VOUCHER` — alasan pertama dari server | Hapus/ganti voucher |
+| Mode pemeliharaan | `503 MAINTENANCE` | Coba lagi nanti |
+
+### 9. Perilaku UI
+
+- **Halaman admin:** `/admin/settings` — judul "Pengaturan Toko", deskripsi "Informasi toko, kebijakan, dan opsi ambil di toko."; `StoreSettingsForm` memuat checkbox `pickupEnabled` dan textarea `store-pickup-info` ("Informasi pickup", maks 1000 karakter).
+- **Halaman pembeli:** `/checkout` — `CheckoutForm` bagian radio (DELIVERY/PICKUP); kartu pickup menampilkan "Ambil di {pickup.brandName}", `pickup.storeAddress`, `pickup.storePhone`, `pickup.info`.
+- **Halaman pesanan:** `/orders/[id]` — judul bagian berganti menjadi "Ambil di Toko"; baris Alamat/Pengiriman/resi disembunyikan; resi tidak pernah diisi di jalur pickup. Detail admin `/admin/orders/[id]` menampilkan bagian sama.
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Pickup aktif + dipilih | Ongkos kirim Rp0 di ringkasan; kartu pengiriman tidak diminta | Isi nama + HP, kirim |
+| Pickup aktif, belum dipilih | Tampilan DELIVERY normal | Pilih sesuai kebutuhan |
+| Pickup nonaktif | Opsi tidak ada | - |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-SHIP-03-01 | Pickup aktif | Checkout, pilih "Ambil di toko", kirim | `201`, Order `fulfillment = PICKUP`, `shippingCost = 0` |
+| AC-SHIP-03-02 | Pickup aktif | `POST /api/orders/create` tanpa `courierCode`/`destinationId` | Tidak ada validasi kurir/tujuan; pesanan dibuat |
+| AC-SHIP-03-03 | Pickup nonaktif | Checkout | Opsi pickup tidak tampil |
+| AC-SHIP-03-04 | Pesanan pickup dibuat | Customer buka `/orders/[id]` | Bagian "Ambil di Toko", tanpa baris alamat lengkap/kurir |
+| AC-SHIP-03-05 | Pickup aktif dengan `pickupInfo` | Checkout | Info toko (alamat, telepon, info) tampil di kartu pickup |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Pickup valid | `{ "fulfillment": "PICKUP", "variantIds": ["<uuid>"], "address": { "name": "Budi Santoso", "phone": "08123456789" }, "voucherCodes": [] }` | `201`, order pickup tanpa ongkir | AC-SHIP-03-01/02 |
+| Pengaturan pickup | `PATCH /api/admin/settings` `{ "pickupEnabled": true, "pickupInfo": "Jam penjemputan 09.00-17.00", ... }` | Tersimpan di `store_settings` | AC-SHIP-03-03/05 |
+
+### 12. Batas fitur
+
+- **Termasuk:** toggle pickup di pengaturan toko, opsi di checkout, ongkir 0 + tanpa kurir, alamat minimal nama + HP, tampilan detail pesanan sesuai fulfillment.
+- **Tidak termasuk:** stok khusus "in-store", jadwal/konfirmasi waktu pengambilan, notifikasi "pesanan siap diambil" terpisah (email memakai jalur NOTIF-01 yang ada), penanda "ambil di toko" pada invoice.
+- **KONFIGURASI:** label pickup memakai `brandName` (keputusan `storeName` dihapus — `docs/04` bagian 10, catatan 2026-10-11); `storeName` di-drop dari `store_settings` (migrasi `20261011160000_drop_store_settings_store_name`).
+- **Ketergantungan:** CONFIG-01 (aktor pengatur), MOD-ORDER (pembuatan pesanan), MOD-VOUCH (validasi ulang voucher), MOD-AUTH (sesi, OTP guest).
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada.
+
+**Rujukan kode:**
+
+- `src/lib/orders/validation.ts` — `FULFILLMENT_METHODS`, `orderCreateSchema` + `superRefine` field opsional untuk pickup.
+- `src/lib/orders/mutations.ts` — `createOrder`: `isPickup` → ongkir 0, kurir/tujuan skip.
+- `src/app/api/orders/create/route.ts` — lewati kewajiban `destinationId` untuk pickup; pesan galat per jalur.
+- `src/components/checkout/CheckoutForm.tsx` — `handleFulfillment`, kartu "Ambil di {brandName}".
+- `src/app/(storefront)/checkout/page.tsx` — membaca `getPickupSettings()` + brand untuk props pickup.
+- `src/lib/config/queries.ts` / `validation.ts` / `mutations.ts` — `pickupEnabled`, `pickupInfo`, validasi, upsert.
+- `src/components/admin/StoreSettingsForm.tsx` — UI toggle + informasi pickup.
+- `src/app/(storefront)/orders/[id]/page.tsx`, `src/app/admin/orders/[id]/page.tsx` — tampilan detail sesuai `fulfillment`.
+- `prisma/schema.prisma` — `FulfillmentMethod { DELIVERY, PICKUP }`, `Order.fulfillment`, `StoreSetting`.
+- `docs/04_IMPLEMENTATION_PLAN.md` bagian 9.2 (keputusan pickup no. 9), 9.4 (V4/V6), 9.5 (butir 6) — bukti `docs/04` bagian 9.
+
+---
+
+## <a name="order-05"></a>ORDER-05 — Cancel Order Request
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | ORDER-05 — Cancel Order Request (pengajuan + peninjauan pembatalan pesanan) |
+| Modul | MOD-ORDER |
+| Tujuan | Pembeli (customer/guest) mengajukan pembatalan seluruh pesanan dengan alasan wajib; pesanan masuk status `CANCEL_REQUESTED` untuk ditinjau Store Admin: disetujui (stok kembali, refund dibuat bila sudah dibayar) atau ditolak (status kembali + alasan wajib) |
+| Aktor utama | Customer (login), Guest (akses pesanan via cookie), Store Admin (tinjau) |
+| Status | Terimplementasi (PH-06) |
+| Referensi PRD | PRD 5.5 (revisi 1.6), 3.1.G, 2.3 |
+| Referensi SDD | SDD 4.7, SDD 10 (A01/A03) |
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** halaman `/orders/[id]` (customer/guest) — kartu "Pembatalan" dirender hanya saat `order.status` adalah `WAITING_PAYMENT` atau `PROCESSING`
+- Pesanan customer: sesi login `CUSTOMER`; guest: cookie `flexstore_guest_access` bertanda HMAC berisi nomor HP terverifikasi (TTL 24 jam)
+- Pemicu: klik tombol "Ajukan Pembatalan" pada `CancelOrderForm`, lalu kirim form alasan
+- Aksi tinjauan admin dipicu dari `/admin/orders/[id]` saat status `CANCEL_REQUESTED`
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Customer (login) | `POST /api/orders/[id]/cancel` | Sesi `auth()` | Bukan `CUSTOMER` → `403 FORBIDDEN`; bukan pemilik pesanan → `404 NOT_FOUND` |
+| Guest (cookie akses) | `POST /api/orders/[id]/cancel` | `getGuestAccessPhone()` | `order.userId` tidak null, cookie tidak sah/kedaluwarsa, atau `guestPhone` tak sama → `404 NOT_FOUND` |
+| Store Admin | `PATCH /api/admin/orders/[id]` (`APPROVE_CANCEL` / `REJECT_CANCEL`) | `requireStoreAdmin()` (guard) | Tanpa sesi/akun nonaktif → `401 UNAUTHORIZED`; role lain → `403 FORBIDDEN` |
+| Site Admin | Tinjau pembatalan | - | Tidak ada jalur (guard hanya `STORE_ADMIN`) |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| id (path) | String UUID | Ya | `z.string().uuid()` | "ID tidak valid" (`400 INVALID_ID`) |
+| reason | String | Ya | `orderCancelRequestSchema`: trim, min 3, max 300 | "Alasan pembatalan wajib diisi"; "Alasan pembatalan minimal 3 karakter"; "Alasan pembatalan maksimal 300 karakter" (`400 VALIDATION_ERROR`) |
+| action (`APPROVE_CANCEL`) | Literal | Ya | Discriminated union `adminOrderActionSchema`, tanpa field lain | - |
+| action (`REJECT_CANCEL`) + rejectionReason | String | Ya | trim, min 3, max 300 | "Alasan penolakan wajib diisi"; "Alasan penolakan minimal 3 karakter"; "Alasan penolakan maksimal 300 karakter" |
+
+### 5. Alur berhasil (pengajuan + peninjauan)
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Pembeli buka `/orders/[id]`, klik "Ajukan Pembatalan" | Form textarea "Alasan pembatalan" tampil | Form aktif |
+| 2 | Kirim form | `POST /api/orders/[id]/cancel` | `200 { ok: true }`; `updateMany` bersyarat `status in [WAITING_PAYMENT, PROCESSING]` → status `CANCEL_REQUESTED`, `cancelRequestedAt` terisi, `cancelReason` tersimpan, `cancelRejectionReason` dinolkan |
+| 3 | Store Admin buka `/admin/orders/[id]` | Panel "Setujui Pembatalan" + form "Tolak Pembatalan" (template atau manual) tampil | Semua aksi via `PATCH /api/admin/orders/[id]` |
+| 4 | Admin klik "Setujui Pembatalan" | `cancelRequestedOrderAndReleaseStock`: klaim `status = CANCEL_REQUESTED` → `CANCELED` + `canceledAt`, stok varian dikembalikan dan `totalStock` disinkronkan | Pesanan berstatus Dibatalkan; email pembatalan "approved" terkirim |
+| 5 | Jika `payment.status === "PAID"` | Baris `Refund` dibuat jika belum ada: `amount = order.total`, `method = MANUAL`, `status = PENDING` | Refund muncul di kartu "Refund Menunggu Bukti" (jejak ORDER-06) |
+| 6 | Admin tolak (`REJECT_CANCEL`) | Klaim `status = CANCEL_REQUESTED` → status kembali `PROCESSING` (sudah dibayar) atau `WAITING_PAYMENT` (belum); `cancelRejectionReason` tersimpan | Email pembatalan "rejected" terkirim berisi alasan |
+
+### 6. Output dan perubahan data
+
+- **Data dibaca:** Order (`total`, `payment.status`, `userId`, `guestPhone`)
+- **Data diubah (pengajuan):** `Order.status = CANCEL_REQUESTED`, `cancelRequestedAt`, `cancelReason`, `cancelRejectionReason = null`
+- **Data diubah (setuju):** `Order.status = CANCELED`, `canceledAt`; `ProductVariant.stock` (increment) dan `Product.totalStock` (dihitung ulang) dalam satu transaksi
+- **Data dibuat (setuju):** baris `Refund` (`PENDING`) bila pesanan sudah dibayar
+- **Data diubah (tolak):** `Order.status` kembali ke `PROCESSING`/`WAITING_PAYMENT`, `cancelRejectionReason` terisi
+- **Email:** `sendCancellationEmail(orderId, "approved" | "rejected")` — hormati preferensi `cancellationUpdate`
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Guest cookie kedaluwarsa saat mengisi alasan | `getGuestAccessPhone()` → `null` | `404 "Pesanan tidak ditemukan"` |
+| Pesanan sudah diproses/dikirim dll. | `updateMany` klaim 0 baris | `409 INVALID_STATUS "Pesanan tidak bisa dibatalkan pada status ini"` |
+| Admin menolak pada status bukan `CANCEL_REQUESTED` | Klaim 0 baris | `409 INVALID_STATUS "Tidak ada pengajuan pembatalan yang menunggu tinjauan"` |
+| Baris refund sudah ada saat setujui | `findFirst` dulu, tidak membuat duplikat | Satu refund saja per pesanan |
+| Template alasan kosong | UI menampilkan "Belum ada template alasan. Tambahkan di menu Template Alasan." | Admin beralih mode manual |
+
+### 8. Kondisi gagal
+
+| Kondisi | Kode HTTP | Tindakan |
+| --- | --- | --- |
+| UUID path tidak valid (`/cancel`) | `400 INVALID_ID "ID tidak valid"` | Perbaiki ID |
+| Body tidak sesuai schema | `400 VALIDATION_ERROR` (pesan per-field bagian 4) | Perbaiki isian |
+| Bukan pemilik / cookie tak sah / pesanan tidak ada | `404 NOT_FOUND "Pesanan tidak ditemukan"` | Status generik agar keberadaan pesanan tidak bocor |
+| Bukan role `CUSTOMER` (Admin/Site Admin dengan sesi) | `403 FORBIDDEN "Anda tidak memiliki akses"` | Gunakan akun customer |
+| Status tidak bisa dibatalkan | `409 INVALID_STATUS "Pesanan tidak bisa dibatalkan pada status ini"` (kode string exact dari kode; alias `ORDER_NOT_CANCELLABLE` tidak dipakai) | Refresh halaman, cek status |
+| Penolakan tanpa `rejectionReason` / <3 karakter | `400 VALIDATION_ERROR` | Pilih template / isi manual |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/orders/[id]` — kartu "Pembatalan" (tombol "Ajukan Pembatalan" → form textarea, tombol "Kirim Pengajuan"/"Batal"); kartu "Pengajuan Pembatalan" saat `CANCEL_REQUESTED` (menampilkan `cancelReason`); kartu "Pembatalan Ditolak" saat `cancelRejectionReason` terisi
+- **Halaman admin:** `/admin/orders/[id]` — panel "Aksi" `AdminOrderActions` ketika status `CANCEL_REQUESTED`
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Form tertutup | Tombol "Ajukan Pembatalan" | Klik untuk membuka form |
+| Mengirim | Tombol "Mengirim..." nonaktif | Tunggu |
+| Sukses | `router.refresh()` | Kartu "Pengajuan Pembatalan" muncul |
+| Galat | `FormErrorAlert` dengan pesan dari server | Perbaiki lalu kirim ulang |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-ORDER-05-01 | Pesanan `WAITING_PAYMENT` milik customer | Ajukan pembatalan dengan alasan >3 karakter | Status `CANCEL_REQUESTED`, alasan tersimpan |
+| AC-ORDER-05-02 | Pesanan sudah dibayar, `CANCEL_REQUESTED` | Admin setujui | Status `CANCELED`, stok varian + `totalStock` kembali, baris `Refund PENDING` nominal total terbentuk |
+| AC-ORDER-05-03 | Pesanan `CANCEL_REQUESTED` belum dibayar | Admin tolak dengan alasan | Status kembali `WAITING_PAYMENT`, `cancelRejectionReason` tampil, email penolakan |
+| AC-ORDER-05-04 | Pesanan `SHIPPED` | Ajukan pembatalan | `409 INVALID_STATUS`, form tidak tersedia |
+| AC-ORDER-05-05 | Customer A login | Ajukan pembatalan pesanan milik customer B | `404 NOT_FOUND` |
+| AC-ORDER-05-06 | Guest dengan cookie akses | Ajukan pembatalan pesanan `guestPhone` miliknya | Pengajuan berhasil tanpa login |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Pengajuan | `POST /api/orders/<uuid>/cancel` body `{ "reason": "salah pilih ukuran" }` | `200 { "ok": true }` | AC-ORDER-05-01 |
+| Setujui | `PATCH /api/admin/orders/<uuid>` body `{ "action": "APPROVE_CANCEL" }` | Status Dibatalkan + refund PENDING | AC-ORDER-05-02 |
+| Tolak manual | `PATCH /api/admin/orders/<uuid>` body `{ "action": "REJECT_CANCEL", "rejectionReason": "Stok sudah disiapkan" }` | Status kembali + alasan tersimpan | AC-ORDER-05-03 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Pengajuan pembatalan seluruh pesanan (customer + guest), status `CANCEL_REQUESTED`, peninjauan setuju/tolak, pengembalian stok, baris refund otomatis saat sudah dibayar, email pembatalan, template + alasan manual penolakan
+- **Tidak termasuk:** Pembatalan parsial per produk (PRD 5.5 butir 1), pembatalan otomatis oleh cron (pembebasan stok lazy), refund dana itu sendiri (ORDER-06)
+- **Dependensi:** ORDER-07 (UI aksi admin), ORDER-06 (penyelesaian refund), MOD-AUTH (sesi/cookie akses guest), MOD-NOTIF (email + preferensi `cancellationUpdate`), CONFIG-01 (template alasan)
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada.
+
+**Rujukan kode:**
+
+- `src/app/api/orders/[id]/cancel/route.ts` — endpoint pengajuan pembeli, otorisasi customer/guest, kode error exact.
+- `src/lib/orders/admin.ts` — `requestOrderCancellation`, `approveCancellation`, `rejectCancellation`.
+- `src/lib/orders/reservations.ts` — `cancelRequestedOrderAndReleaseStock` (pindah status + restore stock idempoten).
+- `src/lib/orders/admin-validation.ts` — `orderCancelRequestSchema` dan aksi `APPROVE_CANCEL`/`REJECT_CANCEL`.
+- `src/components/orders/CancelOrderForm.tsx` — UI pengajuan di `/orders/[id]`.
+- `src/app/(storefront)/orders/[id]/page.tsx` — kartu Pembatalan / Pengajuan Pembatalan / Pembatalan Ditolak.
+- `src/lib/notifications/order-emails.ts` — `sendCancellationEmail` (approved/rejected).
+- `src/lib/orders/guest-access.ts` — cookie akses guest HMAC `flexstore_guest_access`.
+- `docs/01_PRD.md` bagian 5.5 — aturan pembatalan revisi 1.6.
+- `docs/04_IMPLEMENTATION_PLAN.md` bagian 9.5 — bukti PH-06 selesai dikerjakan.
+
+---
+
+## <a name="order-06"></a>ORDER-06 — Refund Manual
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | ORDER-06 — Refund Manual |
+| Modul | MOD-ORDER |
+| Tujuan | Store Admin memproses refund manual (transfer luar gateway), wajib mengunggah bukti transfer, lalu menandai refund selesai; status refund terpisah dari status pesanan dan selalu traceable |
+| Aktor utama | Store Admin |
+| Status | Terimplementasi (PH-06) |
+| Referensi PRD | PRD 5.6 (revisi 1.6 — refund otomatis lewat gateway "belum diimplementasikan di MVP"; `Refund.method` disediakan di skema), 2.3, 3.1.G |
+| Referensi SDD | SDD 4.7, 4.12, SDD 10 (A07/A08) |
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** `/admin/orders/[id]`, kartu "Refund Menunggu Bukti" — dirender untuk tiap refund berstatus `PENDING`
+- Baris refund berasal dari ORDER-05 (setuju pembatalan untuk pesanan `payment.status === "PAID"`, nominal = `order.total`, `method MANUAL`, `status PENDING`); commit `0a2f57b` hanya menambah bukti uji unggah `refundProof` di `docs/03`/`docs/04`, bukan perubahan skema
+- Pemicu: admin unggah gambar bukti → `useUploadThing("refundProof")` → klik "Tandai Refund Selesai"
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Store Admin | `PATCH /api/admin/orders/[id]` (`COMPLETE_REFUND`) | `requireStoreAdmin()` (role + `deactivatedAt` dicek ulang dari DB) | Tanpa sesi → `401 UNAUTHORIZED`; role lain → `403 FORBIDDEN` |
+| Store Admin | Unggah bukti `POST /api/uploadthing` slug `refundProof` | Middleware `refundProof` | Tanpa sesi → `403 "Anda harus masuk terlebih dahulu"`; bukan `STORE_ADMIN` → `403 "Hanya Store Admin yang dapat mengunggah bukti"` |
+| Customer/Guest | Refund sendiri | - | Tidak ada jalur; hanya melihat riwayat refund di `/orders/[id]` |
+| Site Admin | Aksi refund | - | `403 FORBIDDEN` (guard hanya `STORE_ADMIN`) |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| action | Literal `COMPLETE_REFUND` | Ya | Discriminated union `adminOrderActionSchema` | - |
+| refundId | String UUID | Ya | `z.string().uuid("Refund tidak valid")` | "Refund tidak valid" (`400 VALIDATION_ERROR`) |
+| proofUrl | String URL | Ya (wajib bukti) | trim, `.url("Bukti refund tidak valid")`, max 500 | "Bukti refund wajib diunggah"; "Bukti refund tidak valid"; "URL bukti terlalu panjang" |
+| note | String | Tidak | trim, max 500 | "Catatan tidak valid"; "Catatan maksimal 500 karakter" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Admin buka `/admin/orders/[id]` | Kartu "Refund Menunggu Bukti" list refund `PENDING` | Form "Bukti refund (gambar)" + "Catatan (opsional)" tampil |
+| 2 | Admin pilih berkas gambar (`accept="image/*"`) | Presign + unggah ke Uploadthing (`refundProof`: gambar, maks 4 MB, 1 berkas) | `proofUrl` terisi dari `serverData.url`; status "Bukti terunggah." |
+| 3 | Admin isi catatan (opsional) dan klik "Tandai Refund Selesai" | `PATCH /api/admin/orders/[id]` body `COMPLETE_REFUND` | `updateMany` bersyarat `id = refundId, status PENDING` → `status COMPLETED`, `proofUrl`, `note`, `processedAt = now()` |
+| 4 | System | `sendRefundCompletedEmail(orderId)` ambil refund terbaru (`take 1`, orderBy `createdAt desc`) | Email refund berisi `orderNumber`, `amount`, `note`, hormati preferensi `refundUpdate` |
+| 5 | Pembeli buka `/orders/[id]` | Kartu "Refund" per baris: "Selesai" (COMPLETED), "Gagal" (FAILED), "Menunggu Bukti" selainnya | Riwayat refund terlihat |
+
+### 6. Output dan perubahan data
+
+- **Data dibaca:** `Refund` (id, status, amount, orderId, `createdAt`)
+- **Data diubah:** `Refund.status = COMPLETED`, `proofUrl` (URL Uploadthing), `note`, `processedAt`
+- **Data dibuat:** tidak ada (baris `Refund` berasal dari ORDER-05); status pesanan TIDAK berubah (refund terpisah dari status order, PRD 5.6 butir 3)
+- **Eksternal:** berkas bukti tersimpan di Uploadthing; aplikasi hanya menyimpan `proofUrl`
+- **Email:** `buildRefundCompletedEmail` lewat `sendRefundCompletedEmail`
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Klik "Tandai Refund Selesai" tanpa unggah | Validasi klien di `RefundCompleteForm` | Error "Unggah bukti refund terlebih dahulu" |
+| Unggahan gagal | `onUploadError` | Error "Gagal mengunggah bukti refund" |
+| Refund sudah `COMPLETED`/`FAILED` atau tidak ada | `updateMany` klaim 0 baris | `409 INVALID_STATUS "Refund sudah diproses atau tidak ditemukan"` |
+| `refundId` bukan UUID | Guard awal `isUuid` | `NOT_FOUND "Refund tidak ditemukan"` → HTTP 404 |
+| 2 berkas dalam satu permintaan unggah | Ditolak Uploadthing (`FileCountMismatch`) | `400 "Invalid config: FileCountMismatch"` (bukti `docs/04` bagian 9.4 V7) |
+
+### 8. Kondisi gagal
+
+| Kondisi | Kode HTTP | Tindakan |
+| --- | --- | --- |
+| UUID path tidak valid | `400 INVALID_ID "ID tidak valid"` | Perbaiki ID |
+| Body tidak sesuai schema | `400 VALIDATION_ERROR` (pesan bagian 4) | Perbaiki isian |
+| Tanpa sesi / akun dinonaktifkan | `401 UNAUTHORIZED "Anda harus masuk terlebih dahulu"` | Login Store Admin |
+| Bukan `STORE_ADMIN` | `403 FORBIDDEN "Anda tidak memiliki akses"` | Gunakan akun admin toko |
+| Unggah bukti tanpa sesi | `403 "Anda harus masuk terlebih dahulu"` | Login dulu |
+| `refundId` tidak ditemukan | `404 NOT_FOUND "Refund tidak ditemukan"` | Periksa refund |
+| Refund sudah diproses | `409 INVALID_STATUS "Refund sudah diproses atau tidak ditemukan"` | Refresh detail pesanan |
+
+### 9. Perilaku UI
+
+- **Halaman admin:** `/admin/orders/[id]` — kartu "Refund Menunggu Bukti" (form per refund), kartu "Refund" (riwayat semua refund dengan label Selesai/Gagal/Menunggu Bukti)
+- **Halaman pembeli:** `/orders/[id]` — kartu "Refund" (nominal + badge status; tidak menampilkan bukti/catatan)
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Sedang unggah | "Mengunggah..." | Tunggu |
+| Bukti terunggah | "Bukti terunggah." | Isi catatan, tombol "Tandai Refund Selesai" aktif |
+| Menyimpan | "Menyimpan..." | Tunggu |
+| Sukses | `router.refresh()` | Badge refund menjadi "Selesai" |
+| Galat | `FormErrorAlert` | Perbaiki lalu ulang |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-ORDER-06-01 | Refund `PENDING` | Unggah gambar + tandai selesai | `status COMPLETED`, `proofUrl` + `processedAt` tersimpan, email terkirim |
+| AC-ORDER-06-02 | Refund `PENDING` | Coba tandai selesai tanpa bukti | Ditahan di klien: "Unggah bukti refund terlebih dahulu"; server menolak `proofUrl` kosong dengan `400 VALIDATION_ERROR` |
+| AC-ORDER-06-03 | Refund sudah `COMPLETED` | Tandai selesai lagi | `409 INVALID_STATUS "Refund sudah diproses atau tidak ditemukan"` |
+| AC-ORDER-06-04 | Sesi Store Admin, unggah bukti nyata | `POST /api/uploadthing?slug=refundProof` | Presigned 200 → PUT berkas 200, URL `...ufs.sh/...` disajikan `200 image/png`; produksi tanpa sesi `403` (bukti `docs/04` bagian 9.4 V7) |
+| AC-ORDER-06-05 | Pesanan dibatalkan, sudah dibayar | Pembeli buka `/orders/[id]` | Baris refund dengan nominal `total` terlihat pada kartu Refund |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Refund pending | `Refund { orderId, amount = order.total, method: MANUAL, status: PENDING }` | Kartu "Refund Menunggu Bukti" | AC-ORDER-06-01 |
+| Bukti terunggah | `https://jqvuhozget.ufs.sh/f/rhko4DgxpLVA2twAjKstE8H5qmXwlReAhBrPc9KanNgku1Df` | `proofUrl` tersimpan, disajikan `image/png` | AC-ORDER-06-04 |
+| Body API | `{ "action": "COMPLETE_REFUND", "refundId": "<uuid>", "proofUrl": "<ufs url>", "note": "Transfer BCA #123" }` | `200 { "ok": true }` | AC-ORDER-06-01 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Refund manual satu nominal penuh per pesanan, wajib bukti unggahan (Uploadthing `refundProof`), status refund PENDING/COMPLETED/FAILED terpisah dari status pesanan, email refund selesai
+- **Tidak termasuk:** Refund otomatis lewat gateway (PRD 5.6 butir 1 — jalurnya hanya enumerasi `RefundMethod AUTOMATIC` di skema; belum diimplementasikan di MVP), penandaan refund FAILED lewat UI, refund parsial
+- **Dependensi:** ORDER-05 (sumber pembuatan baris refund), ORDER-07 (UI detail admin), Uploadthing + sesi, MOD-NOTIF (email refund + preferensi `refundUpdate`)
+
+### 13. Pertanyaan terbuka
+
+- Tidak ada.
+
+**Rujukan kode:**
+
+- `src/lib/orders/admin.ts` — `completeRefund` (klaim bersyarat + email).
+- `src/lib/orders/admin-validation.ts` — discriminated union aksi `COMPLETE_REFUND` dan aturan `proofUrl`.
+- `src/app/api/admin/orders/[id]/route.ts` — endpoint PATCH, pemetaan `NOT_FOUND`→404 / lainnya→409.
+- `src/components/admin/AdminOrderActions.tsx` — `RefundCompleteForm`, unggah via `useUploadThing("refundProof")`.
+- `src/lib/uploadthing/core.ts` — middleware `refundProof` (STORE_ADMIN, 4 MB, 1 gambar).
+- `prisma/schema.prisma` — model `Refund`, enum `RefundMethod`/`RefundStatus`.
+- `src/lib/notifications/order-emails.ts` — `sendRefundCompletedEmail`.
+- `src/app/(storefront)/orders/[id]/page.tsx` — kartu Refund sisi pembeli.
+- `docs/04_IMPLEMENTATION_PLAN.md` bagian 9.4 V7 — bukti uji unggah nyata; commit `0a2f57b` menambah bukti itu ke dokumen.
+
+---
+
+## <a name="order-07"></a>ORDER-07 — Admin Order Management
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | ORDER-07 — Admin Order Management |
+| Modul | MOD-ORDER |
+| Tujuan | Store Admin mencari, memfilter, dan mengelola pesanan: mengubah status `PROCESSING → SHIPPED` dengan nomor resi, `SHIPPED → COMPLETED`, serta meninjau pembatalan (ORDER-05) dan refund (ORDER-06) dari satu daftar + satu detail |
+| Aktor utama | Store Admin |
+| Status | Terimplementasi (PH-06) |
+| Referensi PRD | PRD 2.3, 3.1.K, 4.4; audit `docs/04` bagian 10 (2026-10-10, ORDER-07 ID baru dari audit 13-kebutuhan) |
+| Referensi SDD | SDD 5 (struktur rute admin), SDD 10 (A01/A03) |
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** menu admin → `/admin/orders` (daftar), klik "Detail" → `/admin/orders/[id]`
+- Semua aksi per pesanan lewat satu endpoint `PATCH /api/admin/orders/[id]` dengan discriminated union `action`
+- Pemicu transisi: `PROCESSING` → form "Nomor resi" → "Tandai Dikirim"; `SHIPPED` → tombol "Tandai Selesai"; `CANCEL_REQUESTED` → panel pembatalan; refund `PENDING` → form bukti
+- Halaman admin menandai `instant = false` (blocking route Next.js 16 cacheComponents)
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Store Admin | Lihat `/admin/orders`, `/admin/orders/[id]`; aksi `SHIP`, `COMPLETE`, `APPROVE_CANCEL`, `REJECT_CANCEL`, `COMPLETE_REFUND` | Guard `requireStoreAdmin()` (role + status aktif dari DB, bukan hanya JWT) | Tanpa sesi → `401 UNAUTHORIZED`; akun dinonaktifkan → `401 UNAUTHORIZED`; role lain (termasuk Site Admin, Customer) → `403 FORBIDDEN` |
+| Site Admin | Kelola pesanan | - | `403 FORBIDDEN` (guard hanya `STORE_ADMIN`) |
+| Customer | Semua aksi admin | - | `403 FORBIDDEN` |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| status (query daftar) | Enum | Tidak | `ORDER_STATUS_FILTERS = [WAITING_PAYMENT, PROCESSING, SHIPPED, COMPLETED, CANCEL_REQUESTED, CANCELED]` | Query invalid → fallback `{ page: 1, limit: 20 }` (tanpa filter) |
+| search (query daftar) | String | Tidak | trim, maks 100 | Fallback tanpa filter |
+| page, limit (query daftar) | Number | Tidak | `z.coerce.number().int().min(1)`; limit maks 100, default 20 (halaman membekukan `PAGE_SIZE = 20`) | Fallback |
+| id (path) | UUID | Ya | `z.string().uuid()` | `400 INVALID_ID "ID tidak valid"` |
+| action `SHIP` + trackingNumber | String | Ya (untuk SHIP) | trim, min 3, maks 50, regex `^[A-Za-z0-9-]+$` | "Nomor resi wajib diisi"; "Nomor resi minimal 3 karakter"; "Nomor resi maksimal 50 karakter"; "Nomor resi hanya boleh huruf, angka, dan minus" |
+| action `COMPLETE` | Literal | Ya | Tanpa field tambahan | - |
+| (aksi lain) | - | - | `APPROVE_CANCEL` / `REJECT_CANCEL` / `COMPLETE_REFUND` (rincian ORDER-05/06) | - |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Admin buka `/admin/orders` | `listAdminOrders`: filter status, pencarian `OR` (orderNumber, guestPhone, user.email, user.name), urut `createdAt desc`, paginasi | Tabel kolom Nomor, Tanggal, Pembeli, Total, Status, Pembayaran, Aksi |
+| 2 | Klik chip status / isi pencarian + "Terapkan" | Navigasi `?status=...&search=...` | Daftar terfilter dengan bar "Semua" + 6 status |
+| 3 | Klik "Detail" | `/admin/orders/[id]` → `getAdminOrderDetail` (include items, payment, refunds, user) + `listCancellationReasons({ activeOnly: true })`; UUID invalid → `notFound()` | Detail: Item, Alamat/Ambil di Toko, Pengiriman (jika ada resi), Pembatalan (alasan/alasan penolakan), Pembeli, Pembayaran, Refund, panel Aksi |
+| 4 | Status `PROCESSING`: isi nomor resi, klik "Tandai Dikirim" | `PATCH` `SHIP` → `markOrderShipped` klaim `updateMany { id, status: PROCESSING }` → `SHIPPED`, `trackingNumber`, `shippedAt` | Email "Pesanan Dikirim" (`buildOrderShippedEmail` berisi resi, kurir, layanan, tautan pelacakan) |
+| 5 | Status `SHIPPED`: klik "Tandai Selesai" | `PATCH` `COMPLETE` → `markOrderCompleted` klaim `SHIPPED` → `COMPLETED`, `completedAt` | Badge status "Selesai" |
+| 6 | Klik paginasi "Sebelumnya"/"Selanjutnya" | `?page=n` | Penanda "X pesanan - halaman n dari y" |
+
+### 6. Output dan perubahan data
+
+- **Data dibaca:** Order + OrderItem + Payment + Refund + User; template alasan penolakan (CONFIG-01)
+- **Data diubah oleh SHIP:** `Order.status = SHIPPED`, `trackingNumber`, `shippedAt`
+- **Data diubah oleh COMPLETE:** `Order.status = COMPLETED`, `completedAt`
+- **Kondisi akhir:** setiap transisi klaim via `updateMany` bersyarat status lama; dua permintaan berbarengan menghasilkan satu transisi saja
+- **Tidak ada perubahan data** oleh browse/filter daftar (read-only)
+- **Email:** kirim saat SHIP (preferensi `shippingUpdate`), APPROVE/REJECT (`cancellationUpdate`), COMPLETE_REFUND (`refundUpdate`)
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Tidak ada pesanan yang cocok | Panel "Belum ada pesanan yang cocok." | Daftar kosong, tetapi tetap bisa memfilter ulang |
+| `SHIP` pesanan bukan `PROCESSING` | Klaim 0 baris | `409 INVALID_STATUS "Hanya pesanan berstatus Diproses yang bisa dikirim"` |
+| `COMPLETE` pesanan bukan `SHIPPED` | Klaim 0 baris | `409 INVALID_STATUS "Hanya pesanan berstatus Dikirim yang bisa diselesaikan"` |
+| UUID path invalid di halaman detail | `notFound()` | Halaman 404 tanpa query DB |
+| Reservasi `WAITING_PAYMENT` kedeluwarsa | `getAdminOrderDetail` memanggil `releaseExpiredReservations()` (lazy) | Pembebasan dibatasi `RELEASE_BATCH = 20` per panggilan |
+
+### 8. Kondisi gagal
+
+| Kondisi | Kode HTTP | Tindakan |
+| --- | --- | --- |
+| Tanpa sesi / akun dinonaktifkan | `401 UNAUTHORIZED "Anda harus masuk terlebih dahulu"` | Login Store Admin |
+| Bukan `STORE_ADMIN` | `403 FORBIDDEN "Anda tidak memiliki akses"` | Gunakan akun admin toko |
+| UUID path tidak valid | `400 INVALID_ID "ID tidak valid"` | Perbaiki ID |
+| Body tidak sesuai schema | `400 VALIDATION_ERROR` (pesan per-field bagian 4) | Perbaiki isian |
+| Transisi status salah | `409 INVALID_STATUS` (pesan exact per aksi, bagian 7) | Refresh detail, cek status |
+| Pesanan tidak ditemukan | `404 NOT_FOUND "Pesanan tidak ditemukan"` | Kembali ke `/admin/orders` |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/admin/orders` (daftar, `PageHeader` "Pesanan" dengan deskripsi "Kelola status pesanan, pengiriman, pembatalan, dan refund."), `/admin/orders/[id]` (detail + panel "Aksi" `AdminOrderActions`)
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| `status PROCESSING` | Form "Nomor resi" + tombol "Tandai Dikirim" | Isi resi, kirim |
+| `status SHIPPED` | Tombol "Tandai Selesai" | Selesaikan pesanan |
+| Sedang aksi | "Memproses..." tombol nonaktif | Tunggu |
+| Sukses | `router.refresh()` | Status + kartu diperbarui |
+| Galat | `FormErrorAlert` | Perbaiki lalu ulang |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-ORDER-07-01 | Pesanan berbayar `PROCESSING` | `PATCH SHIP` + resi valid | Status `SHIPPED`, `trackingNumber`+`shippedAt` tersimpan, email terkirim |
+| AC-ORDER-07-02 | Pesanan `SHIPPED` | `PATCH COMPLETE` | Status `COMPLETED`, `completedAt` terisi |
+| AC-ORDER-07-03 | Pesanan `PROCESSING` | `COMPLETE` langsung | `409 INVALID_STATUS` "Hanya pesanan berstatus Diproses yang bisa dikirim" |
+| AC-ORDER-07-04 | Customer/Site Admin login | `PATCH /api/admin/orders/[id]` | `403 FORBIDDEN` |
+| AC-ORDER-07-05 | Pesanan dengan nomor/nama/email/HP tertentu | `GET /admin/orders?search=...` | Pesanan keluar di daftar |
+| AC-ORDER-07-06 | Resi berisi spasi/simbol | `PATCH SHIP` | `400 VALIDATION_ERROR "Nomor resi hanya boleh huruf, angka, dan minus"` |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Filter status | `GET /admin/orders?status=CANCEL_REQUESTED` | Chip aktif "Pengajuan Pembatalan", daftar sesuai | AC-ORDER-07-05 |
+| Aksi kirim | `PATCH /api/admin/orders/<uuid>` body `{ "action": "SHIP", "trackingNumber": "JNE-12345678" }` | `200 { "ok": true }` | AC-ORDER-07-01 |
+| Pencarian | `GET /admin/orders?search=FS-2026` | Pesanan nomor itu muncul | AC-ORDER-07-05 |
+
+### 12. Batas fitur
+
+- **Termasuk:** Daftar + filter + pencarian + paginasi pesanan, detail penuh pesanan, transisi `PROCESSING → SHIPPED` (dengan resi) dan `SHIPPED → COMPLETED`, panel tinjau pembatalan + refund (ORDER-05/ORDER-06), email shipped, status pembayaran read-only di detail
+- **Tidak termasuk:** Edit isi pesanan/item, ubah alamat pengiriman, ubah status pembayaran manual, pembuatan refund baru manual (refund lahir dari ORDER-05), export CSV; agregat status `countOrdersByStatus` dipakai di dashboard `/admin` (`src/app/admin/page.tsx`), bukan di daftar `/admin/orders` (terverifikasi dari kode)
+- **Dependensi:** ORDER-05 (tinjau pembatalan), ORDER-06 (penyelesaian refund), CONFIG-01 (template alasan), SHIP-02 (data resi), MOD-AUTH guard, webhook Xendit (sumber transisi pembayaran `PAID`/`EXPIRED`)
+
+### 13. Pertanyaan terbuka
+
+- Dashboard agregasi `countOrdersByStatus` (`src/lib/orders/admin.ts`) dikonsumsi di dashboard `/admin` (`src/app/admin/page.tsx`, terverifikasi), bukan di halaman daftar `/admin/orders` — bukan bloker, hanya catatan konsistensi.
+
+**Rujukan kode:**
+
+- `src/app/admin/orders/page.tsx` — daftar, filter bar status, form pencarian, paginasi.
+- `src/app/admin/orders/[id]/page.tsx` — detail + panel Aksi + label PAYMENT/REFUND.
+- `src/components/admin/AdminOrderActions.tsx` — UI aksi SHIP/COMPLETE.
+- `src/app/api/admin/orders/[id]/route.ts` — endpoint PATCH discriminated union.
+- `src/lib/orders/admin.ts` — `listAdminOrders`, `getAdminOrderDetail`, `markOrderShipped`, `markOrderCompleted`.
+- `src/lib/orders/admin-validation.ts` — skema list + union + `trackingNumberSchema`.
+- `src/lib/auth/guard.ts` — `requireStoreAdmin` resolusi role dari DB.
+- `docs/04_IMPLEMENTATION_PLAN.md` bagian 9.1/10 — keputusan ORDER-07 dari audit 2026-10-10.
+
+---
+
+## <a name="order-08"></a>ORDER-08 — Tracking Pesanan Customer
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | ORDER-08 — Tracking Pesanan Customer |
+| Modul | MOD-ORDER |
+| Tujuan | Customer login melacak pesanan tanpa input data: `/track-order` menampilkan daftar seluruh pesanan dalam perjalanan (`PROCESSING`/`SHIPPED`), dan detail tracking per pesanan session-scoped di `/orders/[id]/tracking` dari tombol Lacak. Guest tetap memakai jalur ORDER-04 |
+| Aktor utama | Customer (login); Store Admin sebagai sumber data resi (via ORDER-07) |
+| Status | Terimplementasi (PH-06) |
+| Referensi PRD | PRD 2.2 ("Track shipping status", "Tracking order tanpa input data"), 3.1.H; `docs/04` bagian 10 keputusan ORDER-08 (2026-10-10) |
+| Referensi SDD | SDD 5 (rute session-scoped), SDD 10 (A01) |
+
+### 2. Prasyarat dan pemicu
+
+- **Titik masuk:** navbar link "Lacak", `/orders` (kartu "Pelacakan" dengan tombol "Lihat Pelacakan" di `/orders/[id]`), atau langsung `/track-order`
+- Customer harus punya sesi (`getShopperUser()`); tanpa sesi → jalur guest ORDER-04 (form nomor pesanan + nomor HP, `POST /api/orders/track`, rate limit Redis 10 percobaan / 10 menit per IP)
+- Detail tracking hanya untuk order milik user itu (`findFirst { id, userId }`); bukan UUID atau bukan miliknya → `null` → `notFound()` 404 generik
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Customer (login) | Buka `/track-order` — daftar in-transit via `getInTransitOrdersForUser` | Query `findMany { userId, status in [PROCESSING, SHIPPED] }` | Tanpa sesi → daftar tidak dirender, jalur guest tampil |
+| Customer (login) | Buka `/orders/[id]/tracking` — `getTrackingOrderForUser` | Query `findFirst { id, userId }` | Bukan pemilik / UUID invalid / tanpa sesi → `404` generik (keberadaan pesanan tidak bocor) |
+| Guest | Buka `/track-order` | Form `TrackOrderForm` (ORDER-04) | Melebihi 10 percobaan/10 menit per IP: `429 RATE_LIMITED "Terlalu banyak percobaan, coba lagi nanti"` |
+| Store Admin | Sesi admin tidak memakai halaman ini | - | Guard admin dijalankan di endpoint ORDER-07 |
+
+### 4. Input dan validasi
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| id (path `/orders/[id]/tracking`) | UUID | Ya | `isUuid` di lib; hasil null → 404; tidak ada skema body | 404 generik (`notFound()`) |
+| (customer) | - | Tidak | **Tanpa input data** — kepemilikan dari sesi (keputusan `docs/04` bagian 10) | - |
+| orderNumber, phone (hanya jalur guest ORDER-04) | String | Ya | `trackOrderSchema`: orderNumber trim + `toUpperCase()` + regex `ORDER_NUMBER_PATTERN`; phone dari `phoneSchema` | "Nomor pesanan wajib diisi"; "Nomor pesanan tidak valid"; pesan phone dari `phoneSchema` (`400 VALIDATION_ERROR`) |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Customer buka `/track-order` | SSR: `getShopperUser()` → `getInTransitOrdersForUser(user.id)` (menjalankan `releaseExpiredReservations` dulu) | Section "Pesanan Dalam Perjalanan": nomor pesanan + tanggal (`formatDateTime`), `OrderStatusBadge`, tombol "Lacak" per baris → `/orders/[id]/tracking` |
+| 2 | Klik "Lacak" | `/orders/[id]/tracking` | `getTrackingOrderForUser(user.id, id)` include `items` + `payment` |
+| 3 | Halaman render kop | `orderNumber`, `formatDateTime(createdAt)`, `OrderStatusBadge` | Identitas pesanan |
+| 4 | Block "Riwayat Perjalanan" | Milestone dari timestamp nyata: "Pesanan dibuat" (`createdAt`), "Pembayaran diterima" (`Payment.paidAt`), "Dikirim" (`shippedAt`), "Selesai" (`completedAt`) | Timeline tanpa tabel riwayat status |
+| 5 | Block "Pengiriman" | Kurir (`shippingCourier - shippingService`), "Nomor resi" (`trackingNumber` atau "-"), Estimasi (`shippingEtd`), Tujuan (alamat JSON dirangkai) | Info pengiriman lengkap |
+| 6 | Buka `/orders/[id]` | Kartu "Pelacakan" menampilkan `Resi <kurir> <layanan>: <resi>` atau teks "Riwayat status pesanan sejak dibuat hingga selesai." | Jejak menuju halaman tracking |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** informasi status + riwayat pesanan; TIDAK ada mutasi data
+- **Data dibaca:** Order milik user (`items`, `payment`, `shippedAt`, `completedAt`, `trackingNumber`, `shippingCourier/Service/Etd`, `shippingAddress`); daftar in-transit dengan `items.variant.product.images` (1 gambar, `sortOrder asc`)
+- **Data dibuat/diubah:** tidak ada; efek samping baca: `releaseExpiredReservations()`
+- **Reaktivitas:** halaman status dinamis → `await connection()` + `instant = false`
+- **Data sensitif tidak dikembalikan:** jalur guest (`POST /api/orders/track`) memetakan field terpilih saja — `userId`/`guestEmail` tidak ikut
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Customer tanpa pesanan in-transit | "Tidak ada pesanan yang sedang diproses atau dikirim." | Form guest tetap disembunyikan |
+| Status `PROCESSING` belum dikirim | Timeline hanya s.d. "Pembayaran diterima"; Nomor resi "-" | Pesanan tetap terlacak |
+| Guest tanpa sesi | Form `TrackOrderForm` ORDER-04 tampil | Alur publik tidak berubah (keputusan eksplisit `docs/04` bagian 10) |
+| Buka `/orders/[id]/tracking` tanpa login | `getShopperUser()` → null | `notFound()` |
+| IP tidak terbaca (dev tanpa proxy) / Redis gagal | `allowTrackAttempt` return true (degrade gracefully) | Fitur tetap jalan |
+
+### 8. Kondisi gagal
+
+| Kondisi | Kode HTTP | Tindakan |
+| --- | --- | --- |
+| Bukan UUID di path tracking | 404 (`notFound()`, tanpa kode API) | Periksa link |
+| Pesanan milik customer lain | 404 generik | - |
+| Body guest tidak sesuai `trackOrderSchema` | `400 VALIDATION_ERROR` | Perbaiki isian |
+| Kombinasi nomor pesanan + HP salah / pesanan tidak ada | `404 NOT_FOUND "Pesanan tidak ditemukan"` (nomor salah dan tidak ada tidak dibedakan, AC-ORDER-04-02) | ulangi |
+| Percobaan melebihi 10/10 menit per IP | `429 RATE_LIMITED "Terlalu banyak percobaan, coba lagi nanti"` | Tunggu |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/track-order` (dual mode), `/orders/[id]/tracking` (detail session-scoped)
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Customer + ada in-transit | List baris pesanan + tombol "Lacak" | Klik menuju `/orders/[id]/tracking` |
+| Customer + kosong | "Tidak ada pesanan yang sedang diproses atau dikirim." | - |
+| Buka `/orders/[id]/tracking` tanpa login | `notFound()` | - |
+| Sedang aksi | "Memproses..." tombol nonaktif | Tunggu |
+| Galat | `FormErrorAlert` | Perbaiki lalu ulang |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-ORDER-08-01 | Customer login, pesanan `PROCESSING`/`SHIPPED` | Buka `/track-order` | Daftar in-transit + tombol "Lacak" muncul tanpa form input |
+| AC-ORDER-08-02 | Customer login, pesanannya `SHIPPED` dengan resi | Buka `/orders/[id]/tracking` | Timeline Dikirim + Nomor resi + kurir tampil |
+| AC-ORDER-08-03 | Customer A login | Buka tracking pesanan customer B | 404 generik |
+| AC-ORDER-08-04 | Order guest, no sesi | Buka `/track-order` | Form ORDER-04 tampil, daftar in-transit tidak |
+| AC-ORDER-08-05 | Guest | `POST /api/orders/track` kombinasi nomor+HP | Klien guest masih dapat data terpilih + rate limit |
+| AC-ORDER-08-06 | Customer login, pesanan sudah menempuh beberapa milestone | Buka tracking | Timeline milestone tampil, tanpa tabel riwayat status |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Daftar in-transit | Customer login, 1 pesanan `PROCESSING`, 1 `SHIPPED` | 2 baris di `/track-order` | AC-ORDER-08-01 |
+| Detail | `/orders/<uuid>/tracking`, `trackingNumber: "JNE-12345678"` | Timeline + "Nomor resi" terisi | AC-ORDER-08-02 |
+| Milestone | `createdAt` + `Payment.paidAt` + `shippedAt` | 3 entry timeline dengan waktu | AC-ORDER-08-02 |
+
+### 12. Batas fitur
+
+- **TERMASUK:** Daftar in-transit customer (`getInTransitOrdersForUser`), detail tracking session-scoped (`getTrackingOrderForUser`, `/orders/[id]/tracking`), timeline milestone berbasis timestamp nyata, tombol Lacak di navbar + `/orders` + `/track-order`, email shipped membawa tautan jalur sesuai tipe pembeli (`trackingUrlFor`)
+- **TIDAK TERMASUK:** Trace perjalanan paket via API kurir / webhook kurir (hanya data resi yang diinput admin), riwayat status dari tabel khusus, tracking publik tanpa bukti kepemilikan, notifikasi push saat status berganti (lihat jalur email NOTIF-01)
+- **DEPENDENSI:** ORDER-07 (sumber `trackingNumber`/`shippedAt`), ORDER-03 (tautan di `/orders/[id]`), ORDER-04 (jalur guest yang tetap), MOD-AUTH (sesi), Redis (rate limit, hanya jalur guest)
+
+### 13. Pertanyaan terbuka
+
+- Integrasi real-time tracking kurir (RajaOngkir/Biteship dipakai hanya untuk ongkir, bukan tracking webhook) — TIDAK TERMASUK di MVP dan belum ada fase penggantinya.
+
+**Rujukan kode:**
+
+- `src/app/(storefront)/track-order/page.tsx` — dual mode guest form / customer daftar in-transit.
+- `src/app/(storefront)/orders/[id]/tracking/page.tsx` — detail session-scoped + `getMilestones`.
+- `src/lib/orders/admin.ts` — `getInTransitOrdersForUser`, `getTrackingOrderForUser`.
+- `src/app/api/orders/track/route.ts` — jalur publik ORDER-04 + pemetaan field terpilih.
+- `src/lib/orders/validation.ts` — `trackOrderSchema`.
+- `src/lib/orders/rate-limit.ts` — `allowTrackAttempt` (10/10 menit per IP).
+- `src/app/(storefront)/orders/[id]/page.tsx` — kartu "Pelacakan" + kartu resi.
+- `src/lib/notifications/order-emails.ts` — `trackingUrlFor` (link email split customer/guest).
+- `docs/04_IMPLEMENTATION_PLAN.md` bagian 10 (baris ORDER-08) — keputusan dual mode + session-scoped; bagian 9.4/9.5 — bukti PH-06.
+
+---
+
+## <a name="report-01"></a>REPORT-01 — Sales Report (5 Laporan PRD 4.11)
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | REPORT-01 — Sales Report (lima laporan PRD 4.11) |
+| Modul | MOD-REPORT |
+| Tujuan | Menyajikan 5 laporan PRD 4.11 di `/admin/reports`: Laporan Penjualan, Kinerja Produk, Laporan Stok, Laporan Pesanan, Laporan Refund — dengan filter rentang tanggal |
+| Aktor utama | Store Admin |
+| Status | Terimplementasi (PH-06) |
+| Referensi PRD | 4.11 (sales report, product performance, stock report, order report, refund report) |
+| Referensi SDD | 4.7 (report), 5 (rute `/admin/reports`) |
+
+### 2. Prasyarat dan pemicu
+
+- Admin masuk; pemicu: membuka `/admin/reports` atau mengirim form filter tanggal (GET `?from=&to=`).
+- Data sumber: Order + Payment (`PAID`), OrderItem, Product, Refund.
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Store Admin | Lihat 5 laporan + filter rentang | Sesi admin (server component) | Tanpa sesi: redirect login |
+| Customer / Guest | Lihat laporan | - | Tidak ada jalur |
+
+### 4. Input dan validasi
+
+Filter di `/admin/reports` dari `searchParams`, diparse `parseDate` (tanpa schema Zod — nilai tidak valid diabaikan):
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| from | String `yyyy-MM-dd` (query) | Tidak | Diparse `new Date(`${value}T00:00:00.000Z`)`; `NaN` → `undefined` | Tidak ada pesan; default dipakai |
+| to | String `yyyy-MM-dd` (query) | Tidak | Diparse dengan akhir hari `T23:59:59.999Z`; `NaN` → `undefined` | Tidak ada pesan |
+| (bawaan) | - | - | `resolveReportRange`: tanpa `from`/`to` → `to = now`, `from = to − 30 hari` | - |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Admin buka `/admin/reports` | `getReportBundle({ from, to })` — `Promise.all` 5 query | 5 bagian dirender |
+| 2 | Laporan Penjualan | `getSalesReport`: Order `createdAt` dalam rentang, `status != CANCELED`, `payment.status = PAID` | Kartu ringkas: Transaksi, Subtotal, Ongkir, Diskon, Total |
+| 3 | Kinerja Produk | `getProductPerformanceReport`: OrderItem dari order layar sama, agregasi per `productName::variantName` | Tabel Produk/Varian/Terjual/Pendapatan, urut kuantitas desc, maks 50 baris |
+| 4 | Laporan Stok | `getStockReport`: semua produk, `orderBy totalStock asc`, `lowStock = totalStock <= LOW_STOCK_THRESHOLD (5)` | Tabel + Badge "Stok menipis"/"Aman"; jumlah menipis di badge header |
+| 5 | Laporan Pesanan | `getOrderReport`: `prisma.order.groupBy({ by: ["status"] })` dalam rentang | Tabel status (`OrderStatusBadge`) + jumlah |
+| 6 | Laporan Refund | `getRefundReport`: `Refund` dalam rentang, agregasi per status | Tabel Status/Jumlah/Nilai; label `PENDING`="Menunggu Bukti", `COMPLETED`="Selesai", `FAILED`="Gagal" |
+| 7 | Admin ubah rentang | Submit form (`action="/admin/reports"`, tombol "Terapkan") | Halaman dirender ulang dengan rentang baru |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** tampilan laporan; tidak ada tulis ke database.
+- **Data dibaca:** Order, OrderItem, Product (+ `variants.stock`), Refund — agregasi di JavaScript atas baris hasil Prisma (tanpa raw SQL, komentar eksak "cukup untuk skala MVP"); rentang eksak dikembalikan dalam `report.range`.
+- **Data dibuat/diubah:** tidak ada.
+- **Catatan skala:** tanpa paginasi halaman — tabel produk/stok dibatasi `.slice(0, 50)` di UI; laporan penjualan/pesanan/refund digabung seluruhnya.
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Belum ada produk terjual | Teks "Belum ada produk terjual pada rentang ini." | Bagian kosong informatif |
+| Belum ada pesanan / refund | Teks "Belum ada pesanan pada rentang ini." / "Belum ada refund pada rentang ini." | Bagian kosong |
+| Tanggal tidak valid / kosong | `parseDate` mengabaikan | Rentang default (30 hari terakhir) dipakai |
+| Stok menipis ada | Badge `variant="destructive"` "{n} menipis" di samping judul bagian 3 | Penanda cepat |
+
+### 8. Kondisi gagal
+
+| Kondisi | Kode HTTP | Tindakan |
+| --- | --- | --- |
+| Error Prisma/koneksi | 500 generik (halaman server component `instant = false`) | Muat ulang setelah database sehat |
+| Tanpa sesi admin | Redirect ke login (guard admin) | Masuk sebagai admin |
+| Nilai `from`/`to` rusak | Tidak ada kode HTTP (diam diabaikan) | Rentang default dipakai |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/admin/reports` — `PageHeader` judul "Laporan", deskripsi "Penjualan, kinerja produk, stok, pesanan, dan refund." (`export const instant = false`).
+- **Komponen:** `PageHeader`, `Input` (`report-from`, `report-to`, `type="date"`), `Table` (shadcn), `Badge`, `OrderStatusBadge`, `formatRupiah`, `Intl.DateTimeFormat("id-ID", { dateStyle: "medium" })`.
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Pertama kali | Rentang default 30 hari, 5 bagian bila data ada | Baca |
+| Mengubah rentang | Tombol "Terapkan" mengirim GET | Render ulang |
+| Bagian 1 | 5 kartu ringkas grid | Baca |
+| Bagian 2-5 | Tabel + teks kosong | Baca |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-REPORT-01-01 | Order `PAID` dan order `WAITING_PAYMENT` dalam rentang | Buka `/admin/reports` | Laporan Penjualan hanya menghitung order dibayar, bukan `CANCELED` |
+| AC-REPORT-01-02 | Dua produk terjual dengan kuantitas beda | Buka bagian 2 | Daftar urut kuantitas desc dengan nilai pendapatan per varian |
+| AC-REPORT-01-03 | Produk dengan `totalStock <= 5` | Buka bagian 3 | Badge "Stok menipis" tampil; lainnya "Aman" |
+| AC-REPORT-01-04 | Pesanan berbagai status | Buka bagian 4 | Jumlah per status cocok dengan data rentang |
+| AC-REPORT-01-05 | Refund `PENDING` + `COMPLETED` | Buka bagian 5 | Jumlah + nilai per status dengan label Indonesia |
+| AC-REPORT-01-06 | Rentang kosong (tanpa data) | Buka `/admin/reports` | Rentang default 30 hari dipakai; bagian kosong informatif, tanpa error |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Rentang eksplisit | `/admin/reports?from=2026-09-01&to=2026-09-30` | Laporan dirender rentang 1-30 Sep 2026 | AC-REPORT-01-06 |
+| Ringkasan penjualan | `{ count: 3, subtotal: 450000, shipping: 45000, discount: 50000, total: 445000 }` | 5 kartu laporan penjualan | AC-REPORT-01-01 |
+| Refund | `PENDING` 1 x Rp250.000, `COMPLETED` 1 x Rp150.000 | 2 baris tabel refund | AC-REPORT-01-05 |
+
+### 12. Batas fitur
+
+- **Termasuk:** 5 laporan agregat sesuai rentang, agregasi JavaScript tanpa raw SQL, badge stok menipis dengan ambang `LOW_STOCK_THRESHOLD = 5`.
+- **Tidak termasuk:** ekspor CSV/PDF, grafik/chart, perbandingan rentang ganda, drill-down ke pesanan, laporan per kurir/kategori.
+- **Ketergantungan:** MOD-ORDER (data pesanan), MOD-PAYMENT (status `PAID`), ORDER-06 (model Refund + status), MOD-PROD (`Product.totalStock`).
+
+### 13. Pertanyaan terbuka
+
+- Perlu diperiksa: pesan 500 eksak yang muncul saat error Prisma/koneksi dari `/admin/reports` — belum ada uji tercatat di `docs/04` bagian 9.4; sementara itu respons dianggap error generik server component.
+
+**Rujukan kode:**
+
+- `src/lib/reports/queries.ts` — 5 query laporan + `getReportBundle` + `resolveReportRange` + `LOW_STOCK_THRESHOLD = 5`.
+- `src/lib/reports/index.ts` — barrel ekspor.
+- `src/app/admin/reports/page.tsx` — UI 5 bagian, form filter, label refund, slice 50.
+- `docs/01_PRD.md` bagian 4.11 — daftar 5 laporan.
+- `docs/04_IMPLEMENTATION_PLAN.md` bagian 9.3 (TASK-59 "REPORT-01: lima laporan"), 9.5 (butir 3) — bukti `docs/04` bagian 9.
+
+---
+
+## <a name="config-01"></a>CONFIG-01 — Store Settings + Template Alasan Penolakan
+
+### 1. Identitas dan tujuan
+
+| Isian | Jawaban |
+| --- | --- |
+| ID dan nama | CONFIG-01 — Store Settings + Template Alasan Penolakan |
+| Modul | MOD-CONFIG |
+| Tujuan | Store Admin mengelola informasi toko (email, telepon, alamat, tentang, kebijakan, pickup, media sosial) dan CRUD template alasan penolakan pembatalan yang bisa dipilih admin saat menolak pengajuan pembatalan |
+| Aktor utama | Store Admin |
+| Status | Terimplementasi (PH-06) |
+| Referensi PRD | 3.1.G, 4.12 ("Store settings (Store Admin)", "Template alasan penolakan pembatalan"), 5.5 |
+| Referensi SDD | 4.11 (config), 5 (rute `/admin/settings`, `/admin/cancellation-reasons`, `/api/admin/settings`), 6.2 (`StoreSetting`, `CancellationReason`) |
+
+### 2. Prasyarat dan pemicu
+
+- Admin masuk; model `StoreSetting` (satu baris `id = "default"`, `STORE_SETTINGS_ID`) dan `CancellationReason` (`prisma/schema.prisma`: `text`, `isActive` default `true`, `sortOrder` default `0`).
+- Pemicu: membuka `/admin/settings` (pengaturan) dan `/admin/cancellation-reasons` (template alasan); template dipakai ORDER-06 saat menolak pembatalan.
+
+### 3. Hak akses
+
+| Aktor | Aksi | Sumber | Exception |
+| --- | --- | --- | --- |
+| Store Admin | GET/PATCH `/api/admin/settings`, CRUD `/api/admin/cancellation-reasons` | `requireStoreAdmin()` | `401` tanpa sesi (bukti `docs/04` bagian 9.4 V6) |
+| Site Admin | Pengaturan platform terpisah | - | Di luar fitur ini (payment/shipping/platform = Site Admin, fase PH-08) |
+| Customer / Guest | - | - | Tidak ada jalur |
+
+### 4. Input dan validasi
+
+`storeSettingsSchema` (`src/lib/config/validation.ts`) — PATCH `/api/admin/settings` (semua opsional kecuali `pickupEnabled` bawaan):
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| storeEmail | String | Tidak | email + maks 200, atau "" | "Email toko tidak valid" |
+| storePhone | String | Tidak | maks 30, `CONTACT_PHONE_REGEX` (`/^[\d+()\-. ]+$/`), minimal 7 digit | "Nomor telepon hanya boleh berisi angka", "Nomor telepon minimal 7 angka" |
+| storeAddress | String | Tidak | maks 300, tanpa control char | "Alamat toko maksimal 300 karakter", dsl. |
+| aboutUs / returnPolicy / warrantyPolicy | String | Tidak | maks 2000 | "Tentang toko maksimal 2000 karakter", "Kebijakan pengembalian ...", "Kebijakan garansi ..." |
+| pickupEnabled | Boolean | Tidak (default `false`) | `z.boolean` | "Status pickup tidak valid" |
+| pickupInfo | String | Tidak | maks 1000 | "Informasi pickup maksimal 1000 karakter" |
+| socialInstagram / socialFacebook / socialWhatsapp | String | Tidak | maks 200, `SOCIAL_HANDLE_REGEX` (handle `@toko.id` atau URL profil), harus ada alfanumerik | "Akun media sosial maksimal 200 karakter", "Akun media sosial hanya boleh berisi huruf, angka, dan tanda @ . _ - / :", "Akun media sosial harus mengandung huruf atau angka" |
+
+`cancellationReasonSchema`:
+
+| Input | Tipe | Wajib | Validasi | Pesan error |
+| --- | --- | --- | --- | --- |
+| text | String | Ya | min 3, maks 300, harus ada alfanumerik, tanpa control char | "Alasan wajib diisi", "Alasan minimal 3 karakter", "Alasan maksimal 300 karakter", "Alasan harus mengandung huruf atau angka", "Alasan memuat karakter yang tidak diizinkan" |
+| isActive | Boolean | Tidak (default `true`) | `z.boolean` | "Status tidak valid" |
+| sortOrder | Int (coerce) | Tidak (default `0`) | 0..999 | "Urutan tidak boleh negatif", "Urutan terlalu besar", "Urutan harus bilangan bulat" |
+
+### 5. Alur berhasil
+
+| Langkah | Tindakan | Respons | Hasil |
+| --- | --- | --- | --- |
+| 1 | Admin buka `/admin/settings` | `getStoreSettings()` (server) | Form terisi; baris belum ada → `DEFAULT_STORE_SETTINGS` (tanpa menulis DB) |
+| 2 | Admin simpan | `PATCH /api/admin/settings` → `updateStoreSettings` (Prisma upsert `id = "default"`) | `200 { settings }` |
+| 3 | Admin buka `/admin/cancellation-reasons` | `listCancellationReasons()` (urut `sortOrder asc`, `createdAt asc`) | Daftar template dirender |
+| 4 | Admin tambah | `POST /api/admin/cancellation-reasons` → `createCancellationReason` | `201 { reason }` |
+| 5 | Admin ubah | `PATCH /api/admin/cancellation-reasons/[id]` → `updateCancellationReason` | `200 { ok: true }` |
+| 6 | Admin hapus | `DELETE /api/admin/cancellation-reasons/[id]` → `deleteCancellationReason` | `200 { deleted: true }` |
+| 7 | Template dipakai | `/admin/orders/[id]`, status `CANCEL_REQUESTED` → `AdminOrderActions` menerima `cancellationReasons` dari `listCancellationReasons({ activeOnly: true })` | Admin memilih mode "template" atau "manual"; `PATCH /api/admin/orders/[id]` `{ action: "REJECT_CANCEL", rejectionReason }` menyimpan `cancelRejectionReason` di Order |
+
+### 6. Output dan perubahan data
+
+- **Hasil:** pengaturan toko tersimpan sebagai satu baris `store_settings`; template tersimpan di `cancellation_reasons (text, isActive, sortOrder, createdAt, updatedAt)`.
+- **Data dibaca:** `getStoreSettings`, `getPickupSettings` (dipakai SHIP-03), `listCancellationReasons`.
+- **Data dibuat/diubah:** `storeSetting.upsert`, `cancellationReason.create/updateMany/deleteMany`.
+- **Konsumsi di situs:** kebijakan/informasi toko tampil di footer, invoice, dan bagian terkait (SITE-05 / PH-09); pickup menyala/mati di checkout (`src/lib/config/queries.ts`); penolakan pembatalan mengalirkan `cancelRejectionReason` ke pembeli (`sendCancellationEmail(orderId, "rejected")`).
+
+### 7. Alur alternatif
+
+| Kondisi | Perilaku | Hasil |
+| --- | --- | --- |
+| Baris `store_settings` belum ada | `getStoreSettings` mengembalikan `DEFAULT_STORE_SETTINGS` | Pembacaan tanpa efek samping |
+| Tidak ada template saat reject | `rejectTemplate` default ""; admin harus pakai mode "manual" dan isi alasan | Validasi server menolak < 3 karakter |
+| Nonaktifkan template (`isActive: false`) | Tetap disimpan, tidak muncul di dropdown penolakan (`activeOnly: true`) | Riwayat penolakan lama tidak berubah |
+| Template dihapus | Baris hilang; penolakan lama tetap menyimpan teks di `Order.cancelRejectionReason` | Riwayat aman |
+| Akses tanpa sesi | `401` oleh `requireStoreAdmin` | Masuk sebagai admin |
+
+### 8. Kondisi gagal
+
+| Kondisi | Kode HTTP | Tindakan |
+| --- | --- | --- |
+| Body tidak valid | `400 VALIDATION_ERROR` (pesan Zod bagian 4) | Perbaiki isian |
+| Tanpa sesi admin | `401` | Masuk sebagai admin |
+| ID bukan UUID | `400 INVALID_ID` — "ID tidak valid" | - |
+| PATCH/DELETE template tidak ada | `404` — "Template alasan tidak ditemukan" | Refresh daftar |
+| Update gagal (`updateMany` count 0) | `404` "Template alasan tidak ditemukan" | Refresh |
+
+### 9. Perilaku UI
+
+- **Halaman:** `/admin/settings` — "Pengaturan Toko", deskripsi "Informasi toko, kebijakan, dan opsi ambil di toko." dengan `StoreSettingsForm` (memanggil `/api/admin/settings`; komentar di kode: label pickup memakai `brandName`, tidak ada field "nama toko" — keputusan hapus `storeName`).
+- **Halaman:** `/admin/cancellation-reasons` — "Template Alasan", deskripsi "Alasan penolakan pembatalan yang bisa dipilih Store Admin." dengan `CancellationReasonManager` (form tambah, baris ubah + nonaktif, hapus).
+
+| Kondisi | Tampilan | Tindakan |
+| --- | --- | --- |
+| Normal | Form + daftar | Isi, simpan |
+| Menyimpan | Tombol submitting state | Tunggu |
+| Galat validasi | Pesan per field | Perbaiki |
+| Reject di `/admin/orders/[id]` | `Select` "Sumber alasan" ("Pilih template" / "Isi manual") + dropdown `reject-template` atau input `reject-manual` | Pilih mode, klik "Tolak Pembatalan" |
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-CONFIG-01-01 | Admin login, settings belum pernah disimpan | `GET /api/admin/settings` | `200` dengan nilai bawaan (`pickupEnabled: false`, sisanya null) |
+| AC-CONFIG-01-02 | Admin login | `PATCH /api/admin/settings` valid | `200`, nilai tersimpan setelah `upsert` |
+| AC-CONFIG-01-03 | Admin login, `storePhone: "abc"` | `PATCH /api/admin/settings` | `400 VALIDATION_ERROR` "Nomor telepon hanya boleh berisi angka" |
+| AC-CONFIG-01-04 | Template aktif tersimpan | Admin menolak pembatalan dengan mode template | `cancelRejectionReason` di Order berisi teks template; email penolakan terkirim |
+| AC-CONFIG-01-05 | Template nonaktif | Dropdown penolakan di `/admin/orders/[id]` | Tidak muncul (hanya `listCancellationReasons({ activeOnly: true })`) |
+| AC-CONFIG-01-06 | Template tersimpan | `DELETE /api/admin/cancellation-reasons/<uuid>` | `200 { deleted: true }` |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Simpan settings | `{ "storeEmail": "halo@toko.id", "storePhone": "021-1234567", "storeAddress": "Jl. Mawar No. 1, Jakarta", "aboutUs": "...", "returnPolicy": "...", "warrantyPolicy": "...", "pickupEnabled": true, "pickupInfo": "Jam 09.00-17.00", "socialInstagram": "@toko.id", "socialFacebook": "", "socialWhatsapp": "628123456789" }` | `200 { settings }` | AC-CONFIG-01-02 |
+| Template baru | `POST /api/admin/cancellation-reasons` `{ "text": "Stok tidak tersedia saat pengajuan", "sortOrder": 1 }` | `201`, muncul di dropdown penolakan | AC-CONFIG-01-04 |
+
+### 12. Batas fitur
+
+- **Termasuk:** pengaturan informasi toko, kebijakan, pickup, media sosial (3 akun); CRUD template alasan + nonaktifkan + urutan; pemakaian template di ORDER-06 (REJECT_CANCEL).
+- **Tidak termasuk:** payment gateway settings, shipping provider settings, platform settings — milik Site Admin (PH-08); batas jumlah template tidak ada di kode dan tidak diwajibkan PRD (terverifikasi dari `docs/01_PRD.md` bagian 4.12 dan 5.5, keduanya hanya mengatur kelola template tanpa batasan jumlah); nama toko (nama tunggal dari brand, keputusan `docs/04` bagian 10 tanggal 2026-10-11).
+- **Ketergantungan:** SHIP-03 (`pickupEnabled`/`pickupInfo`), ORDER-06 (REJECT_CANCEL + `cancelRejectionReason`), MOD-AUTH (`requireStoreAdmin`).
+
+### 13. Pertanyaan terbuka
+
+- Batas jumlah template alasan (PRD 5.5): kode tidak membatasi jumlah baris `cancellation_reasons`; terverifikasi dari `docs/01_PRD.md` bagian 4.12 dan 5.5 bahwa PRD tidak mensyaratkan batasan jumlah, jadi perilaku kode dianggap sesuai.
+- Tidak ada pertanyaan lain.
+
+**Rujukan kode:**
+
+- `src/lib/config/validation.ts` — `storeSettingsSchema` + `cancellationReasonSchema` (judul komentar file: "CONFIG-01 (PH-06)").
+- `src/lib/config/queries.ts` — `STORE_SETTINGS_ID`, `DEFAULT_STORE_SETTINGS`, `getStoreSettings`, `getPickupSettings`, `listCancellationReasons`.
+- `src/lib/config/mutations.ts` — `updateStoreSettings` (upsert), `create/update/deleteCancellationReason`.
+- `src/app/api/admin/settings/route.ts` — `GET`/`PATCH` dengan `requireStoreAdmin`.
+- `src/app/api/admin/cancellation-reasons/route.ts` dan `[id]/route.ts` — CRUD template (pesan "Template alasan tidak ditemukan").
+- `src/app/admin/settings/page.tsx`, `src/app/admin/cancellation-reasons/page.tsx` — halaman admin.
+- `src/components/admin/StoreSettingsForm.tsx`, `src/components/admin/CancellationReasonManager.tsx` — UI form + manager.
+- `src/components/admin/AdminOrderActions.tsx` — pemakaian template di REJECT_CANCEL (mode template/manual).
+- `prisma/schema.prisma` — model `StoreSetting` dan `CancellationReason`.
+- `docs/04_IMPLEMENTATION_PLAN.md` bagian 9.3 (TASK-55), 9.4 (V6), 9.5 (butir 2), bagian 10 (hapus `storeName` 2026-10-11) — bukti `docs/04` bagian 9/10.
 
 ---
 
@@ -3229,10 +5596,12 @@ Daftar dibatasi **20 entri terbaru** (urut terbaru dulu); entri yang lebih lama 
 
 ---
 
-**Status:** Spesifikasi Fitur v2.1 - PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) **terimplementasi dan Disetujui** (2026-10-11, pengguna: "approve" - bukti `docs/04` bagian 15.5) beserta revisi UI CUST-01/CUST-02. Bagian 1A (aturan karakter input semua field, v2.1) terimplementasi di commit `40dcb41`. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`).
+**Status:** Spesifikasi Fitur v2.4 - PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) **terimplementasi dan Disetujui** (2026-10-11, pengguna: "approve" - bukti `docs/04` bagian 15.5) beserta revisi UI CUST-01/CUST-02. Bagian 1A (aturan karakter input semua field, v2.1) terimplementasi di commit `40dcb41`. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`). Ditambah 2026-10-15: CART-05 (dialog pemilihan varian dari kartu produk + stok efektif TASK-114) - **Terimplementasi** (spesifikasi ditulis lalu dikerjakan di hari yang sama; bukti `docs/04` bagian 16.4; keputusan di bagian 10 dan 16). Ditambah 2026-10-15: 17 spesifikasi rinci (AUTH-02/03, PROD-03/04/05, VOUCH-01/02, NOTIF-01, INV-01, SHIP-02/03, ORDER-05..08, REPORT-01, CONFIG-01) ditulis retroaktif dari kode terimplementasi - utang dokumentasi bagian rinci di catatan indeks bagian 1 tuntas.
 
 **Next steps:**
-1. Tulis bagian rinci 17 fitur yang belum berspesifikasi (utang dokumentasi; daftar di catatan indeks bagian 1 dan `docs/04` bagian 10)
+1. (Selesai 2026-10-15) Tulis bagian rinci 17 fitur yang belum berspesifikasi (utang dokumentasi) — blok rinci AUTH-02/03, PROD-03/04/05, VOUCH-01/02, NOTIF-01, INV-01, SHIP-02/03, ORDER-05..08, REPORT-01, CONFIG-01 kini ada di dokumen ini
 2. (Selesai 2026-10-11) Tautkan bukti implementasi SITE-05 - PH-09 terimplementasi & disetujui (`docs/04` bagian 14.5)
 3. (Selesai 2026-10-11) Tautkan bukti implementasi CUST-03, NOTIF-02, dan revisi UI CUST-01/CUST-02 - PH-10 terimplementasi & disetujui (`docs/04` bagian 15.5)
 4. Jaga indeks fitur tetap sinkron setiap fase selesai (pola penyelarasan 2026-10-11)
+5. (Selesai 2026-10-15) Tulis + implementasikan CART-05 — dialog pemilihan varian dari kartu produk
+6. (Selesai 2026-10-15) TASK-114 — stok efektif di kartu; tombol "Keranjang" pada keadaan semua stok sudah di keranjang mengarah ke halaman keranjang dengan highlight baris item (keputusan pengguna)
