@@ -62,6 +62,15 @@ export function ImageUploader({
                   : `Gambar produk ${index + 1}`
               }
               className="w-48"
+              // Bagan ukuran mengikuti tampilan storefront (`aspect-[4/3]`
+              // sm:aspect-[16/9] + object-contain) — rasio horizontal, tanpa
+              // krop, karena isinya detail tabel.
+              fit={max === 1 ? "contain" : "cover"}
+              mediaClassName={
+                max === 1
+                  ? "aspect-[4/3] sm:aspect-[16/9] w-full"
+                  : undefined
+              }
               onClear={() =>
                 setUrls((previous) =>
                   previous.filter((item) => item !== url),
