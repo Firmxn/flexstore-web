@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ImageDropzone } from "@/components/ui/image-dropzone";
 import { Label } from "@/components/ui/label";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";
@@ -19,7 +20,6 @@ export function VariantImagePicker({
   url: string;
   onChange: (url: string) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { startUpload, isUploading } = useUploadThing("productImage", {
@@ -33,9 +33,8 @@ export function VariantImagePicker({
     },
   });
 
-  async function handleFiles(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    event.target.value = "";
+  async function handleFiles(files: File[]) {
+    const file = files[0];
     if (!file) return;
 
     await startUpload([file]);
@@ -45,53 +44,40 @@ export function VariantImagePicker({
     <div className="flex flex-col gap-2">
       <Label htmlFor={id}>Gambar varian (opsional)</Label>
 
-      <div className="flex items-center gap-3">
-        {url ? (
-          // URL berasal dari Uploadthing; pakai img biasa agar tidak bergantung
-          // pada allowlist domain next/image.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={url}
-            alt="Gambar varian"
-            className="size-16 rounded border border-border object-cover"
-          />
-        ) : (
-          <div className="flex size-16 items-center justify-center rounded border border-dashed border-border text-xs text-muted-foreground">
-            Kosong
-          </div>
-        )}
-
-        <div className="flex flex-col gap-2">
-          <input
-            ref={inputRef}
-            id={id}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            disabled={isUploading}
-            onChange={handleFiles}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isUploading}
-            onClick={() => inputRef.current?.click()}
-          >
-            {isUploading ? "Mengunggah..." : url ? "Ganti" : "Unggah"}
-          </Button>
-          {url ? (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => onChange("")}
-            >
-              Hapus
-            </Button>
-          ) : null}
+      {url ? (
+        // URL berasal dari Uploadthing; pakai img biasa agar tidak bergantung
+        // pada allowlist domain next/image.
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={url}
+          alt="Gambar varian"
+          className="size-16 rounded border border-border object-cover"
+        />
+      ) : (
+        <div className="flex size-16 items-center justify-center rounded border border-dashed border-border text-xs text-muted-foreground">
+          Kosong
         </div>
-      </div>
+      )}
+
+      <ImageDropzone
+        inputId={id}
+        uploading={isUploading}
+        onFiles={handleFiles}
+        typesText="Satu berkas gambar, maksimal 4MB."
+        className="p-4"
+      />
+
+      {url ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="self-start"
+          onClick={() => onChange("")}
+        >
+          Hapus
+        </Button>
+      ) : null}
 
       <FormErrorAlert message={error} />
     </div>

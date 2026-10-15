@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { ImageDropzone } from "@/components/ui/image-dropzone";
 import { Label } from "@/components/ui/label";
 
 // SITE-05 (PH-09): pemilih satu berkas gambar brand (logo, favicon, banner).
 // Unggahan dilakukan lewat hook `useUploadThing` milik pemanggil; komponen ini
 // hanya UI supaya endpoint Uploadthing tetap terketik literal di satu tempat.
+// Cara memilih berkasnya memakai dropzone seragam (docs/03 bagian 1C).
 
 export function AssetPicker({
   id,
@@ -27,8 +28,6 @@ export function AssetPicker({
   onUpload: (files: File[]) => void;
   onClear: () => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   return (
     <div className="flex flex-col gap-2">
       <Label htmlFor={id}>{label}</Label>
@@ -48,38 +47,19 @@ export function AssetPicker({
         <p className="text-sm text-muted-foreground">Belum ada berkas.</p>
       )}
 
-      <input
-        ref={inputRef}
-        id={id}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        disabled={uploading}
-        onChange={(event) => {
-          const files = Array.from(event.target.files ?? []);
-          if (files.length > 0) onUpload(files);
-          event.target.value = "";
-        }}
+      <ImageDropzone
+        inputId={id}
+        uploading={uploading}
+        onFiles={(files) => onUpload(files.slice(0, 1))}
+        typesText={hint}
+        className="p-4"
       />
 
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={uploading}
-          onClick={() => inputRef.current?.click()}
-        >
-          {uploading ? "Mengunggah..." : "Unggah"}
+      {url ? (
+        <Button type="button" variant="ghost" size="sm" className="self-start" onClick={onClear}>
+          Hapus
         </Button>
-        {url ? (
-          <Button type="button" variant="ghost" size="sm" onClick={onClear}>
-            Hapus
-          </Button>
-        ) : null}
-      </div>
-
-      <p className="text-xs text-muted-foreground">{hint}</p>
+      ) : null}
     </div>
   );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { ImageDropzone } from "@/components/ui/image-dropzone";
 import { MAX_PRODUCT_IMAGES } from "@/lib/products/validation";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";
@@ -19,7 +20,6 @@ export function ImageUploader({
   setUrls,
   max = MAX_PRODUCT_IMAGES,
 }: ImageUploaderProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   const { startUpload, isUploading } = useUploadThing("productImage", {
@@ -27,17 +27,13 @@ export function ImageUploader({
       const uploaded = files.map((file) => file.serverData.url);
       setUrls((previous) => [...previous, ...uploaded].slice(0, max));
       setError(null);
-      if (inputRef.current) inputRef.current.value = "";
     },
     onUploadError: () => {
       setError("Gagal mengunggah gambar, coba lagi");
     },
   });
 
-  async function handleFiles(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(event.target.files ?? []);
-    if (files.length === 0) return;
-
+  async function handleFiles(files: File[]) {
     const remaining = max - urls.length;
     if (remaining <= 0) {
       setError(`Maksimal ${max} gambar`);
@@ -85,28 +81,13 @@ export function ImageUploader({
         <p className="text-sm text-muted-foreground">Belum ada gambar.</p>
       )}
 
-      <div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          multiple={max > 1}
-          className="hidden"
-          onChange={handleFiles}
-          disabled={isUploading || urls.length >= max}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isUploading || urls.length >= max}
-          onClick={() => inputRef.current?.click()}
-        >
-          {isUploading ? "Mengunggah..." : "Unggah Gambar"}
-        </Button>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Maksimal {max} gambar, masing-masing 4MB.
-        </p>
-      </div>
+      <ImageDropzone
+        multiple={max > 1}
+        uploading={isUploading}
+        disabled={urls.length >= max}
+        onFiles={handleFiles}
+        typesText={`Maksimal ${max} gambar, masing-masing 4MB.`}
+      />
     </div>
   );
 }

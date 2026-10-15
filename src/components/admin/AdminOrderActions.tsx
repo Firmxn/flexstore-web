@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageDropzone } from "@/components/ui/image-dropzone";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";
@@ -53,8 +54,8 @@ function RefundCompleteForm({
     onUploadError: () => setError("Gagal mengunggah bukti refund"),
   });
 
-  async function handleFile(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
+  async function handleFiles(files: File[]) {
+    const file = files[0];
     if (!file) return;
     setError(null);
     await startUpload([file]);
@@ -89,16 +90,13 @@ function RefundCompleteForm({
     <div className="flex flex-col gap-3 rounded-lg border border-border p-3">
       <div className="flex flex-col gap-2">
         <Label htmlFor={`refund-proof-${refundId}`}>Bukti refund (gambar)</Label>
-        <input
-          id={`refund-proof-${refundId}`}
-          type="file"
-          accept="image/*"
-          className="text-sm"
-          onChange={handleFile}
+        <ImageDropzone
+          inputId={`refund-proof-${refundId}`}
+          uploading={isUploading}
+          onFiles={handleFiles}
+          typesText="Satu berkas gambar, maksimal 4MB."
+          className="p-4"
         />
-        {isUploading ? (
-          <p className="text-xs text-muted-foreground">Mengunggah...</p>
-        ) : null}
         {proofUrl ? (
           <p className="text-xs text-muted-foreground">Bukti terunggah.</p>
         ) : null}
