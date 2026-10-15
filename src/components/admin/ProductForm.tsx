@@ -346,149 +346,6 @@ export function ProductForm({
       </div>
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
-        <div className="flex flex-col gap-1">
-          <h2 className="font-semibold">Seksi Editorial (opsional)</h2>
-          <p className="text-sm text-muted-foreground">
-            Semuanya opsional — isi hanya yang ingin ditampilkan di halaman
-            produk. Seksi yang kosong tidak dirender sama sekali.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="product-hero-type">Banner Hero (opsional)</Label>
-            <p className="text-sm text-muted-foreground">
-              Banner panorama full-width di bawah grid produk. Pilih salah satu
-              sumber: gambar atau video.
-            </p>
-            <Select
-              value={heroType}
-              onValueChange={(value) => {
-                const next = value as "none" | "image" | "video";
-                setHeroType(next);
-                // Hanya satu sumber yang disimpan: pilihan baru mengosongkan
-                // sumber lain agar tidak ada dua banner bersaing.
-                if (next !== "image") setField("heroImageUrl", "");
-                if (next !== "video") setField("videoHeroUrl", "");
-              }}
-            >
-              <SelectTrigger id="product-hero-type" className="sm:max-w-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Tanpa banner</SelectItem>
-                <SelectItem value="image">Gambar</SelectItem>
-                <SelectItem value="video">Video</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {heroType === "image" ? (
-              <div className="flex flex-col gap-2">
-                <ImageUploader
-                  max={1}
-                  layout="single"
-                  fit="cover"
-                  productName={values.name || "Produk"}
-                  // Rasio banner storefront (panorama di layar lebar).
-                  mediaClassName="aspect-video w-full sm:aspect-[4/1]"
-                  urls={values.heroImageUrl ? [values.heroImageUrl] : []}
-                  setUrls={(action) => {
-                    setValues((previous) => {
-                      const current = previous.heroImageUrl
-                        ? [previous.heroImageUrl]
-                        : [];
-                      const next =
-                        typeof action === "function"
-                          ? action(current)
-                          : action;
-                      return { ...previous, heroImageUrl: next[0] ?? "" };
-                    });
-                  }}
-                />
-              </div>
-            ) : null}
-
-            {heroType === "video" ? (
-              <VideoHeroUploader
-                url={values.videoHeroUrl}
-                autoplay={values.videoHeroAutoplay}
-                onUrlChange={(url) => setField("videoHeroUrl", url)}
-                onAutoplayChange={(autoplay) =>
-                  setField("videoHeroAutoplay", autoplay)
-                }
-              />
-            ) : null}
-          </div>
-
-          {/* Susunan mengikuti seksi "Cerita produk" storefront: gambar 16:9 di
-              kiri, narasi di kanan. */}
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label>Gambar Narasi (opsional)</Label>
-              <p className="text-sm text-muted-foreground">
-                Satu gambar editorial, tampil di kiri narasi (rasio 16:9 seperti
-                storefront).
-              </p>
-              <ImageUploader
-                max={1}
-                layout="single"
-                fit="cover"
-                productName={values.name || "Produk"}
-                mediaClassName="aspect-video w-full"
-                urls={values.storyImageUrl ? [values.storyImageUrl] : []}
-                setUrls={(action) => {
-                  setValues((previous) => {
-                    const current = previous.storyImageUrl
-                      ? [previous.storyImageUrl]
-                      : [];
-                    const next =
-                      typeof action === "function" ? action(current) : action;
-                    return { ...previous, storyImageUrl: next[0] ?? "" };
-                  });
-                }}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="product-story-text">
-                Narasi Produk (opsional)
-              </Label>
-              <Textarea
-                id="product-story-text"
-                rows={5}
-                maxLength={MAX_STORY_TEXT}
-                placeholder="Kosongkan untuk memakai deskripsi produk sebagai narasi."
-                value={values.storyText}
-                onChange={(event) => setField("storyText", event.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Label>Lookbook (opsional)</Label>
-            <p className="text-sm text-muted-foreground">
-              Maksimal {MAX_LOOKBOOK_IMAGES} foto, tampil di grid paling bawah.
-            </p>
-            <ImageUploader
-              layout="lookbook"
-              productName={values.name || "Produk"}
-              max={MAX_LOOKBOOK_IMAGES}
-              urls={values.lookbookUrls}
-              setUrls={(action) => {
-                setValues((previous) => ({
-                  ...previous,
-                  lookbookUrls:
-                    typeof action === "function"
-                      ? action(previous.lookbookUrls)
-                      : action,
-                }));
-              }}
-            />
-          </div>
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
         <div className="flex items-center justify-between">
           <h2 className="font-semibold">Varian</h2>
           <Button
@@ -638,6 +495,149 @@ export function ProductForm({
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="font-semibold">Seksi Editorial (opsional)</h2>
+          <p className="text-sm text-muted-foreground">
+            Semuanya opsional — isi hanya yang ingin ditampilkan di halaman
+            produk. Seksi yang kosong tidak dirender sama sekali.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="product-hero-type">Banner Hero (opsional)</Label>
+            <p className="text-sm text-muted-foreground">
+              Banner panorama full-width di bawah grid produk. Pilih salah satu
+              sumber: gambar atau video.
+            </p>
+            <Select
+              value={heroType}
+              onValueChange={(value) => {
+                const next = value as "none" | "image" | "video";
+                setHeroType(next);
+                // Hanya satu sumber yang disimpan: pilihan baru mengosongkan
+                // sumber lain agar tidak ada dua banner bersaing.
+                if (next !== "image") setField("heroImageUrl", "");
+                if (next !== "video") setField("videoHeroUrl", "");
+              }}
+            >
+              <SelectTrigger id="product-hero-type" className="sm:max-w-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Tanpa banner</SelectItem>
+                <SelectItem value="image">Gambar</SelectItem>
+                <SelectItem value="video">Video</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {heroType === "image" ? (
+              <div className="flex flex-col gap-2">
+                <ImageUploader
+                  max={1}
+                  layout="single"
+                  fit="cover"
+                  productName={values.name || "Produk"}
+                  // Rasio banner storefront (panorama di layar lebar).
+                  mediaClassName="aspect-video w-full sm:aspect-[4/1]"
+                  urls={values.heroImageUrl ? [values.heroImageUrl] : []}
+                  setUrls={(action) => {
+                    setValues((previous) => {
+                      const current = previous.heroImageUrl
+                        ? [previous.heroImageUrl]
+                        : [];
+                      const next =
+                        typeof action === "function"
+                          ? action(current)
+                          : action;
+                      return { ...previous, heroImageUrl: next[0] ?? "" };
+                    });
+                  }}
+                />
+              </div>
+            ) : null}
+
+            {heroType === "video" ? (
+              <VideoHeroUploader
+                url={values.videoHeroUrl}
+                autoplay={values.videoHeroAutoplay}
+                onUrlChange={(url) => setField("videoHeroUrl", url)}
+                onAutoplayChange={(autoplay) =>
+                  setField("videoHeroAutoplay", autoplay)
+                }
+              />
+            ) : null}
+          </div>
+
+          {/* Susunan mengikuti seksi "Cerita produk" storefront: gambar 16:9 di
+              kiri, narasi di kanan. */}
+          <div className="grid gap-6 sm:grid-cols-2">
+            <div className="flex flex-col gap-2">
+              <Label>Gambar Narasi (opsional)</Label>
+              <p className="text-sm text-muted-foreground">
+                Satu gambar editorial, tampil di kiri narasi (rasio 16:9 seperti
+                storefront).
+              </p>
+              <ImageUploader
+                max={1}
+                layout="single"
+                fit="cover"
+                productName={values.name || "Produk"}
+                mediaClassName="aspect-video w-full"
+                urls={values.storyImageUrl ? [values.storyImageUrl] : []}
+                setUrls={(action) => {
+                  setValues((previous) => {
+                    const current = previous.storyImageUrl
+                      ? [previous.storyImageUrl]
+                      : [];
+                    const next =
+                      typeof action === "function" ? action(current) : action;
+                    return { ...previous, storyImageUrl: next[0] ?? "" };
+                  });
+                }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="product-story-text">
+                Narasi Produk (opsional)
+              </Label>
+              <Textarea
+                id="product-story-text"
+                rows={5}
+                maxLength={MAX_STORY_TEXT}
+                placeholder="Kosongkan untuk memakai deskripsi produk sebagai narasi."
+                value={values.storyText}
+                onChange={(event) => setField("storyText", event.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Lookbook (opsional)</Label>
+            <p className="text-sm text-muted-foreground">
+              Maksimal {MAX_LOOKBOOK_IMAGES} foto, tampil di grid paling bawah.
+            </p>
+            <ImageUploader
+              layout="lookbook"
+              productName={values.name || "Produk"}
+              max={MAX_LOOKBOOK_IMAGES}
+              urls={values.lookbookUrls}
+              setUrls={(action) => {
+                setValues((previous) => ({
+                  ...previous,
+                  lookbookUrls:
+                    typeof action === "function"
+                      ? action(previous.lookbookUrls)
+                      : action,
+                }));
+              }}
+            />
+          </div>
         </div>
       </section>
 
