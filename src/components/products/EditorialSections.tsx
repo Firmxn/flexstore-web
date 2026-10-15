@@ -56,7 +56,7 @@ export function EditorialSections({
           className="grid gap-6 sm:grid-cols-2"
         >
           {storyImageUrl ? (
-            <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-border bg-muted">
+            <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-muted">
               <Image
                 src={storyImageUrl}
                 alt={`Cerita ${productName}`}
