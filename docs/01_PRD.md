@@ -121,7 +121,7 @@ Sistem memiliki **4 role** (single-store MVP):
 - ✅ Brand
 - ✅ Product status: Active, Inactive, Draft, Out of Stock, Discontinued
 - ✅ Product search dan filter (by name, category, price range, sort)
-- ✅ **Product images:** 1 gambar utama (wajib) + 3 gambar tambahan (opsional) = maksimal 4 gambar per produk
+- ✅ **Product images:** 1 gambar utama (wajib) + 4 gambar tambahan (opsional) = maksimal 5 gambar per produk (dinaikkan dari 4 pada 2026-10-15)
 - ✅ **Variant images:** Setiap variant bisa punya 1 gambar sendiri; unggah/pilih gambar tersedia di form admin produk dan tampil di keranjang (revisi 1.5)
 - ✅ **Size chart / Additional info image:** 1 gambar opsional untuk size chart, spec sheet, nutrition facts, dll
 - ✅ **Stock:** Dual tracking
