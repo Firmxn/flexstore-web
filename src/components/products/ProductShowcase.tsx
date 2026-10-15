@@ -287,11 +287,16 @@ function SizeChartTrigger({
             <DialogDescription>Ukuran {productName}</DialogDescription>
           </DialogHeader>
           <div className="max-h-[70vh] overflow-y-auto">
+            {/* Rasio kotak mengikuti gambar aslinya (tanpa krop), sama seperti
+                pratinjau form admin. `width`/`height` 0 + `sizes="100vw"` supaya
+                yang dipakai rasio intrinsik berkas, bukan kotak 3:4 tetap
+                (keputusan pengguna 2026-10-16). */}
             <Image
               src={url}
               alt={`Bagan ukuran ${productName}`}
-              width={1200}
-              height={1600}
+              width={0}
+              height={0}
+              sizes="100vw"
               className="h-auto w-full object-contain"
             />
           </div>
