@@ -51,18 +51,17 @@ export function VariantImagePicker({
         onClear={url ? () => onChange("") : undefined}
       />
 
-      <ImageDropzone
-        inputId={id}
-        uploading={isUploading}
-        disabled={Boolean(url)}
-        onFiles={handleFiles}
-        typesText={
-          url
-            ? "Sudah ada gambar. Hapus dulu untuk mengganti."
-            : "Satu berkas gambar, maksimal 4MB."
-        }
-        className="p-4"
-      />
+      {/* Slot terisi → dropzone disembunyikan (aturan 1C); penggantian lewat
+          tombol Hapus pada preview. */}
+      {url ? null : (
+        <ImageDropzone
+          inputId={id}
+          uploading={isUploading}
+          onFiles={handleFiles}
+          typesText="Satu berkas gambar, maksimal 4MB."
+          className="p-4"
+        />
+      )}
 
       <FormErrorAlert message={error} />
     </div>

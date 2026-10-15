@@ -14,7 +14,10 @@ export const PRODUCT_STATUSES = [
   "DISCONTINUED",
 ] as const;
 
-export const MAX_PRODUCT_IMAGES = 4;
+// Batas galeri produk (gambar utama): 1 wajib + 4 opsional (keputusan pengguna
+// 2026-10-15, naik dari 4). Konstanta tunggal ini mengendalikan validasi Zod
+// `images` sekaligus plafon `maxFileCount` endpoint Uploadthing `productImage`.
+export const MAX_PRODUCT_IMAGES = 5;
 
 // PROD-07: batas seksi editorial.
 export const MAX_STORY_TEXT = 2000;

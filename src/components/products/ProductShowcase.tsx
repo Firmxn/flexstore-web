@@ -194,7 +194,14 @@ function ProductGallery({
       </div>
 
       {slides.length > 1 ? (
-        <div className="grid grid-cols-4 gap-3">
+        // 4 gambar tetap satu baris (tata letak lama); 5 gambar utama (kapasitas
+        // baru) juga dijejerkan satu baris supaya tidak ada sisa menggantung.
+        <div
+          className={cn(
+            "grid gap-3",
+            slides.length === 5 ? "grid-cols-5" : "grid-cols-4",
+          )}
+        >
           {slides.map((slide, index) => (
             <button
               key={slide.key}

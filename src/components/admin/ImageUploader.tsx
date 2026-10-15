@@ -85,19 +85,16 @@ export function ImageUploader({
         </div>
       ) : null}
 
-      <ImageDropzone
-        multiple={max > 1}
-        uploading={isUploading}
-        disabled={urls.length >= max}
-        onFiles={handleFiles}
-        typesText={
-          urls.length >= max
-            ? max === 1
-              ? "Sudah ada gambar. Hapus dulu untuk mengganti."
-              : `Galeri penuh (${max} gambar). Hapus salah satu untuk mengganti.`
-            : `Maksimal ${max} gambar, masing-masing 4MB.`
-        }
-      />
+      {/* Slot penuh → dropzone tidak dirender sama sekali (aturan 1C); muncul
+          kembali begitu salah satu gambar dihapus. */}
+      {urls.length < max ? (
+        <ImageDropzone
+          multiple={max > 1}
+          uploading={isUploading}
+          onFiles={handleFiles}
+          typesText={`Maksimal ${max} gambar, masing-masing 4MB.`}
+        />
+      ) : null}
     </div>
   );
 }

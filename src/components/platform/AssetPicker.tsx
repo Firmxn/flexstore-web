@@ -43,18 +43,16 @@ export function AssetPicker({
         onClear={onClear}
       />
 
-      <ImageDropzone
-        inputId={id}
-        uploading={uploading}
-        disabled={Boolean(url)}
-        onFiles={(files) => onUpload(files.slice(0, 1))}
-        typesText={
-          url
-            ? "Sudah ada berkas. Hapus dulu untuk mengganti."
-            : hint
-        }
-        className="p-4"
-      />
+      {/* Slot terisi → dropzone disembunyikan (aturan 1C). */}
+      {url ? null : (
+        <ImageDropzone
+          inputId={id}
+          uploading={uploading}
+          onFiles={(files) => onUpload(files.slice(0, 1))}
+          typesText={hint}
+          className="p-4"
+        />
+      )}
     </div>
   );
 }

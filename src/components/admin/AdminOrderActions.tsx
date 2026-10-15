@@ -97,18 +97,16 @@ function RefundCompleteForm({
           className="w-48 mx-auto"
           onClear={() => setProofUrl("")}
         />
-        <ImageDropzone
-          inputId={`refund-proof-${refundId}`}
-          uploading={isUploading}
-          disabled={Boolean(proofUrl)}
-          onFiles={handleFiles}
-          typesText={
-            proofUrl
-              ? "Bukti sudah ada. Hapus dulu untuk mengganti."
-              : "Satu berkas gambar, maksimal 4MB."
-          }
-          className="p-4"
-        />
+        {/* Slot terisi → dropzone disembunyikan (aturan 1C). */}
+        {proofUrl ? null : (
+          <ImageDropzone
+            inputId={`refund-proof-${refundId}`}
+            uploading={isUploading}
+            onFiles={handleFiles}
+            typesText="Satu berkas gambar, maksimal 4MB."
+            className="p-4"
+          />
+        )}
       </div>
       <div className="flex flex-col gap-2">
         <Label htmlFor={`refund-note-${refundId}`}>Catatan (opsional)</Label>
