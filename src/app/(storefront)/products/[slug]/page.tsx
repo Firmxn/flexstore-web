@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Badge } from "@/components/ui/badge";
 import { ProductShowcase } from "@/components/products/ProductShowcase";
-import { EditorialSections } from "@/components/products/EditorialSections";
+import { MediaContentSections } from "@/components/products/MediaContentSections";
 import { getBrandSetting } from "@/lib/brand";
 import { getPublishedProductBySlug } from "@/lib/products";
 
@@ -124,7 +124,7 @@ export default async function ProductDetailPage({ params }: DetailProps) {
         ) : null}
       </ProductShowcase>
 
-      <EditorialSections
+      <MediaContentSections
         videoHeroUrl={product.videoHeroUrl}
         videoHeroAutoplay={product.videoHeroAutoplay}
         heroImageUrl={product.heroImageUrl}

@@ -500,7 +500,7 @@ export function ProductForm({
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
         <div className="flex flex-col gap-1">
-          <h2 className="font-semibold">Seksi Editorial (opsional)</h2>
+          <h2 className="font-semibold">Media &amp; Konten (opsional)</h2>
           <p className="text-sm text-muted-foreground">
             Semuanya opsional — isi hanya yang ingin ditampilkan di halaman
             produk. Seksi yang kosong tidak dirender sama sekali.
@@ -574,13 +574,13 @@ export function ProductForm({
           </div>
 
           {/* Susunan mengikuti seksi "Cerita produk" storefront: gambar 16:9 di
-              kiri, narasi di kanan. */}
+              kiri, teks cerita di kanan. */}
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
-              <Label>Gambar Narasi (opsional)</Label>
+              <Label>Gambar Cerita (opsional)</Label>
               <p className="text-sm text-muted-foreground">
-                Satu gambar editorial, tampil di kiri narasi (rasio 16:9 seperti
-                storefront).
+                Satu gambar untuk cerita produk, tampil di kiri teksnya (rasio
+                16:9 seperti storefront).
               </p>
               <ImageUploader
                 max={1}
@@ -604,13 +604,13 @@ export function ProductForm({
 
             <div className="flex flex-col gap-2">
               <Label htmlFor="product-story-text">
-                Narasi Produk (opsional)
+                Cerita Produk (opsional)
               </Label>
               <Textarea
                 id="product-story-text"
                 rows={5}
                 maxLength={MAX_STORY_TEXT}
-                placeholder="Kosongkan untuk memakai deskripsi produk sebagai narasi."
+                placeholder="Kosongkan untuk memakai deskripsi produk sebagai cerita."
                 value={values.storyText}
                 onChange={(event) => setField("storyText", event.target.value)}
               />

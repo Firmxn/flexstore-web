@@ -1,6 +1,6 @@
 "use client";
 
-// PROD-07 — seksi editorial detail produk: (1) VideoHero full-width di bawah
+// PROD-07 — seksi Media & Konten detail produk: (1) VideoHero full-width di bawah
 // grid, (2) ProductStory dua kolom gambar+narasi, (3) Lookbook meniru templat
 // editorial pengguna: foto utama di kiri membentang dua baris + foto pendamping
 // di kanan; rasio lanskap serupa video hero. Seksi tanpa data tidak dirender.
@@ -8,7 +8,7 @@
 import Image from "next/image";
 import { useState, type ReactNode } from "react";
 
-export type EditorialData = {
+export type MediaContentData = {
   videoHeroUrl: string | null;
   videoHeroAutoplay: boolean;
   heroImageUrl: string | null;
@@ -19,7 +19,7 @@ export type EditorialData = {
   description: string | null;
 };
 
-export function EditorialSections({
+export function MediaContentSections({
   videoHeroUrl,
   videoHeroAutoplay,
   heroImageUrl,
@@ -28,7 +28,7 @@ export function EditorialSections({
   lookbookUrls,
   productName,
   description,
-}: EditorialData) {
+}: MediaContentData) {
   // Banner hero: gambar diprioritaskan bila keduanya terisi (admin hanya bisa
   // memilih satu lewat form; aturan ini jaring pengaman).
   const hasHero = Boolean(heroImageUrl || videoHeroUrl);

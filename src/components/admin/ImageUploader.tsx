@@ -15,7 +15,7 @@ import { Alert } from "@/components/ui/alert";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
 import { ImagePreview } from "@/components/ui/image-preview";
 import { ImageRemoveButton } from "@/components/ui/image-remove-button";
-import { Lookbook } from "@/components/products/EditorialSections";
+import { Lookbook } from "@/components/products/MediaContentSections";
 import { MAX_PRODUCT_IMAGES } from "@/lib/products/validation";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";

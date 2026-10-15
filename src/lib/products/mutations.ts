@@ -12,7 +12,7 @@ function calculateMinPrice(variants: { price: number }[]) {
   return Math.min(...variants.map((variant) => variant.price));
 }
 
-// Baris gambar (galeri + bagan ukuran + seksi editorial PROD-07) untuk
+// Baris gambar (galeri + bagan ukuran + seksi Media & Konten PROD-07) untuk
 // nested create ProductImage.
 function imageRows(input: ProductInput) {
   const galleryImages = input.images.map((image, index) => ({
@@ -25,7 +25,7 @@ function imageRows(input: ProductInput) {
   const sizeChart = input.sizeChartUrl
     ? [{ url: input.sizeChartUrl, role: "SIZE_CHART" as const, sortOrder: 0 }]
     : [];
-  // Seksi editorial: STORY maks 1, LOOKBOOK maks 4 (batas di Zod).
+  // Seksi Media & Konten: STORY maks 1, LOOKBOOK maks 4 (batas di Zod).
   const story = input.storyImageUrl
     ? [{ url: input.storyImageUrl, role: "STORY" as const, sortOrder: 0 }]
     : [];

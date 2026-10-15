@@ -19,7 +19,7 @@ export const PRODUCT_STATUSES = [
 // `images` sekaligus plafon `maxFileCount` endpoint Uploadthing `productImage`.
 export const MAX_PRODUCT_IMAGES = 5;
 
-// PROD-07: batas seksi editorial.
+// PROD-07: batas seksi Media & Konten.
 export const MAX_STORY_TEXT = 2000;
 export const MAX_STORY_IMAGES = 1;
 export const MAX_LOOKBOOK_IMAGES = 4;
@@ -116,7 +116,7 @@ export const productSchema = z.object({
     ])
     .optional()
     .transform((value) => (value ? value : undefined)),
-  // PROD-07 — tiga isian editorial opsional; semuanya tidak pernah memblok simpan.
+  // PROD-07 — tiga isian Media & Konten opsional; semuanya tidak pernah memblok simpan.
   videoHeroUrl: z
     .union([
       z.string().trim().url("URL video tidak valid").max(500),
