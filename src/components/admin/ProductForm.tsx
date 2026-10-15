@@ -342,7 +342,7 @@ export function ProductForm({
                         <Info className="h-3.5 w-3.5" aria-hidden />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent align="start" className="w-64">
+                    <PopoverContent align="start" className="w-64 text-xs">
                       <p className="font-semibold">Ketentuan SKU</p>
                       <ul className="mt-1 list-disc space-y-1 pl-4 text-muted-foreground">
                         <li>
@@ -351,7 +351,8 @@ export function ProductForm({
                         </li>
                         <li>Wajib unik antar semua produk.</li>
                         <li>
-                          Pola disarankan INISIAL-PROD-VARIAN, contoh: KP-30S-M.
+                          Format disarankan: inisial produk - kode produk -
+                          varian, contoh KP-30S-M (Kaos Polos 30s, ukuran M).
                         </li>
                       </ul>
                     </PopoverContent>
