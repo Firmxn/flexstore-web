@@ -61,7 +61,11 @@ export function ImageUploader({
                   ? "Gambar bagan ukuran"
                   : `Gambar produk ${index + 1}`
               }
-              className="w-48"
+              // Bagan ukuran mengikuti tampilan storefront (`aspect-[4/3]`
+              // sm:aspect-[16/9] + object-contain) — rasio horizontal, tanpa
+              // krop, karena isinya detail tabel; kartunya dibuat lebih besar
+              // dari preview lain (`max-w-xl`) agar detail terbaca.
+              className={max === 1 ? "w-full max-w-xl" : "w-48"}
               // Bagan ukuran mengikuti tampilan storefront (`aspect-[4/3]`
               // sm:aspect-[16/9] + object-contain) — rasio horizontal, tanpa
               // krop, karena isinya detail tabel.
@@ -86,7 +90,13 @@ export function ImageUploader({
         uploading={isUploading}
         disabled={urls.length >= max}
         onFiles={handleFiles}
-        typesText={`Maksimal ${max} gambar, masing-masing 4MB.`}
+        typesText={
+          urls.length >= max
+            ? max === 1
+              ? "Sudah ada gambar. Hapus dulu untuk mengganti."
+              : `Galeri penuh (${max} gambar). Hapus salah satu untuk mengganti.`
+            : `Maksimal ${max} gambar, masing-masing 4MB.`
+        }
       />
     </div>
   );

@@ -54,8 +54,13 @@ export function VariantImagePicker({
       <ImageDropzone
         inputId={id}
         uploading={isUploading}
+        disabled={Boolean(url)}
         onFiles={handleFiles}
-        typesText="Satu berkas gambar, maksimal 4MB."
+        typesText={
+          url
+            ? "Sudah ada gambar. Hapus dulu untuk mengganti."
+            : "Satu berkas gambar, maksimal 4MB."
+        }
         className="p-4"
       />
 

@@ -100,8 +100,13 @@ function RefundCompleteForm({
         <ImageDropzone
           inputId={`refund-proof-${refundId}`}
           uploading={isUploading}
+          disabled={Boolean(proofUrl)}
           onFiles={handleFiles}
-          typesText="Satu berkas gambar, maksimal 4MB."
+          typesText={
+            proofUrl
+              ? "Bukti sudah ada. Hapus dulu untuk mengganti."
+              : "Satu berkas gambar, maksimal 4MB."
+          }
           className="p-4"
         />
       </div>

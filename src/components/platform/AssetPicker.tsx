@@ -46,8 +46,13 @@ export function AssetPicker({
       <ImageDropzone
         inputId={id}
         uploading={uploading}
+        disabled={Boolean(url)}
         onFiles={(files) => onUpload(files.slice(0, 1))}
-        typesText={hint}
+        typesText={
+          url
+            ? "Sudah ada berkas. Hapus dulu untuk mengganti."
+            : hint
+        }
         className="p-4"
       />
     </div>
