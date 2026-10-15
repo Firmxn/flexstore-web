@@ -139,6 +139,28 @@ Pemakai pertama yang diubah saat implementasi: `DeleteButton` (`window.confirm` 
 
 ---
 
+## 1C. Aturan unggah gambar aplikasi (UI seragam, drag-and-drop) — belum diimplementasikan
+
+Aturan bersama untuk seluruh titik unggah gambar di sistem (galeri produk, bagan ukuran, gambar varian, bukti refund, logo/favicon/banner brand). **Status: belum diimplementasikan** (dokumentasi dulu, 2026-10-15). Keputusan pengguna: "gue pengen UI seperti gambar, untuk upload gambar di sistem ini, baik itu gambar utama, varian, ataupun lainnya" — lampiran referensi: kotak upload bergaris putus-putus dengan ikon awan-unggah, teks ajakan, dan tombol utama "Browse Image".
+
+Bentuk yang diidamkan (komponen konfirmasi visual mengikuti referensi pengguna):
+
+- **Wadah dropzone:** kotak dengan garis pinggir putus-putus (`border-dashed`, sudut membulat, latar netral) yang menampung seluruh isi; seluruh wilayah kotak memakai tombol file dialog (klik di mana saja) dan menerima drag-and-drop file dari luar browser.
+- **Ikon:** ikon unggah-awan (`Upload`, terpusat; lingkaran latar `muted` mengikuti punca 1B) di atas teks.
+- **Teks ajakan:** kalimat utama "Pilih berkas atau tarik dan lepas ke sini." dan kalimat kedua menyebut berkas yang relevan: "Berkas JPG, PNG, SVG akan diterima." — daftar tipe di teks harus menyesuaikan tipe yang disetujui server per endpoint (lihat butir berikut), bukan teks keras generik.
+- **Tombol utama:** satu tombol utama (variant default/primary) berlabel "Browse Image" di dalam dropzone — sama seperti referensi; klik tombol dan klik nama file membuka dialog file yang sama.
+- **Saat drag melewati dropzone:** kotak menonjol (latar `muted/50` atau garis pinggir berwarna `primary`) supaya pembeli tahu lepasan akan ditampung.
+- **Saat mengunggah:** tombol nonaktif + teks "Mengunggah..."; galat tampil lewat pola `FormErrorAlert`/`Alert` yang sudah ada (bagian 1B), seperti "Gagal unggah" saat ini.
+- **Pratinjau dan pengelolaan hasil** (daftar file, hapus, ganti) memakai perilaku yang sudah ada di tiap komponen — UI bagian ini hanya mengganti cara memulihkan berkas ke sistem.
+- **Kontrak server TIDAK berubah** — masih Uploadthing berikut endpoint dan plafon yang sudah ada (`src/lib/uploadthing/core.ts`): `productImage` (maks 4 MB, galeri 4 berkas, bagan ukuran dan varian 1 berkas, gambar), `refundProof` (maks 4 MB, 1 berkas), aset brand (`bannerImage` 4 MB, favicon 2 MB — batas masing-masing endpoint). Plafon ukuran/tipe yang dilanggar ditolak server; UI hanya menyaingi dengan menampilkan galatnya rapi.
+- **Aksesibilitas:** dropzone punya role tombol/label jelas, aktif keyboard (Enter/Spasi membuka dialog file), fokus terlihat.
+
+**Titik yang diganti saat implementasi (pemakai uploadthing saat ini):** `ImageUploader` (galeri produk maks 4 + bagan ukuran 1), `VariantImagePicker` (satu per baris varian), `AdminOrderActions` (unggah bukti refund), `AssetPicker`/`BrandSettingsForm` (`/site-admin/brand`: logo, favicon, banner). Komponen dasar satu place, mis. `src/components/ui/image-dropzone.tsx` (atau elemen shadcn `Input` file berpakaian), dipakai ulang tanpa menyalin-tempel.
+
+Tindak lanjut implementasi (mengubah status bagian ini): buat dropzone, tukar keenam pemakai di atas, verifikasi dua puluh — klik dan drag-and-drop — di urutan tampilan (desktop) dan layar sentuh (mobile tetap buka dialog file, tanpa drag di layar sentuh), lalu perbarui status dengan bukti verifikasi di `docs/04`.
+
+---
+
 ## <a name="auth-01"></a>AUTH-01 ├óΓé¼ΓÇ¥ Guest OTP Verification
 
 ### 1. Identitas dan tujuan
