@@ -1,11 +1,10 @@
 import { cache } from "react";
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Badge } from "@/components/ui/badge";
-import { AddToCartForm } from "@/components/cart/AddToCartForm";
+import { ProductShowcase } from "@/components/products/ProductShowcase";
 import { getBrandSetting } from "@/lib/brand";
 import { getPublishedProductBySlug } from "@/lib/products";
 
@@ -74,99 +73,49 @@ export default async function ProductDetailPage({ params }: DetailProps) {
         <span className="text-foreground">{product.name}</span>
       </nav>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="flex flex-col gap-3">
-          {gallery.length > 0 ? (
-            <>
-              <div className="relative aspect-square overflow-hidden rounded-xl border border-border bg-muted">
-                <Image
-                  src={gallery[0].url}
-                  alt={product.name}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 50vw"
-                  className="object-cover"
-                  priority
-                />
-              </div>
-              {gallery.length > 1 ? (
-                <div className="grid grid-cols-4 gap-3">
-                  {gallery.slice(1).map((image) => (
-                    <div
-                      key={image.id}
-                      className="relative aspect-square overflow-hidden rounded-lg border border-border bg-muted"
-                    >
-                      <Image
-                        src={image.url}
-                        alt={product.name}
-                        fill
-                        sizes="120px"
-                        className="object-cover"
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </>
+      <ProductShowcase
+        productName={product.name}
+        gallery={gallery.map((image) => ({ id: image.id, url: image.url }))}
+        variantMedia={product.variants.map((variant) => ({
+          variantId: variant.id,
+          variantName: variant.name,
+          imageUrl: variant.imageUrl,
+        }))}
+        variants={product.variants.map((variant) => ({
+          id: variant.id,
+          name: variant.name,
+          sku: variant.sku,
+          price: Number(variant.price),
+          stock: variant.stock,
+        }))}
+        sizeChartUrl={sizeChart?.url ?? null}
+      >
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-muted-foreground">
+            {product.category.name}
+            {product.brand ? ` - ${product.brand.name}` : ""}
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {product.name}
+          </h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {product.totalStock > 0 ? (
+            <Badge variant="secondary">
+              Stok tersedia {product.totalStock}
+            </Badge>
           ) : (
-            <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
-              Tanpa gambar
-            </div>
+            <Badge variant="destructive">Stok habis</Badge>
           )}
         </div>
 
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">
-              {product.category.name}
-              {product.brand ? ` - ${product.brand.name}` : ""}
-            </p>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              {product.name}
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {product.totalStock > 0 ? (
-              <Badge variant="secondary">
-                Stok tersedia {product.totalStock}
-              </Badge>
-            ) : (
-              <Badge variant="destructive">Stok habis</Badge>
-            )}
-          </div>
-
-          {product.description ? (
-            <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
-              {product.description}
-            </p>
-          ) : null}
-
-          <AddToCartForm
-            variants={product.variants.map((variant) => ({
-              id: variant.id,
-              name: variant.name,
-              sku: variant.sku,
-              price: Number(variant.price),
-              stock: variant.stock,
-            }))}
-          />
-        </div>
-      </div>
-
-      {sizeChart ? (
-        <section className="flex flex-col gap-3 rounded-xl border border-border bg-background p-4">
-          <h2 className="font-semibold">Bagan Ukuran</h2>
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border border-border bg-muted sm:aspect-[16/9]">
-            <Image
-              src={sizeChart.url}
-              alt={`Bagan ukuran ${product.name}`}
-              fill
-              sizes="(max-width: 1024px) 100vw, 1024px"
-              className="object-contain"
-            />
-          </div>
-        </section>
-      ) : null}
+        {product.description ? (
+          <p className="whitespace-pre-line text-sm leading-relaxed text-muted-foreground">
+            {product.description}
+          </p>
+        ) : null}
+      </ProductShowcase>
     </PageContainer>
   );
 }

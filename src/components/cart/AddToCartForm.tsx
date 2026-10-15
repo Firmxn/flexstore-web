@@ -17,10 +17,22 @@ type VariantOption = {
   stock: number;
 };
 
-export function AddToCartForm({ variants }: { variants: VariantOption[] }) {
+export function AddToCartForm({
+  variants,
+  initialVariantId,
+  onVariantChange,
+}: {
+  variants: VariantOption[];
+  // Dipakai ProductShowcase (PROD-06): bawaan varian disinkronkan dengan
+  // slide galeri, dan setiap perubahan pemberitahukan induk.
+  initialVariantId?: string;
+  onVariantChange?: (variantId: string) => void;
+}) {
   const router = useRouter();
   const firstAvailable = variants.find((variant) => variant.stock > 0);
-  const [variantId, setVariantId] = useState(firstAvailable?.id ?? "");
+  const [variantId, setVariantId] = useState(
+    initialVariantId ?? firstAvailable?.id ?? "",
+  );
   const [quantity, setQuantity] = useState(1);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,6 +97,7 @@ export function AddToCartForm({ variants }: { variants: VariantOption[] }) {
                         setVariantId(variant.id);
                         setQuantity(1);
                         setSuccess(false);
+                        onVariantChange?.(variant.id);
                       }}
                       className="h-4 w-4"
                     />
