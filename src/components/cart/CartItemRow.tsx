@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,6 +19,9 @@ type CartItemRowProps = {
   stock: number;
   available: boolean;
   selected: boolean;
+  // CART-05 (TASK-114): baris di-highlight (latar + cincin + di-gulir ke
+  // pandangan) bila varian ini masuk `?hilite=` halaman keranjang.
+  highlighted?: boolean;
   onSelectChange: (selected: boolean) => void;
 };
 
@@ -33,11 +36,21 @@ export function CartItemRow({
   stock,
   available,
   selected,
+  highlighted = false,
   onSelectChange,
 }: CartItemRowProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const rowRef = useRef<HTMLLIElement | null>(null);
+
+  // Gulir sekali saat baris muncul dengan highlight (tanpa setState — aman
+  // aturan lint react-hooks).
+  useEffect(() => {
+    if (highlighted && rowRef.current) {
+      rowRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [highlighted]);
 
   async function mutate(
     request: () => Promise<unknown>,
@@ -73,7 +86,14 @@ export function CartItemRow({
   }
 
   return (
-    <li className="flex gap-4 border-b border-border p-4 last:border-b-0">
+    <li
+      ref={rowRef}
+      className={`flex gap-4 border-b border-border p-4 last:border-b-0 ${
+        highlighted
+          ? "bg-accent/40 shadow-[inset_0_0_0_2px_hsl(var(--primary))]"
+          : ""
+      }`}
+    >
       <input
         type="checkbox"
         className="mt-1 h-4 w-4 shrink-0"

@@ -8,17 +8,20 @@ import { ProductCardActions } from "./ProductCardActions";
 export function ProductCard({
   product,
   canShop,
+  cartQuantities = {},
 }: {
   product: ProductWithRelations;
   canShop: boolean;
+  // CART-05/TASK-114: kuantitas varian yang sudah di keranjang pembeli
+  // (`Record<variantId, quantity>`), dibaca halaman sekali per render.
+  cartQuantities?: Record<string, number>;
 }) {
   // Bagan ukuran bukan foto produk; jangan dipakai sebagai sampul (PRD 3.1.A).
   const cover = product.images.find((image) => image.role !== "SIZE_CHART")?.url;
+  const hasSizeChart = product.images.some((image) => image.role === "SIZE_CHART");
   const prices = product.variants.map((variant) => Number(variant.price));
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
-  const availableVariant =
-    product.variants.find((variant) => variant.stock > 0) ?? null;
   const href = `/products/${product.slug}`;
 
   return (
@@ -55,7 +58,19 @@ export function ProductCard({
 
         {canShop ? (
           <div className="mt-auto pt-1">
-            <ProductCardActions variantId={availableVariant?.id ?? null} />
+            <ProductCardActions
+              productName={product.name}
+              productHref={href}
+              coverUrl={cover ?? null}
+              hasSizeChart={hasSizeChart}
+              variants={product.variants.map((variant) => ({
+                id: variant.id,
+                name: variant.name,
+                price: Number(variant.price),
+                stock: variant.stock,
+                keranjang: cartQuantities[variant.id] ?? 0,
+              }))}
+            />
           </div>
         ) : null}
       </div>

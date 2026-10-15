@@ -116,3 +116,20 @@ export async function getCartItemCount(
   const cart = await getCart(identity);
   return cart.itemCount;
 }
+
+// Kuanta keranjang per varian, untuk kartu katalog (CART-05, TASK-114).
+// Kartu menilai stok efektif = `stock - kuantitas di keranjang`, jadi halaman
+// yang dirender server cukup memanggil ini sekali lalu meneruskannya ke
+// ProductGrid/ProductCard — bukan menghitung ulang di setiap kartu.
+export async function getCartQuantities(
+  identity: CartIdentity | null,
+): Promise<Record<string, number>> {
+  if (!identity) return {};
+
+  const rawItems = await getRawItems(identity);
+  const map: Record<string, number> = {};
+  for (const item of rawItems) {
+    map[item.variantId] = (map[item.variantId] ?? 0) + item.quantity;
+  }
+  return map;
+}

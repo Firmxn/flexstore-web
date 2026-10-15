@@ -10,7 +10,7 @@ import {
   defaultBannerTitle,
   getBrandSetting,
 } from "@/lib/brand";
-import { getCartAccess } from "@/lib/cart";
+import { getCartAccess, getCartQuantities } from "@/lib/cart";
 import { getPublishedProducts } from "@/lib/products";
 import { cn } from "@/lib/utils/cn";
 
@@ -28,7 +28,17 @@ async function FeaturedProducts() {
     getCartAccess(),
   ]);
 
-  return <ProductGrid products={products} canShop={access.ok} />;
+  // Kuantitas keranjang untuk stok efektif kartu (CART-05, TASK-114).
+  const cartQuantities =
+    access.ok && access.identity ? await getCartQuantities(access.identity) : {};
+
+  return (
+    <ProductGrid
+      products={products}
+      canShop={access.ok}
+      cartQuantities={cartQuantities}
+    />
+  );
 }
 
 function ProductGridSkeleton() {

@@ -13,11 +13,23 @@ export const metadata = { title: "Keranjang" };
 // instant-navigation karena data dinamis diakses di luar Suspense.
 export const instant = false;
 
-export default async function CartPage() {
+export default async function CartPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ hilite?: string | string[] | undefined }>;
+}) {
   // Halaman membaca cookie/sesi (NextAuth memakai crypto.getRandomValues()),
   // jadi ditandai request-time supaya tidak diprerender (Next.js 16
   // cacheComponents). Lihat docs/messages/blocking-prerender-crypto.
   await connection();
+
+  // CART-05 (TASK-114): `?hilite=<variantId>` dari tombol kartu "Keranjang"
+  // saat semua stok varian itu sudah di keranjang — dipakai untuk highlight.
+  const params = await searchParams;
+  const hilite =
+    typeof params.hilite === "string" && params.hilite.trim() !== ""
+      ? params.hilite
+      : undefined;
 
   // Keranjang hanya untuk customer dan guest; role lain (mis. admin)
   // diarahkan ke areanya masing-masing (PRD 2).
@@ -51,7 +63,7 @@ export default async function CartPage() {
             Centang item yang ingin di-checkout. Item yang tidak dicentang
             tetap tersimpan di keranjang.
           </p>
-          <CartView items={cart.items} />
+          <CartView items={cart.items} hilite={hilite} />
         </>
       )}
     </PageContainer>

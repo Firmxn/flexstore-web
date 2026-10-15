@@ -7,14 +7,28 @@ import { CartSummary } from "./CartSummary";
 
 type CartViewProps = {
   items: CartLine[];
+  // CART-05 (TASK-114): daftar variantId (dipisah koma) dari `?hilite=` yang
+  // barisnya di-highlight halaman keranjang (keadaan kartu "Keranjang" saat
+  // semua stok varian itu sudah di keranjang).
+  hilite?: string;
 };
 
 // Pemilihan item untuk checkout. State hanya hidup di komponen ini (tidak
 // disimpan ke server) dan default kosong: pengguna yang menentukan item mana
 // yang di-checkout (catatan review PH-02, docs/04 bagian 6.1). Ongkir dihitung
 // di /checkout, bukan di sini.
-export function CartView({ items }: CartViewProps) {
+export function CartView({ items, hilite }: CartViewProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const highlighted = useMemo(
+    () =>
+      new Set(
+        (hilite ?? "")
+          .split(",")
+          .map((value) => value.trim())
+          .filter(Boolean),
+      ),
+    [hilite],
+  );
 
   const selectedLines = useMemo(
     () => items.filter((item) => selected.has(item.variantId)),
@@ -54,6 +68,7 @@ export function CartView({ items }: CartViewProps) {
             stock={item.stock}
             available={item.productStatus === "ACTIVE"}
             selected={selected.has(item.variantId)}
+            highlighted={highlighted.has(item.variantId)}
             onSelectChange={(next) => toggle(item.variantId, next)}
           />
         ))}

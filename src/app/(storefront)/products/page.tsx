@@ -6,7 +6,7 @@ import { CategoryPills } from "@/components/products/CategoryPills";
 import { Pagination } from "@/components/products/Pagination";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { Input } from "@/components/ui/input";
-import { getCartAccess } from "@/lib/cart";
+import { getCartAccess, getCartQuantities } from "@/lib/cart";
 import { getCategories } from "@/lib/categories";
 import { getPublishedProducts } from "@/lib/products";
 import { catalogFilterSchema } from "@/lib/products/validation";
@@ -116,7 +116,15 @@ async function ProductsContent({
         sort={filters.sort}
       />
 
-      <ProductGrid products={products} canShop={access.ok} />
+      <ProductGrid
+        products={products}
+        canShop={access.ok}
+        cartQuantities={
+          access.ok && access.identity
+            ? await getCartQuantities(access.identity)
+            : {}
+        }
+      />
 
       <Pagination
         page={page}
