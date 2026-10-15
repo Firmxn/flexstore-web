@@ -297,13 +297,18 @@ export function ProductForm({
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
         <h2 className="font-semibold">Gambar Produk</h2>
-        <ImageUploader urls={values.images} setUrls={(action) => {
-          setValues((previous) => ({
-            ...previous,
-            images:
-              typeof action === "function" ? action(previous.images) : action,
-          }));
-        }} />
+        <ImageUploader
+          layout="gallery"
+          productName={values.name || "Produk"}
+          urls={values.images}
+          setUrls={(action) => {
+            setValues((previous) => ({
+              ...previous,
+              images:
+                typeof action === "function" ? action(previous.images) : action,
+            }));
+          }}
+        />
       </section>
 
       <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
@@ -315,6 +320,13 @@ export function ProductForm({
         </div>
         <ImageUploader
           max={1}
+          layout="single"
+          fit="contain"
+          productName={values.name || "Produk"}
+          // Mengikuti dialog "Bagan Ukuran" storefront: kotak 3:4 (rasio
+          // deklarasi tampilan storefront) dengan object-contain, jadi gambar
+          // tampil tanpa krop persis seperti di halaman produk.
+          mediaClassName="aspect-[3/4] w-full max-w-sm mx-auto"
           urls={values.sizeChartUrl ? [values.sizeChartUrl] : []}
           setUrls={(action) => {
             setValues((previous) => {
@@ -370,6 +382,11 @@ export function ProductForm({
               <div className="flex flex-col gap-2">
                 <ImageUploader
                   max={1}
+                  layout="single"
+                  fit="cover"
+                  productName={values.name || "Produk"}
+                  // Rasio banner storefront (panorama di layar lebar).
+                  mediaClassName="aspect-video w-full sm:aspect-[4/1]"
                   urls={values.heroImageUrl ? [values.heroImageUrl] : []}
                   setUrls={(action) => {
                     setValues((previous) => {
@@ -399,28 +416,21 @@ export function ProductForm({
             ) : null}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="product-story-text">
-                Narasi Produk (opsional)
-              </Label>
-              <Textarea
-                id="product-story-text"
-                rows={5}
-                maxLength={MAX_STORY_TEXT}
-                placeholder="Kosongkan untuk memakai deskripsi produk sebagai narasi."
-                value={values.storyText}
-                onChange={(event) => setField("storyText", event.target.value)}
-              />
-            </div>
-
+          {/* Susunan mengikuti seksi "Cerita produk" storefront: gambar 16:9 di
+              kiri, narasi di kanan. */}
+          <div className="grid gap-6 sm:grid-cols-2">
             <div className="flex flex-col gap-2">
               <Label>Gambar Narasi (opsional)</Label>
               <p className="text-sm text-muted-foreground">
-                Satu gambar editorial, tampil di kiri narasi.
+                Satu gambar editorial, tampil di kiri narasi (rasio 16:9 seperti
+                storefront).
               </p>
               <ImageUploader
                 max={1}
+                layout="single"
+                fit="cover"
+                productName={values.name || "Produk"}
+                mediaClassName="aspect-video w-full"
                 urls={values.storyImageUrl ? [values.storyImageUrl] : []}
                 setUrls={(action) => {
                   setValues((previous) => {
@@ -434,6 +444,20 @@ export function ProductForm({
                 }}
               />
             </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="product-story-text">
+                Narasi Produk (opsional)
+              </Label>
+              <Textarea
+                id="product-story-text"
+                rows={5}
+                maxLength={MAX_STORY_TEXT}
+                placeholder="Kosongkan untuk memakai deskripsi produk sebagai narasi."
+                value={values.storyText}
+                onChange={(event) => setField("storyText", event.target.value)}
+              />
+            </div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -442,6 +466,8 @@ export function ProductForm({
               Maksimal {MAX_LOOKBOOK_IMAGES} foto, tampil di grid paling bawah.
             </p>
             <ImageUploader
+              layout="lookbook"
+              productName={values.name || "Produk"}
               max={MAX_LOOKBOOK_IMAGES}
               urls={values.lookbookUrls}
               setUrls={(action) => {

@@ -6,7 +6,7 @@
 // di kanan; rasio lanskap serupa video hero. Seksi tanpa data tidak dirender.
 // "use client" karena `<video>` memakai handler onError untuk fallback.
 import Image from "next/image";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 export type EditorialData = {
   videoHeroUrl: string | null;
@@ -155,12 +155,16 @@ function LookbookItem({
   productName,
   sizes,
   className,
+  children,
 }: {
   url: string;
   index: number;
   productName: string;
   sizes: string;
   className?: string;
+  // Slot aksi per foto (dipakai form admin untuk tombol Hapus); storefront
+  // tidak mengirim apa pun sehingga tampilannya tidak berubah.
+  children?: ReactNode;
 }) {
   return (
     <div
@@ -173,6 +177,7 @@ function LookbookItem({
         sizes={sizes}
         className="object-cover"
       />
+      {children}
     </div>
   );
 }
@@ -180,8 +185,18 @@ function LookbookItem({
 // Susunan lookbook meniru templat editorial: foto utama di kiri membentang dua
 // baris, foto pendamping di kanan (dua kecil di baris atas saat lengkap 4 foto,
 // dan satu lebar di baris bawah). Untuk 3 foto: utama + dua pendamping
-// bertumpuk; 1-2 foto: sederhana bersebelahan.
-function Lookbook({ urls, productName }: { urls: string[]; productName: string }) {
+// bertumpuk; 1-2 foto: sederhana bersebelahan. Diekspor supaya form admin
+// memakai susunan yang sama persis untuk pratinjau (`renderAction` menambah
+// tombol Hapus per foto tanpa mengubah tata letak).
+export function Lookbook({
+  urls,
+  productName,
+  renderAction,
+}: {
+  urls: string[];
+  productName: string;
+  renderAction?: (url: string, index: number) => ReactNode;
+}) {
   const [utama, ...pendamping] = urls;
 
   if (urls.length <= 2) {
@@ -194,7 +209,9 @@ function Lookbook({ urls, productName }: { urls: string[]; productName: string }
             index={index}
             productName={productName}
             sizes="(max-width: 640px) 50vw, 50vw"
-          />
+          >
+            {renderAction?.(url, index)}
+          </LookbookItem>
         ))}
       </div>
     );
@@ -208,7 +225,9 @@ function Lookbook({ urls, productName }: { urls: string[]; productName: string }
         productName={productName}
         sizes="(max-width: 640px) 100vw, 50vw"
         className="sm:aspect-auto sm:row-span-2"
-      />
+      >
+        {renderAction?.(utama, 0)}
+      </LookbookItem>
       {pendamping.length === 3 ? (
         <>
           <div className="grid grid-cols-2 gap-4">
@@ -219,7 +238,9 @@ function Lookbook({ urls, productName }: { urls: string[]; productName: string }
                 index={i + 1}
                 productName={productName}
                 sizes="(max-width: 640px) 50vw, 25vw"
-              />
+              >
+                {renderAction?.(url, i + 1)}
+              </LookbookItem>
             ))}
           </div>
           <LookbookItem
@@ -227,7 +248,9 @@ function Lookbook({ urls, productName }: { urls: string[]; productName: string }
             index={3}
             productName={productName}
             sizes="(max-width: 640px) 100vw, 50vw"
-          />
+          >
+            {renderAction?.(pendamping[2], 3)}
+          </LookbookItem>
         </>
       ) : (
         pendamping.map((url, i) => (
@@ -237,7 +260,9 @@ function Lookbook({ urls, productName }: { urls: string[]; productName: string }
             index={i + 1}
             productName={productName}
             sizes="(max-width: 640px) 50vw, 50vw"
-          />
+          >
+            {renderAction?.(url, i + 1)}
+          </LookbookItem>
         ))
       )}
     </div>
