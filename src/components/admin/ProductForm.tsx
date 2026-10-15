@@ -336,6 +336,11 @@ export function ProductForm({
                     updateVariant(index, { sku: event.target.value })
                   }
                 />
+                <p className="text-xs text-muted-foreground">
+                  Huruf, angka, titik, minus, garis bawah (maks 64), wajib unik
+                  antar semua produk. Format disarankan INISIAL-PROD-VARIAN,
+                  contoh: KP-30S-M.
+                </p>
               </div>
 
               <div className="flex flex-col gap-2">
