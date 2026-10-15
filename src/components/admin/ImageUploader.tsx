@@ -71,7 +71,16 @@ export function ImageUploader({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      className={cn(
+        "flex flex-col gap-3",
+        // Pratinjau galeri dibatasi lebarnya supaya gambar utama dan strip
+        // thumbnail tidak memenuhi layar form (keputusan pengguna 2026-10-15:
+        // ukuran gambar mengikuti container, jadi container-nya yang dikecilkan).
+        // Batas ini hanya berlaku di form admin; halaman storefront tetap penuh.
+        layout === "gallery" && "w-full max-w-sm",
+      )}
+    >
       <FormErrorAlert message={error} />
 
       {urls.length > 0 && layout === "gallery" ? (
