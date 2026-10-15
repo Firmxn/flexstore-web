@@ -37,7 +37,7 @@ function ItemRow({ item }: { item: OrderRow["items"][number] }) {
 
   return (
     <div className="flex items-center gap-3">
-      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md border border-border bg-muted">
+      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-border bg-muted">
         {image ? (
           <Image
             src={image}

@@ -168,7 +168,7 @@ function ProductGallery({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-muted">
+      <div className="group relative aspect-square overflow-hidden rounded-2xl border border-border bg-muted">
         <div
           className="flex h-full w-full transition-transform duration-300 ease-out"
           style={{ transform: `translateX(-${active * 100}%)` }}
@@ -218,7 +218,7 @@ function ProductGallery({
               type="button"
               aria-label={`Gambar ${index + 1}`}
               onClick={() => setManual({ seq: selection.seq, index })}
-              className="relative aspect-square overflow-hidden rounded-lg border border-border bg-muted opacity-80 hover:opacity-100"
+              className="relative aspect-square overflow-hidden rounded-2xl border border-border bg-muted opacity-80 hover:opacity-100"
             >
               <Image
                 src={slide.url}

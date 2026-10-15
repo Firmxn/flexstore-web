@@ -56,7 +56,7 @@ export function EditorialSections({
           className="grid gap-6 sm:grid-cols-2"
         >
           {storyImageUrl ? (
-            <div className="relative aspect-video overflow-hidden rounded-xl border border-border bg-muted">
+            <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-muted">
               <Image
                 src={storyImageUrl}
                 alt={`Cerita ${productName}`}
@@ -96,7 +96,7 @@ function HeroImage({ url, productName }: { url: string; productName: string }) {
   return (
     <section
       aria-label="Banner produk"
-      className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted sm:aspect-[4/1]"
+      className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-muted sm:aspect-[4/1]"
     >
       <Image
         src={url}
@@ -115,7 +115,7 @@ function VideoHero({ url, autoplay }: { url: string; autoplay: boolean }) {
   return (
     <section
       aria-label="Video produk"
-      className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-muted sm:aspect-[4/1]"
+      className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-muted sm:aspect-[4/1]"
     >
       {failed ? (
         // URL mati: bingkai bg-muted tetap, tanpa galat besar (AC bagian 8).
@@ -168,7 +168,7 @@ function LookbookItem({
 }) {
   return (
     <div
-      className={`relative aspect-video overflow-hidden rounded-lg border border-border bg-muted ${className ?? ""}`}
+      className={`relative aspect-video overflow-hidden rounded-2xl border border-border bg-muted ${className ?? ""}`}
     >
       <Image
         src={url}

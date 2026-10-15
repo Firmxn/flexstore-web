@@ -77,7 +77,7 @@ export function VariantPickerDialog({
 
         <div className="flex items-center gap-3">
           {coverUrl ? (
-            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-muted">
               <Image
                 src={coverUrl}
                 alt={productName}

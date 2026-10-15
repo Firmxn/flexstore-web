@@ -49,7 +49,7 @@ export function ImageDropzone({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border bg-background p-6 text-center transition-colors",
+        "flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border bg-background p-6 text-center transition-colors",
         dragOver && "border-primary bg-muted/50",
         inactive
           ? "cursor-not-allowed opacity-60"

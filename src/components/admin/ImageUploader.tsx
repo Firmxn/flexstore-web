@@ -148,21 +148,16 @@ function GalleryPreview({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-border bg-muted">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-muted">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={current}
           alt={`${productName} gambar utama`}
           className="h-full w-full object-cover"
         />
-        {/* Kotak gambar utama memakai radius lebih besar (`rounded-xl`, mengikuti
-            carousel storefront) sehingga lengkungan sudutnya lebih masuk; tombol
-            digeser 1px supaya jarak visualnya ke border seimbang dengan slot lain
-            (keputusan pengguna 2026-10-15). */}
         <ImageRemoveButton
           label="Hapus gambar utama"
           onClick={() => onRemove(current)}
-          className="right-[5px] top-[5px]"
         />
       </div>
 
@@ -179,19 +174,19 @@ function GalleryPreview({
                 type="button"
                 aria-label={`Tampilkan gambar ${itemIndex + 1}`}
                 onClick={() => setActive(itemIndex)}
-                className="relative aspect-square w-full overflow-hidden rounded-lg border border-border bg-muted opacity-80 hover:opacity-100"
+                className="relative aspect-square w-full overflow-hidden rounded-2xl border border-border bg-muted opacity-80 hover:opacity-100"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" className="h-full w-full object-cover" />
               </button>
               {/* Wrapper thumbnail tidak berborder (border-nya ada di tombol di
-                  dalamnya), jadi tombol digeser 1px supaya jaraknya ke border
-                  sama dengan slot lain yang berborder (keputusan pengguna
-                  2026-10-15). */}
+                  dalamnya), jadi tombol digeser 1px lebih masuk daripada default
+                  supaya jaraknya ke border sama dengan slot lain yang berborder
+                  (keputusan pengguna 2026-10-15). */}
               <ImageRemoveButton
                 label={`Hapus gambar ${itemIndex + 1}`}
                 onClick={() => onRemove(url)}
-                className="right-[5px] top-[5px]"
+                className="right-[7px] top-[7px]"
               />
             </div>
           ))}

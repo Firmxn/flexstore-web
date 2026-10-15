@@ -105,7 +105,7 @@ export function CartItemRow({
 
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div className="flex gap-4">
-          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
+          <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-border bg-muted">
             {imageUrl ? (
               <Image
                 src={imageUrl}

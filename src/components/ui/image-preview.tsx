@@ -37,7 +37,7 @@ export function ImagePreview({
   return (
     <div
       className={cn(
-        "relative flex items-center justify-center overflow-hidden rounded-lg border border-border bg-muted",
+        "relative flex items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted",
         mediaClassName,
         className,
       )}

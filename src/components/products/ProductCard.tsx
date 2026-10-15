@@ -27,7 +27,7 @@ export function ProductCard({
   return (
     <Card className="flex flex-col overflow-hidden transition-shadow hover:shadow-md">
       <Link href={href} className="block p-3">
-        <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+        <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
           {cover ? (
             <Image
               src={cover}
