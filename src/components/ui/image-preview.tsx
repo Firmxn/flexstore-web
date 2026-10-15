@@ -1,9 +1,10 @@
 "use client";
 
 // Preview gambar seragam (teman `ImageDropzone`, docs/03 bagian 1C): kartu
-// bergaris sama di seluruh titik unggah — kotak media netral berisi gambar
-// (atau placeholder "Belum ada gambar.") dan tombol "Hapus" pada baris yang
-// sama. Ukuran kotak media diatur pemanggil lewat `mediaClassName`.
+// bergaris sama di seluruh titik unggah — kotak media netral berisi gambar dan
+// tombol "Hapus" pada baris yang sama. Tanpa keadaan kosong (dropzone di
+// bawahnya sudah menjadi penanda). Ukuran kotak media diatur pemanggil lewat
+// `mediaClassName`.
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 
@@ -14,7 +15,6 @@ type ImagePreviewProps = {
   fit?: "cover" | "contain";
   // Ukuran kotak media; default kotak persegi penuh lebar.
   mediaClassName?: string;
-  emptyText?: string;
   className?: string;
 };
 
@@ -24,9 +24,12 @@ export function ImagePreview({
   onClear,
   fit = "cover",
   mediaClassName = "aspect-square w-full",
-  emptyText = "Belum ada gambar.",
   className,
 }: ImagePreviewProps) {
+  // Tanpa keadaan kosong: bila belum ada berkas, dropzone di bawahnya sudah
+  // menjadi penanda — komponen ini hanya membingkai gambar yang sudah ada.
+  if (!url) return null;
+
   return (
     <div
       className={cn(
@@ -40,23 +43,17 @@ export function ImagePreview({
           mediaClassName,
         )}
       >
-        {url ? (
-          // URL berasal dari Uploadthing; pakai img biasa agar tidak bergantung
-          // pada allowlist domain next/image.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={url}
-            alt={alt}
-            className={cn(
-              "h-full w-full",
-              fit === "cover" ? "object-cover" : "object-contain",
-            )}
-          />
-        ) : (
-          <span className="px-2 text-center text-xs text-muted-foreground">
-            {emptyText}
-          </span>
-        )}
+        {/* URL berasal dari Uploadthing; pakai img biasa agar tidak bergantung
+            pada allowlist domain next/image. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={url}
+          alt={alt}
+          className={cn(
+            "h-full w-full",
+            fit === "cover" ? "object-cover" : "object-contain",
+          )}
+        />
       </div>
 
       {onClear ? (

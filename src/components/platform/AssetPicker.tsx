@@ -39,7 +39,7 @@ export function AssetPicker({
         url={url}
         alt={label}
         fit={fit}
-        mediaClassName={mediaClassName ?? "h-16 w-40"}
+        mediaClassName={mediaClassName ?? "aspect-square w-48"}
         onClear={onClear}
       />
 

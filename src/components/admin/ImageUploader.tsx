@@ -48,12 +48,20 @@ export function ImageUploader({
       <FormErrorAlert message={error} />
 
       {urls.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        // Satu wadah untuk galeri (banyak berkas) dan bagan ukuran (satu):
+        // kartu `w-48` seragam mengikuti lebar kartu galeri, terpusat baik
+        // saat satu maupun banyak berkas.
+        <div className="flex flex-wrap justify-center gap-3">
           {urls.map((url, index) => (
             <ImagePreview
               key={url}
               url={url}
-              alt={`Gambar produk ${index + 1}`}
+              alt={
+                max === 1
+                  ? "Gambar bagan ukuran"
+                  : `Gambar produk ${index + 1}`
+              }
+              className="w-48"
               onClear={() =>
                 setUrls((previous) =>
                   previous.filter((item) => item !== url),
@@ -62,9 +70,7 @@ export function ImageUploader({
             />
           ))}
         </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">Belum ada gambar.</p>
-      )}
+      ) : null}
 
       <ImageDropzone
         multiple={max > 1}

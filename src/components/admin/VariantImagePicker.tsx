@@ -47,7 +47,7 @@ export function VariantImagePicker({
       <ImagePreview
         url={url}
         alt="Gambar varian"
-        mediaClassName="h-24 w-24"
+        className="w-48 mx-auto"
         onClear={url ? () => onChange("") : undefined}
       />
 

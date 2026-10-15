@@ -94,7 +94,7 @@ function RefundCompleteForm({
         <ImagePreview
           url={proofUrl}
           alt="Bukti refund"
-          mediaClassName="h-32 w-32"
+          className="w-48 mx-auto"
           onClear={() => setProofUrl("")}
         />
         <ImageDropzone

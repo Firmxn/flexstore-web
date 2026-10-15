@@ -153,7 +153,7 @@ export function BrandSettingsForm({ initial }: { initial: BrandFormValues }) {
             label="Logo"
             hint="PNG/JPG/SVG, maksimal 2MB. Tampil di header storefront."
             url={values.logoUrl}
-            mediaClassName="h-16 w-40"
+            mediaClassName="aspect-square w-48"
             fit="contain"
             uploading={logoUpload.isUploading}
             onUpload={(files) => void logoUpload.startUpload(files)}
@@ -164,7 +164,7 @@ export function BrandSettingsForm({ initial }: { initial: BrandFormValues }) {
             label="Favicon"
             hint="Ikon tab browser, maksimal 2MB."
             url={values.faviconUrl}
-            mediaClassName="h-16 w-16"
+            mediaClassName="aspect-square w-48"
             fit="contain"
             uploading={faviconUpload.isUploading}
             onUpload={(files) => void faviconUpload.startUpload(files)}
