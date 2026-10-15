@@ -139,9 +139,9 @@ Pemakai pertama yang diubah saat implementasi: `DeleteButton` (`window.confirm` 
 
 ---
 
-## 1C. Aturan unggah gambar aplikasi (UI seragam, drag-and-drop) — belum diimplementasikan
+## 1C. Aturan unggah gambar aplikasi (UI seragam, drag-and-drop)
 
-Aturan bersama untuk seluruh titik unggah gambar di sistem (galeri produk, bagan ukuran, gambar varian, bukti refund, logo/favicon/banner brand). **Status: belum diimplementasikan** (dokumentasi dulu, 2026-10-15). Keputusan pengguna: "gue pengen UI seperti gambar, untuk upload gambar di sistem ini, baik itu gambar utama, varian, ataupun lainnya" — lampiran referensi: kotak upload bergaris putus-putus dengan ikon awan-unggah, teks ajakan, dan tombol utama "Browse Image".
+Aturan bersama untuk seluruh titik unggah gambar di sistem (galeri produk, bagan ukuran, gambar varian, bukti refund, logo/favicon/banner brand). **Status: terimplementasi (2026-10-15)** — komponen `src/components/ui/image-dropzone.tsx` menggantikan cara pemilihan berkas di keempat pemakai; kontrak server tidak berubah. Keputusan pengguna: "gue pengen UI seperti gambar, untuk upload gambar di sistem ini, baik itu gambar utama, varian, ataupun lainnya" — lampiran referensi: kotak upload bergaris putus-putus dengan ikon awan-unggah, teks ajakan, dan tombol utama "Browse Image".
 
 Bentuk yang diidamkan (komponen konfirmasi visual mengikuti referensi pengguna):
 
@@ -157,7 +157,7 @@ Bentuk yang diidamkan (komponen konfirmasi visual mengikuti referensi pengguna):
 
 **Titik yang diganti saat implementasi (pemakai uploadthing saat ini):** `ImageUploader` (galeri produk maks 4 + bagan ukuran 1), `VariantImagePicker` (satu per baris varian), `AdminOrderActions` (unggah bukti refund), `AssetPicker`/`BrandSettingsForm` (`/site-admin/brand`: logo, favicon, banner). Komponen dasar satu place, mis. `src/components/ui/image-dropzone.tsx` (atau elemen shadcn `Input` file berpakaian), dipakai ulang tanpa menyalin-tempel.
 
-Tindak lanjut implementasi (mengubah status bagian ini): buat dropzone, tukar keenam pemakai di atas, verifikasi dua puluh — klik dan drag-and-drop — di urutan tampilan (desktop) dan layar sentuh (mobile tetap buka dialog file, tanpa drag di layar sentuh), lalu perbarui status dengan bukti verifikasi di `docs/04`.
+**Bukti implementasi (2026-10-15):** `src/components/ui/image-dropzone.tsx` dibuat (kotak `border-dashed`, ikon `Upload` berlingkar `muted`, teks "Pilih berkas atau tarik dan lepas ke sini.", sub-teks tipe per endpoint, tombol "Browse Image" jalan keyboard; dragover menonjol `border-primary bg-muted/50`; unggahan berjalan `uploading` nonaktif + tombol "Mengunggah..."; galat tetap lewat `FormErrorAlert`). Keempat pemakai ditukar: `ImageUploader`, `VariantImagePicker`, `AdminOrderActions` (bukti refund), `AssetPicker` (dipakai `BrandSettingsForm`). Verifikasi: `tsc` exit 0, `pnpm lint` 0 error, uji browser `/admin/products/new` — 3 dropzone tampil, tombol lama hilang, dragover menyala, drop PNG valid mengunggah sukses (URL `.ufs.sh` muncul di pratinjau galeri), galat berkas rusak tampil lewat `FormErrorAlert`. Uji layar sentuh: sama seperti sebelumnya (klik kotak membuka dialog file). Rincian bukti: `docs/04` bagian 10.
 
 ---
 
