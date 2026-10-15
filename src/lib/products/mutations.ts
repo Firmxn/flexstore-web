@@ -109,6 +109,8 @@ export class VariantInCartError extends Error {
 export function updateProduct(id: string, input: ProductInput) {
   const fields = productScalars(input);
 
+  // Query berjalan berurutan lewat koneksi jauh (Supabase); transaksi default
+  // 5 detik hangus saat menyimpan produk dengan banyak varian/gambar.
   return prisma.$transaction(async (tx) => {
     const existing = await tx.productVariant.findMany({
       where: { productId: id },
@@ -173,7 +175,7 @@ export function updateProduct(id: string, input: ProductInput) {
       },
       include: { images: true, variants: true },
     });
-  });
+  }, { timeout: 15_000, maxWait: 10_000 });
 }
 
 export function deleteProduct(id: string) {
