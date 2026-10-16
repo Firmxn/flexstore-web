@@ -19,14 +19,24 @@ export async function CartBadge() {
 
   const count = await getCartItemCount(access.identity);
 
+  // Ikon keranjang + badge jumlah saja (tanpa teks), gaya meniru lonceng
+  // notifikasi di sebelahnya: tombol kotak 9x9 dan badge melayang di
+  // kanan-atas ikon.
   return (
     <Link
       href="/cart"
-      className="inline-flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm hover:bg-accent"
+      aria-label={count > 0 ? `Keranjang, ${count} item` : "Keranjang"}
+      className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-input hover:bg-accent"
     >
-      <ShoppingCart className="h-4 w-4" />
-      <span className="hidden sm:inline">Keranjang</span>
-      {count > 0 ? <Badge variant="secondary">{count}</Badge> : null}
+      <ShoppingCart className="h-4 w-4" aria-hidden />
+      {count > 0 ? (
+        <Badge
+          variant="destructive"
+          className="absolute -right-1.5 -top-1.5 h-5 min-w-5 justify-center px-1 text-[10px]"
+        >
+          {count > 99 ? "99+" : count}
+        </Badge>
+      ) : null}
     </Link>
   );
 }
