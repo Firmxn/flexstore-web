@@ -3,6 +3,9 @@ import type { ProductStatus } from "@prisma/client";
 const rupiah = new Intl.NumberFormat("id-ID", {
   style: "currency",
   currency: "IDR",
+  // Kode mata uang, bukan simbol (keputusan pengguna 2026-10-16):
+  // "IDR 99.000" — tetap pemisah locale id-ID (titik ribuan).
+  currencyDisplay: "code",
   maximumFractionDigits: 0,
 });
 

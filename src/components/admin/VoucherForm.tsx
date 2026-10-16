@@ -236,7 +236,7 @@ export function VoucherForm({
           ) : (
             <div className="flex flex-col gap-2">
               <Label htmlFor="voucher-amount">
-                {values.type === "SHIPPING" ? "Potongan ongkir (Rp)" : "Nominal (Rp)"}
+                {values.type === "SHIPPING" ? "Potongan ongkir (IDR)" : "Nominal (IDR)"}
               </Label>
               <Input
                 id="voucher-amount"

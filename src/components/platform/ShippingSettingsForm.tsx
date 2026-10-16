@@ -155,7 +155,7 @@ export function ShippingSettingsForm({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="shipping-flat">Tarif flat (Rp)</Label>
+            <Label htmlFor="shipping-flat">Tarif flat (IDR)</Label>
             <Input
               id="shipping-flat"
               type="number"
