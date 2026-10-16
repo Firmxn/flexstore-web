@@ -67,10 +67,11 @@ export default async function HomePage() {
   const imageUrl = banner.enabled ? banner.imageUrl : null;
 
   return (
-    <PageContainer>
+    <>
+      {/* Hero banner: lebar penuh layar (full-width), di luar PageContainer. */}
       <section
         className={cn(
-          "relative overflow-hidden rounded-2xl border border-border",
+          "relative overflow-hidden",
           !imageUrl && "bg-muted/30",
         )}
       >
@@ -101,7 +102,7 @@ export default async function HomePage() {
           </h1>
           <p
             className={cn(
-              "mx-auto mt-4 max-w-xl",
+              "mx-auto mt-4 max-w-2xl",
               imageUrl ? "text-white/90" : "text-muted-foreground",
             )}
           >
@@ -116,21 +117,24 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold tracking-tight">Produk Terbaru</h2>
-          <Link
-            href="/products"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Lihat semua
-          </Link>
-        </div>
+      {/* Konten storefront tetap di dalam container terpusat. */}
+      <PageContainer>
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold tracking-tight">Produk Terbaru</h2>
+            <Link
+              href="/products"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Lihat semua
+            </Link>
+          </div>
 
-        <Suspense fallback={<ProductGridSkeleton />}>
-          <FeaturedProducts />
-        </Suspense>
-      </section>
-    </PageContainer>
+          <Suspense fallback={<ProductGridSkeleton />}>
+            <FeaturedProducts />
+          </Suspense>
+        </section>
+      </PageContainer>
+    </>
   );
 }

@@ -133,6 +133,9 @@ model Product {
   videoHeroAutoplay  Boolean   @default(true)
   heroImageUrl       String?
   storyText          String?
+  // PROD-08: judul section "Informasi Tambahan" di halaman produk (mis.
+  // "Bahan & Perawatan"); null = judul default.
+  infoLabel   String?
   status      ProductStatus @default(DRAFT)
   totalStock  Int           @default(0)
   // Harga varian termurah, denormalisasi dari ProductVariant supaya katalog
@@ -248,11 +251,12 @@ enum RefundStatus {
   FAILED
 }
 
-// Peran gambar produk (PRD 3.1.A/7.4): galeri utama atau bagan ukuran.
+// Peran gambar produk (PRD 3.1.A/7.4): galeri utama atau satu gambar informasi
+// tambahan (PROD-08; dulu "SIZE_CHART", mis. bagan ukuran/bahan/perawatan).
 // PROD-07: STORY (maks 1) dan LOOKBOOK (maks 4) untuk seksi Media & Konten.
 enum ImageRole {
   GALLERY
-  SIZE_CHART
+  INFO
   STORY
   LOOKBOOK
 }

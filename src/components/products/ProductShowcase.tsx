@@ -3,8 +3,9 @@
 // Induk klien halaman detail (PROD-06): memegang state varian terpilih dan
 // menyambungkannya ke galeri carousel serta form beli. Galeri memakai
 // transisi CSS translate sederhana (KISS — pustaka carousel baru tidak
-// dipakai; keputusan dicatat docs/04). Bagan ukuran tidak masuk carousel:
-// tautan kecil bergaya BackLink di kanan bawah form membuka dialog.
+// dipakai; keputusan dicatat docs/04). Informasi tambahan (PROD-08, dulu bagan
+// ukuran) tidak masuk carousel: tautan kecil bergaya BackLink di kanan bawah
+// form membuka dialog, judulnya mengikuti label produk.
 import Image from "next/image";
 import { useMemo, useState, type ReactNode } from "react";
 import { AddToCartForm } from "@/components/cart/AddToCartForm";
@@ -16,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils/cn";
+import { DEFAULT_INFO_LABEL } from "@/lib/products/validation";
 
 type GalleryImage = { id: string; url: string };
 type VariantMedia = { variantId: string; variantName: string; imageUrl: string | null };
@@ -33,14 +35,17 @@ export function ProductShowcase({
   gallery,
   variantMedia,
   variants,
-  sizeChartUrl,
+  infoUrl,
+  infoLabel,
   children,
 }: {
   productName: string;
   gallery: GalleryImage[];
   variantMedia: VariantMedia[];
   variants: VariantOption[];
-  sizeChartUrl: string | null;
+  infoUrl: string | null;
+  // PROD-08: judul kustom slot informasi tambahan (null = judul default).
+  infoLabel: string | null;
   // Konten kolom kanan bagian atas (kategori, judul, stok, deskripsi) tetap
   // dirender sebagai Server Component children.
   children: ReactNode;
@@ -64,21 +69,30 @@ export function ProductShowcase({
       />
       <div className="flex flex-col gap-5">
         {children}
-        <AddToCartForm
-          variants={variants}
-          initialVariantId={selection.variantId ?? undefined}
-          onVariantChange={(variantId) =>
-            setSelection((previous) => ({
-              variantId,
-              seq: previous.seq + 1,
-            }))
-          }
-        />
-        {sizeChartUrl ? (
-          <div className="flex justify-end">
-            <SizeChartTrigger url={sizeChartUrl} productName={productName} />
-          </div>
-        ) : null}
+        {/* Form beli dan tautan informasi tambahan dirapatkan (gap-2,
+            keputusan pengguna 2026-10-16): sebelumnya tautan menggantung 20px
+            di bawah tombol karena mengikuti gap kolom. */}
+        <div className="flex flex-col gap-2">
+          <AddToCartForm
+            variants={variants}
+            initialVariantId={selection.variantId ?? undefined}
+            onVariantChange={(variantId) =>
+              setSelection((previous) => ({
+                variantId,
+                seq: previous.seq + 1,
+              }))
+            }
+          />
+          {infoUrl ? (
+            <div className="flex justify-end">
+              <InfoTrigger
+                url={infoUrl}
+                label={infoLabel ?? DEFAULT_INFO_LABEL}
+                productName={productName}
+              />
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
   );
@@ -262,11 +276,13 @@ function GalleryArrow({
   );
 }
 
-function SizeChartTrigger({
+function InfoTrigger({
   url,
+  label,
   productName,
 }: {
   url: string;
+  label: string;
   productName: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -278,13 +294,13 @@ function SizeChartTrigger({
         onClick={() => setOpen(true)}
         className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
       >
-        Lihat bagan ukuran
+        Lihat {label}
       </button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Bagan Ukuran</DialogTitle>
-            <DialogDescription>Ukuran {productName}</DialogDescription>
+            <DialogTitle>{label}</DialogTitle>
+            <DialogDescription>{productName}</DialogDescription>
           </DialogHeader>
           <div className="max-h-[70vh] overflow-y-auto">
             {/* Rasio kotak mengikuti gambar aslinya (tanpa krop), sama seperti
@@ -293,7 +309,7 @@ function SizeChartTrigger({
                 (keputusan pengguna 2026-10-16). */}
             <Image
               src={url}
-              alt={`Bagan ukuran ${productName}`}
+              alt={`${label} ${productName}`}
               width={0}
               height={0}
               sizes="100vw"

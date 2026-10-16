@@ -12,18 +12,18 @@ function calculateMinPrice(variants: { price: number }[]) {
   return Math.min(...variants.map((variant) => variant.price));
 }
 
-// Baris gambar (galeri + bagan ukuran + seksi Media & Konten PROD-07) untuk
-// nested create ProductImage.
+// Baris gambar (galeri + informasi tambahan + seksi Media & Konten PROD-07)
+// untuk nested create ProductImage.
 function imageRows(input: ProductInput) {
   const galleryImages = input.images.map((image, index) => ({
     url: image.url,
     role: "GALLERY" as const,
     sortOrder: image.sortOrder ?? index,
   }));
-  // Bagan ukuran disimpan sebagai baris gambar dengan peran SIZE_CHART
-  // (PRD 3.1.A/7.4), terpisah dari galeri.
-  const sizeChart = input.sizeChartUrl
-    ? [{ url: input.sizeChartUrl, role: "SIZE_CHART" as const, sortOrder: 0 }]
+  // Informasi tambahan disimpan sebagai baris gambar dengan peran INFO
+  // (PROD-08, dulu SIZE_CHART), terpisah dari galeri.
+  const info = input.infoUrl
+    ? [{ url: input.infoUrl, role: "INFO" as const, sortOrder: 0 }]
     : [];
   // Seksi Media & Konten: STORY maks 1, LOOKBOOK maks 4 (batas di Zod).
   const story = input.storyImageUrl
@@ -35,7 +35,7 @@ function imageRows(input: ProductInput) {
     sortOrder: index,
   }));
 
-  return [...galleryImages, ...sizeChart, ...story, ...lookbook];
+  return [...galleryImages, ...info, ...story, ...lookbook];
 }
 
 // Field scalar Product (tanpa nested write) — dipakai create dan update.
@@ -48,6 +48,8 @@ function productScalars(input: ProductInput) {
     videoHeroAutoplay: input.videoHeroAutoplay ?? true,
     heroImageUrl: input.heroImageUrl || null,
     storyText: input.storyText || null,
+    // PROD-08: label judul slot informasi tambahan (null = judul default).
+    infoLabel: input.infoLabel || null,
     status: input.status,
     categoryId: input.categoryId,
     brandId: input.brandId || null,
@@ -82,7 +84,7 @@ export function createProduct(input: ProductInput) {
   });
 }
 
-// Galeri & bagan ukuran tetap diganti seluruhnya (tidak ada FK data lain yang
+// Galeri & informasi tambahan tetap diganti seluruhnya (tidak ada FK data lain yang
 // menunjuk ProductImage). Varian DIUPSERT PER SKU supaya ID varian yang tetap
 // sama tidak berubah: OrderItem (Restrict) dan CartItem (Cascade) menunjuk
 // ProductVariant.id, jadi pola lama hapus-buat-ulang membuat ubah status produk

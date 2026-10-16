@@ -14,7 +14,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Info } from "lucide-react";
 import {
+  DEFAULT_INFO_LABEL,
+  MAX_INFO_LABEL,
   MAX_LOOKBOOK_IMAGES,
+  MAX_PRODUCT_IMAGES,
   MAX_STORY_TEXT,
   PRODUCT_STATUSES,
   productSchema,
@@ -42,7 +45,8 @@ export type ProductFormValues = {
   brandId: string;
   status: string;
   images: string[];
-  sizeChartUrl: string;
+  infoUrl: string;
+  infoLabel: string;
   videoHeroUrl: string;
   videoHeroAutoplay: boolean;
   heroImageUrl: string;
@@ -82,7 +86,8 @@ export function ProductForm({
       brandId: "",
       status: "DRAFT",
       images: [],
-      sizeChartUrl: "",
+      infoUrl: "",
+      infoLabel: "",
       videoHeroUrl: "",
       videoHeroAutoplay: true,
       heroImageUrl: "",
@@ -139,7 +144,8 @@ export function ProductForm({
       brandId: values.brandId,
       status: values.status,
       images: values.images.map((url, index) => ({ url, sortOrder: index })),
-      sizeChartUrl: values.sizeChartUrl,
+      infoUrl: values.infoUrl,
+      infoLabel: values.infoLabel,
       videoHeroUrl: values.videoHeroUrl,
       videoHeroAutoplay: values.videoHeroAutoplay,
       heroImageUrl: values.heroImageUrl,
@@ -295,11 +301,19 @@ export function ProductForm({
         </div>
       </section>
 
-      {/* Gambar Produk dan Bagan Ukuran berdampingan: satu baris dua kolom
-          (keputusan pengguna 2026-10-15); menumpuk kembali di layar sempit. */}
+      {/* Gambar Produk dan Informasi Tambahan berdampingan: satu baris dua
+          kolom (keputusan pengguna 2026-10-15); menumpuk kembali di layar
+          sempit. */}
       <div className="grid gap-4 md:grid-cols-2">
         <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
-          <h2 className="font-semibold">Gambar Produk</h2>
+          <div className="flex flex-col gap-1">
+            <h2 className="font-semibold">Gambar Produk</h2>
+            <p className="text-sm text-muted-foreground">
+              Gambar utama setiap produk — tampil di katalog dan halaman detail.
+              Sampai {MAX_PRODUCT_IMAGES} gambar; gambar pertama jadi sampul di
+              katalog.
+            </p>
+          </div>
           <ImageUploader
             layout="gallery"
             productName={values.name || "Produk"}
@@ -316,9 +330,25 @@ export function ProductForm({
 
         <section className="flex flex-col gap-4 rounded-xl border border-border bg-background p-6">
           <div className="flex flex-col gap-1">
-            <h2 className="font-semibold">Bagan Ukuran</h2>
+            <h2 className="font-semibold">Informasi Tambahan (opsional)</h2>
             <p className="text-sm text-muted-foreground">
-              Opsional. Satu gambar bagan ukuran yang tampil di halaman produk.
+              Satu gambar untuk keterangan tambahan, misalnya bagan
+              ukuran, bahan, atau cara perawatan. Pelanggan membukanya lewat
+              tautan di halaman produk.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="product-info-label">Label judul (opsional)</Label>
+            <Input
+              id="product-info-label"
+              value={values.infoLabel}
+              maxLength={MAX_INFO_LABEL}
+              placeholder={DEFAULT_INFO_LABEL}
+              onChange={(event) => setField("infoLabel", event.target.value)}
+            />
+            <p className="text-sm text-muted-foreground">
+              Jadi judul tautan dan dialog di halaman produk. Kosong berarti
+              &quot;{DEFAULT_INFO_LABEL}&quot;.
             </p>
           </div>
           <ImageUploader
@@ -326,19 +356,17 @@ export function ProductForm({
             layout="single"
             fit="contain"
             productName={values.name || "Produk"}
-            // Mengikuti dialog "Bagan Ukuran" storefront: kotak 3:4 (rasio
-            // deklarasi tampilan storefront) dengan object-contain, jadi gambar
-            // tampil tanpa krop persis seperti di halaman produk.
-            mediaClassName="aspect-[3/4] w-full max-w-sm mx-auto"
-            urls={values.sizeChartUrl ? [values.sizeChartUrl] : []}
+            // Mengikuti tampilan storefront: rasio asli gambar (tanpa krop),
+            // tinggi dibatasi seperti area dialog informasi tambahan.
+            mediaClassName="w-full"
+            imageClassName="mx-auto max-h-[70vh] w-auto"
+            urls={values.infoUrl ? [values.infoUrl] : []}
             setUrls={(action) => {
               setValues((previous) => {
-                const current = previous.sizeChartUrl
-                  ? [previous.sizeChartUrl]
-                  : [];
+                const current = previous.infoUrl ? [previous.infoUrl] : [];
                 const next =
                   typeof action === "function" ? action(current) : action;
-                return { ...previous, sizeChartUrl: next[0] ?? "" };
+                return { ...previous, infoUrl: next[0] ?? "" };
               });
             }}
           />
@@ -425,7 +453,7 @@ export function ProductForm({
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor={`variant-price-${index}`}>Harga (Rp)</Label>
+                <Label htmlFor={`variant-price-${index}`}>Harga (IDR)</Label>
                 <Input
                   id={`variant-price-${index}`}
                   type="number"
@@ -502,8 +530,8 @@ export function ProductForm({
         <div className="flex flex-col gap-1">
           <h2 className="font-semibold">Media &amp; Konten (opsional)</h2>
           <p className="text-sm text-muted-foreground">
-            Semuanya opsional — isi hanya yang ingin ditampilkan di halaman
-            produk. Seksi yang kosong tidak dirender sama sekali.
+            Semua isian di bagian ini opsional. Isi yang ingin ditampilkan di
+            halaman produk; bagian yang kosong tidak akan ditampilkan.
           </p>
         </div>
 
@@ -511,8 +539,8 @@ export function ProductForm({
           <div className="flex flex-col gap-2">
             <Label htmlFor="product-hero-type">Banner Hero (opsional)</Label>
             <p className="text-sm text-muted-foreground">
-              Banner panorama full-width di bawah grid produk. Pilih salah satu
-              sumber: gambar atau video.
+              Tampilkan banner lebar setelah informasi utama produk. Pilih
+              gambar atau video.
             </p>
             <Select
               value={heroType}
@@ -579,8 +607,8 @@ export function ProductForm({
             <div className="flex flex-col gap-2">
               <Label>Gambar Cerita (opsional)</Label>
               <p className="text-sm text-muted-foreground">
-                Satu gambar untuk cerita produk, tampil di kiri teksnya (rasio
-                16:9 seperti storefront).
+                Gambar pendamping untuk cerita produk. Tampil di samping teks
+                dengan rasio 16:9.
               </p>
               <ImageUploader
                 max={1}
@@ -620,7 +648,8 @@ export function ProductForm({
           <div className="flex flex-col gap-2">
             <Label>Lookbook (opsional)</Label>
             <p className="text-sm text-muted-foreground">
-              Maksimal {MAX_LOOKBOOK_IMAGES} foto, tampil di grid paling bawah.
+              Tambahkan hingga {MAX_LOOKBOOK_IMAGES} foto. Foto akan ditampilkan
+              sebagai galeri di bagian bawah halaman produk.
             </p>
             <ImageUploader
               layout="lookbook"

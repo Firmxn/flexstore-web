@@ -24,6 +24,11 @@ export const MAX_STORY_TEXT = 2000;
 export const MAX_STORY_IMAGES = 1;
 export const MAX_LOOKBOOK_IMAGES = 4;
 
+// PROD-08: slot "Informasi Tambahan" — satu gambar (peran `INFO`) plus label
+// judul kustom per produk. Judul dipakai apa adanya di halaman produk.
+export const MAX_INFO_LABEL = 40;
+export const DEFAULT_INFO_LABEL = "Informasi Tambahan";
+
 export const productImageSchema = z.object({
   url: z
     .string({
@@ -37,11 +42,17 @@ export const productImageSchema = z.object({
 
 export const productVariantSchema = z.object({
   sku: z
-    .string({ required_error: "SKU wajib diisi", invalid_type_error: "SKU wajib diisi" })
+    .string({
+      required_error: "SKU wajib diisi",
+      invalid_type_error: "SKU wajib diisi",
+    })
     .trim()
     .min(1, "SKU wajib diisi")
     .max(64, "SKU maksimal 64 karakter")
-    .regex(SKU_REGEX, "SKU hanya boleh huruf, angka, titik, minus, dan garis bawah"),
+    .regex(
+      SKU_REGEX,
+      "SKU hanya boleh huruf, angka, titik, minus, dan garis bawah",
+    ),
   name: z
     .string({
       required_error: "Nama variant wajib diisi",
@@ -50,7 +61,10 @@ export const productVariantSchema = z.object({
     .trim()
     .min(1, "Nama variant wajib diisi")
     .max(200, "Nama variant maksimal 200 karakter")
-    .regex(PRODUCT_NAME_REGEX, "Nama variant memuat karakter yang tidak diizinkan")
+    .regex(
+      PRODUCT_NAME_REGEX,
+      "Nama variant memuat karakter yang tidak diizinkan",
+    )
     .regex(/[A-Za-z0-9]/, "Nama variant harus mengandung huruf atau angka"),
   price: z
     .number({ invalid_type_error: "Harga harus berupa angka" })
@@ -67,7 +81,12 @@ export const productVariantSchema = z.object({
     .int("Berat harus bilangan bulat")
     .min(1, "Berat minimal 1 gram")
     .max(1000000, "Berat maksimal 1.000.000 gram"),
-  imageUrl: z.string().trim().url("URL gambar tidak valid").optional().nullable(),
+  imageUrl: z
+    .string()
+    .trim()
+    .url("URL gambar tidak valid")
+    .optional()
+    .nullable(),
 });
 
 export const productSchema = z.object({
@@ -79,7 +98,10 @@ export const productSchema = z.object({
     .trim()
     .min(1, "Nama produk wajib diisi")
     .max(200, "Nama maksimal 200 karakter")
-    .regex(PRODUCT_NAME_REGEX, "Nama produk memuat karakter yang tidak diizinkan")
+    .regex(
+      PRODUCT_NAME_REGEX,
+      "Nama produk memuat karakter yang tidak diizinkan",
+    )
     .regex(/[A-Za-z0-9]/, "Nama produk harus mengandung huruf atau angka"),
   slug: slugSchema,
   description: z
@@ -108,14 +130,22 @@ export const productSchema = z.object({
     .array(productImageSchema, { required_error: "Minimal 1 gambar" })
     .min(1, "Minimal 1 gambar")
     .max(MAX_PRODUCT_IMAGES, `Maksimal ${MAX_PRODUCT_IMAGES} gambar`),
-  // Bagan ukuran (PRD 3.1.A/7.4): satu gambar opsional dengan peran khusus.
-  sizeChartUrl: z
+  // Informasi tambahan (PROD-08, dulu bagan ukuran): satu gambar opsional
+  // dengan peran khusus, plus label judulnya di halaman produk.
+  infoUrl: z
     .union([
-      z.string().trim().url("URL bagan ukuran tidak valid").max(500),
+      z.string().trim().url("URL informasi tambahan tidak valid").max(500),
       z.literal(""),
     ])
     .optional()
     .transform((value) => (value ? value : undefined)),
+  infoLabel: z
+    .string()
+    .trim()
+    .max(MAX_INFO_LABEL, `Label maksimal ${MAX_INFO_LABEL} karakter`)
+    .refine(isControlCharFree, "Label memuat karakter yang tidak diizinkan")
+    .optional()
+    .or(z.literal("")),
   // PROD-07 — tiga isian Media & Konten opsional; semuanya tidak pernah memblok simpan.
   videoHeroUrl: z
     .union([

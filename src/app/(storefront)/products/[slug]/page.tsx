@@ -56,10 +56,11 @@ export default async function ProductDetailPage({ params }: DetailProps) {
 
   if (!product) notFound();
 
-  // Bagan ukuran punya peran sendiri dan dipisahkan dari galeri (PRD 3.1.A).
-  // PROD-07: STORY/LOOKBOOK juga di luar galeri — hanya GALLERY yang masuk carousel.
+  // Informasi tambahan punya peran sendiri dan dipisahkan dari galeri
+  // (PROD-08, dulu bagan ukuran). PROD-07: STORY/LOOKBOOK juga di luar galeri
+  // — hanya GALLERY yang masuk carousel.
   const gallery = product.images.filter((image) => image.role === "GALLERY");
-  const sizeChart = product.images.find((image) => image.role === "SIZE_CHART");
+  const info = product.images.find((image) => image.role === "INFO");
   const storyImage = product.images.find((image) => image.role === "STORY");
   const lookbookUrls = product.images
     .filter((image) => image.role === "LOOKBOOK")
@@ -95,7 +96,8 @@ export default async function ProductDetailPage({ params }: DetailProps) {
           price: Number(variant.price),
           stock: variant.stock,
         }))}
-        sizeChartUrl={sizeChart?.url ?? null}
+        infoUrl={info?.url ?? null}
+        infoLabel={product.infoLabel}
       >
         <div className="flex flex-col gap-2">
           <p className="text-sm text-muted-foreground">

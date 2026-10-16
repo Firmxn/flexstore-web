@@ -54,9 +54,8 @@ export default async function EditProductPage({
           images: product.images
             .filter((image) => image.role === "GALLERY")
             .map((image) => image.url),
-          sizeChartUrl:
-            product.images.find((image) => image.role === "SIZE_CHART")?.url ??
-            "",
+          infoUrl: product.images.find((image) => image.role === "INFO")?.url ?? "",
+          infoLabel: product.infoLabel ?? "",
           videoHeroUrl: product.videoHeroUrl ?? "",
           videoHeroAutoplay: product.videoHeroAutoplay,
           heroImageUrl: product.heroImageUrl ?? "",

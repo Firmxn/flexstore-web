@@ -34,34 +34,47 @@ export function AddToCartForm({
     initialVariantId ?? firstAvailable?.id ?? "",
   );
   const [quantity, setQuantity] = useState(1);
-  const [pending, setPending] = useState(false);
+  // Aksi yang sedang berjalan: "cart" (Tambah ke Keranjang) atau "buy"
+  // (Buat Pesanan). Keduanya menulis keranjang; "buy" lanjut ke halaman checkout.
+  const [pending, setPending] = useState<"cart" | "buy" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   const selected = variants.find((variant) => variant.id === variantId);
   const maxQuantity = selected?.stock ?? 0;
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  // Dua tombol memakai jalur tulis keranjang yang sama (CART-01): "cart" tetap
+  // di halaman, "buy" (tombol "Buat Pesanan") lanjut ke /checkout untuk varian ini -
+  // pola sama dengan tombol "Beli" di dialog varian kartu (CART-05).
+  async function submit(action: "cart" | "buy") {
     if (!variantId) return;
 
     setError(null);
     setSuccess(false);
-    setPending(true);
+    setPending(action);
 
     try {
       await apiRequest("/api/cart", {
         method: "POST",
         body: JSON.stringify({ variantId, quantity }),
       });
+      if (action === "buy") {
+        router.push(`/checkout?variantIds=${variantId}`);
+        return;
+      }
       setSuccess(true);
       setQuantity(1);
       router.refresh();
     } catch (caught) {
       setError(toErrorMessage(caught));
     } finally {
-      setPending(false);
+      setPending(null);
     }
+  }
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    void submit("cart");
   }
 
   if (variants.length === 0) {
@@ -120,7 +133,7 @@ export function AddToCartForm({
         </ul>
       </div>
 
-      <div className="flex items-end gap-3">
+      <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-2">
           <label htmlFor="quantity" className="text-sm font-medium">
             Jumlah
@@ -136,16 +149,29 @@ export function AddToCartForm({
               if (Number.isInteger(value) && value >= 1) setQuantity(value);
             }}
             className="w-24"
-            disabled={!selected || pending}
+            disabled={!selected || pending !== null}
           />
         </div>
-        <Button
-          type="submit"
-          disabled={!selected || pending || maxQuantity <= 0}
-          className="h-10 flex-1"
-        >
-          {pending ? "Menambahkan..." : "Tambah ke Keranjang"}
-        </Button>
+        {/* Dua aksi berdampingan; di layar sempit keduanya turun ke baris
+            sendiri (min-w) supaya label tidak terpotong. */}
+        <div className="flex min-w-[16rem] flex-1 gap-3">
+          <Button
+            type="submit"
+            disabled={!selected || pending !== null || maxQuantity <= 0}
+            className="h-10 flex-1"
+          >
+            {pending === "cart" ? "Menambahkan..." : "Tambah ke Keranjang"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!selected || pending !== null || maxQuantity <= 0}
+            onClick={() => void submit("buy")}
+            className="h-10 flex-1"
+          >
+            {pending === "buy" ? "Memproses..." : "Buat Pesanan"}
+          </Button>
+        </div>
       </div>
 
       {maxQuantity > 0 && quantity >= maxQuantity ? (

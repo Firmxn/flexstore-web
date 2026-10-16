@@ -4,38 +4,48 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { ShoppingCart } from "lucide-react";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { formatRupiah } from "@/lib/utils/format";
 import {
   VariantPickerDialog,
   stokEfektif,
   type CardVariantOption,
 } from "./VariantPickerDialog";
 
-// Tombol aksi pada kartu katalog: "Keranjang" menambah ke keranjang, "Beli"
-// menambah lalu langsung membuka checkout dengan item itu terpilih (CART-01).
-// Bila produk punya lebih dari satu varian dengan stok efektif, klik membuka
-// dialog pemilihan varian dulu (CART-05, permintaan pengguna 2026-10-15); satu
-// varian berstok tetap langsung, tanpa dialog.
+// Tombol aksi pada kartu katalog: hanya "Keranjang" sebagai ikon minimalis
+// di sebelah kanan (permintaan pengguna 2026-10-16). Tombol "Beli" dihapus.
 //
 // Stok efektif (perbaikan 2026-10-15, TASK-114): kartu menilai
 // `stock - keranjang` — kuantitas varian yang sudah di keranjang pembeli
 // disertakan saat render. Tiga keadaan tombol:
-// 1. stok gudang kosong semua → "Stok habis" (disabled);
-// 2. stok gudang ada tapi semua sudah di keranjang → satu tombol "Keranjang";
+// 1. stok gudang kosong semua → ikon keranjang disabled ("Stok habis");
+// 2. stok gudang ada tapi semua sudah di keranjang → satu ikon keranjang;
 //    klik tidak menambah apa pun, hanya menuju halaman keranjang dengan
 //    highlight baris varian (keputusan pengguna: tanpa dialog tambahan);
-// 3. selain itu → Keranjang/Beli seperti biasa.
+// 3. selain itu → ikon keranjang aktif (langsung atau lewat dialog varian).
+//
+// canShop = false (role non-customer, mis. admin — `getCartAccess` gagal):
+// tombol tetap dirender dalam keadaan disabled di seluruh keadaan di atas,
+// pengganti perilaku lama yang menyembunyikan blok aksi dari kartu
+// (keputusan pengguna 2026-10-16).
 export function ProductCardActions({
+  canShop,
   productName,
   productHref,
   coverUrl,
-  hasSizeChart,
+  hasInfo,
+  infoLabel,
+  price,
   variants,
 }: {
+  canShop: boolean;
   productName: string;
   productHref: string;
   coverUrl: string | null;
-  hasSizeChart: boolean;
+  hasInfo: boolean;
+  infoLabel: string;
+  price: number;
   variants: CardVariantOption[];
 }) {
   const router = useRouter();
@@ -43,7 +53,7 @@ export function ProductCardActions({
   const langsung = tersedia.length === 1;
   const stokHabis = variants.every((variant) => variant.stock <= 0);
   const penuhDiKeranjang = !stokHabis && tersedia.length === 0;
-  const [pending, setPending] = useState<"cart" | "buy" | null>(null);
+  const [pending, setPending] = useState<"cart" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   // Kunci per pembukaan: dialog diremount saat dibuka ulang, jadi pilihan kembali
@@ -53,9 +63,19 @@ export function ProductCardActions({
 
   if (stokHabis) {
     return (
-      <Button variant="secondary" className="w-full" disabled>
-        Stok habis
-      </Button>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium">{formatRupiah(price)}</span>
+        <Button
+          variant="outline"
+          size="icon"
+          disabled
+          aria-label="Stok habis"
+          title="Stok habis"
+          className="size-9 rounded-lg opacity-50 cursor-not-allowed"
+        >
+          <ShoppingCart className="size-4" />
+        </Button>
+      </div>
     );
   }
 
@@ -65,14 +85,20 @@ export function ProductCardActions({
       .map((variant) => variant.id)
       .join(",");
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full"
-        onClick={() => router.push(`/cart?hilite=${hilite}`)}
-      >
-        Keranjang
-      </Button>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium">{formatRupiah(price)}</span>
+        <Button
+          variant="outline"
+          size="icon"
+          disabled={!canShop}
+          onClick={() => router.push(`/cart?hilite=${hilite}`)}
+          aria-label="Lihat keranjang"
+          title="Lihat keranjang"
+          className="size-9 rounded-lg"
+        >
+          <ShoppingCart className="size-4" />
+        </Button>
+      </div>
     );
   }
 
@@ -83,17 +109,13 @@ export function ProductCardActions({
     });
   }
 
-  async function jalankan(variantId: string, aksi: "cart" | "buy") {
+  async function keranjang(variantId: string) {
     setError(null);
-    setPending(aksi);
+    setPending("cart");
     try {
       await addToCart(variantId);
-      if (aksi === "buy") {
-        router.push(`/checkout?variantIds=${variantId}`);
-      } else {
-        setDialogOpen(false);
-        router.refresh();
-      }
+      setDialogOpen(false);
+      router.refresh();
     } catch (caught) {
       setError(toErrorMessage(caught));
     } finally {
@@ -101,8 +123,8 @@ export function ProductCardActions({
     }
   }
 
-  function pilih(aksi: "cart" | "buy") {
-    if (langsung) return jalankan(tersedia[0].id, aksi);
+  function pilih() {
+    if (langsung) return keranjang(tersedia[0].id);
     setError(null);
     setDialogKey((key) => key + 1);
     setDialogOpen(true);
@@ -110,23 +132,24 @@ export function ProductCardActions({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium">{formatRupiah(price)}</span>
         <Button
           variant="outline"
-          size="sm"
-          className="flex-1"
-          disabled={pending !== null}
-          onClick={() => pilih("cart")}
+          size="icon"
+          disabled={pending !== null || !canShop}
+          onClick={pilih}
+          aria-label={
+            pending === "cart"
+              ? "Menambahkan ke keranjang"
+              : "Tambah ke keranjang"
+          }
+          title={
+            pending === "cart" ? "Menambahkan..." : "Tambah ke keranjang"
+          }
+          className="size-9 rounded-lg"
         >
-          {pending === "cart" ? "..." : "Keranjang"}
-        </Button>
-        <Button
-          size="sm"
-          className="flex-1"
-          disabled={pending !== null}
-          onClick={() => pilih("buy")}
-        >
-          {pending === "buy" ? "..." : "Beli"}
+          <ShoppingCart className="size-4" />
         </Button>
       </div>
       {langsung ? (
@@ -146,12 +169,13 @@ export function ProductCardActions({
           productName={productName}
           productHref={productHref}
           coverUrl={coverUrl}
-          hasSizeChart={hasSizeChart}
+          hasInfo={hasInfo}
+          infoLabel={infoLabel}
           variants={variants}
           pending={pending}
           error={error}
-          onCart={(variantId) => jalankan(variantId, "cart")}
-          onBuy={(variantId) => jalankan(variantId, "buy")}
+          onCart={(variantId) => keranjang(variantId)}
+          onBuy={() => {}}
         />
       )}
     </div>

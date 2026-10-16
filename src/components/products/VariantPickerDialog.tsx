@@ -16,7 +16,7 @@ import { formatRupiah } from "@/lib/utils/format";
 
 // CART-05 (permintaan pengguna 2026-10-15): dialog pemilihan varian dari kartu
 // produk. Isinya sesimpel nama produk, gambar, dan daftar varian — detail
-// selengkapnya (bagan ukuran, deskripsi) dibuka lewat tautan bergaya BackLink
+// selengkapnya (informasi tambahan, deskripsi) dibuka lewat tautan bergaya BackLink
 // ke halaman detail, bukan diduplikasi di dalam dialog.
 //
 // Baris varian dinilai dengan stok efektif (perbaikan 2026-10-15, TASK-114):
@@ -40,7 +40,8 @@ export function VariantPickerDialog({
   productName,
   productHref,
   coverUrl,
-  hasSizeChart,
+  hasInfo,
+  infoLabel,
   variants,
   pending,
   error,
@@ -52,7 +53,9 @@ export function VariantPickerDialog({
   productName: string;
   productHref: string;
   coverUrl: string | null;
-  hasSizeChart: boolean;
+  // PROD-08: slot informasi tambahan (dulu bagan ukuran) + label judulnya.
+  hasInfo: boolean;
+  infoLabel: string;
   variants: CardVariantOption[];
   pending: "cart" | "buy" | null;
   error: string | null;
@@ -160,12 +163,12 @@ export function VariantPickerDialog({
 
         <FormErrorAlert message={error} />
 
-        {hasSizeChart ? (
+        {hasInfo ? (
           <Link
             href={productHref}
             className="w-fit text-sm text-muted-foreground hover:underline"
           >
-            Lihat bagan ukuran &amp; detail lengkap
+            Lihat {infoLabel} &amp; Detail Lengkap
           </Link>
         ) : null}
       </DialogContent>
