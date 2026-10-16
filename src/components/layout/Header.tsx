@@ -10,7 +10,7 @@ export async function Header() {
   const brand = await getBrandSetting();
 
   return (
-    <header className="sticky top-0 z-10 border-b border-border bg-background/95 backdrop-blur print:hidden">
+    <header className="fixed inset-x-0 top-0 z-10 border-b border-border bg-background/95 backdrop-blur print:hidden">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
         <Link href="/" className="flex items-center gap-2 text-xl font-bold tracking-tight">
           {brand.logoUrl ? (
