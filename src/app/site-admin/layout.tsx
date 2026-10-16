@@ -1,6 +1,9 @@
-import Link from "next/link";
-import { SiteAdminSidebar } from "@/components/layout/SiteAdminSidebar";
-import { SidebarAccountMenu } from "@/components/layout/SidebarAccountMenu";
+import { cookies } from "next/headers";
+import { AppShell } from "@/components/layout/AppShell";
+import {
+  isSidebarCollapsed,
+  SIDEBAR_PREF_COOKIE,
+} from "@/lib/layout/sidebar-pref";
 import { requireSiteAdminPage } from "@/lib/auth/session";
 import { getBrandSetting } from "@/lib/brand";
 import { connection } from "next/server";
@@ -21,26 +24,24 @@ export default async function SiteAdminLayout({
   // SITE-05 (PH-09): nama brand dari pengaturan Site Admin.
   const brand = await getBrandSetting();
 
+  // Preferensi sidebar (ringkas/penuh) dibaca lewat cookie pada request
+  // pertama supaya tidak ada pergeseran layout setelah hydration. Cookie
+  // sama dengan area admin, jadi keputusan user berlaku untuk keduanya.
+  const cookieStore = await cookies();
+  const initialCollapsed = isSidebarCollapsed(
+    cookieStore.get(SIDEBAR_PREF_COOKIE)?.value,
+  );
+
   return (
-    <div className="flex flex-1 flex-col lg:flex-row">
-      <aside className="flex shrink-0 flex-col border-b border-border bg-background lg:sticky lg:top-0 lg:z-10 lg:h-screen lg:w-60 lg:overflow-y-auto lg:border-b-0 lg:border-r">
-        <div className="flex h-16 items-center gap-2 border-b border-border px-4">
-          <Link href="/" className="font-bold tracking-tight">
-            {brand.brandName}
-          </Link>
-          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
-            Platform
-          </span>
-        </div>
-
-        <SiteAdminSidebar />
-
-        <div className="mt-auto border-t border-border p-2">
-          <SidebarAccountMenu name={user.name ?? "Site Admin"} role="Site Admin" />
-        </div>
-      </aside>
-
-      <main className="flex-1 bg-muted/20 p-4 lg:p-8">{children}</main>
-    </div>
+    <AppShell
+      brandName={brand.brandName}
+      userName={user.name ?? "Site Admin"}
+      role="Site Admin"
+      badge="Platform"
+      variant="site-admin"
+      initialCollapsed={initialCollapsed}
+    >
+      {children}
+    </AppShell>
   );
 }
