@@ -65,6 +65,7 @@
        lock dari Radix men-set `overflow: hidden` di body — untuk overflow
        hidden browser tidak mereserve gutter. */
     overflow-y: scroll;
+    scrollbar-gutter: stable;
   }
 
   * {
@@ -79,11 +80,13 @@
 
   /* Kompensasi scrollbar dari react-remove-scroll (dipakai Radix Select/Dialog
      ketika popup terbuka) menyuntik stylesheet runtime yang menambah
-     margin-right 15px di `body[data-scroll-locked]`, karena ia menganggap
-     scrollbar sudah dihapus oleh body lock — padahal scrollbar html kita
-     permanen (html overflow-y: scroll di atas), jadi kompensasinya berganda
-     dan menggeser konten ke kiri. Dinetralkan dengan selector lebih spesifik
-     agar menang atas stylesheet yang disuntikkan saat runtime. */
+     margin-right/padding-right di `body`, karena ia menganggap scrollbar
+     sudah dihapus oleh body lock — padahal scrollbar html kita permanen
+     (html overflow-y: scroll di atas), jadi kompensasinya berganda dan
+     menggeser konten/navbar ke kiri. Versi Radix baru menandai `html`
+     dengan `data-scroll-locked`, versi lama menandai `body`; ditangkap
+     keduanya dengan selector yang sama spesifiknya. */
+  html[data-scroll-locked] body,
   html body[data-scroll-locked] {
     margin-right: 0 !important;
     padding-right: 0 !important;
