@@ -11,7 +11,7 @@
 
 ## 1. Identitas dan indeks fitur
 
-- **Versi / tanggal:** v2.5 / 2026-10-15
+- **Versi / tanggal:** v2.6 / 2026-10-16
 - **Versi PRD / SDD:** PRD v1.6, SDD v1.0
 - **Pemilik keputusan:** Development Team
 
@@ -66,6 +66,13 @@
 | | **MOD-NOTIF** | NOTIF-02 | Pusat Notifikasi In-App (ikon navbar) | Terimplementasi (PH-10, Disetujui) | [NOTIF-02](#notif-02) |
 | Pasca-MVP | **MOD-CART** | CART-05 | Pemilihan Varian dari Kartu Produk (dialog) | Terimplementasi (2026-10-15, pasca-MVP) | [CART-05](#cart-05) |
 | Pasca-MVP | **MOD-PROD** | PROD-06 | Gambar Varian di Galeri Detail (carousel) | Terimplementasi 2026-10-15 (termasuk status tambahan bagan ukuran dialog) | [PROD-06](#prod-06) |
+| Pasca-MVP | **MOD-PROD** | PROD-07 | Seksi Editorial Detail Produk (VideoHero, ProductStory, Lookbook) | Terimplementasi 2026-10-15 | [PROD-07](#prod-07) |
+| Pasca-MVP | **MOD-ADMIN** | ADMIN-DASH-01 | Modernisasi Dashboard Store Admin | Spek ditulis 2026-10-15, belum diimplementasikan | [ADMIN-DASH-01](#admin-dash-01) |
+| Pasca-MVP | **MOD-PROD** | PROD-08 | Informasi Tambahan Produk (role `INFO`, label kustom) | Terimplementasi 2026-10-16 (TASK-117; bukti `docs/04` bagian 10) | [PROD-08](#prod-08) |
+| Pasca-MVP | **MOD-PROD** | PROD-09 | Varian Berbasis Opsi (kombinasi ukuran/warna) | Spek ditulis 2026-10-16, **BELUM diimplementasikan** | [PROD-09](#prod-09) |
+| Pasca-MVP | **MOD-CREDIT** | CREDIT-01 | Saldo Toko (refund ke saldo + pemakaian saat checkout) | Spek ditulis 2026-10-15, belum diimplementasikan | [CREDIT-01](#credit-01) |
+| Pasca-MVP | **MOD-CONFIG** | SITE-06 | Mode Gelap (dark theme — trigger tema saat ini placeholder) | Spek ditulis 2026-10-16, **BELUM diimplementasikan** | [SITE-06](#site-06) |
+| Pasca-MVP | **MOD-CUST** | WISH-01 | Favorit Produk (wishlist versi penuh; dummy UI sudah ada) | Spek ditulis 2026-10-16, **BELUM diimplementasikan** | [WISH-01](#wish-01) |
 
 **Phase Checkpoint:**
 - **Phase 1:** Admin CRUD products, customer register/login/view products ├ó┼ôΓÇ£ Foundation ready
@@ -163,7 +170,7 @@ Bentuk yang diidamkan (komponen konfirmasi visual mengikuti referensi pengguna):
 
 **Preview seragam (revisi pengguna 2026-10-15: "preview juga harus seragam"):** kartu preview memakai komponen `src/components/ui/image-preview.tsx` di seluruh titik unggah — kotak media netral (`bg-muted`) berisi gambar (`object-cover`/`object-contain` sesuai konteks), tombol "Hapus" pada baris yang sama, ukuran kotak media diatur pemanggil (`mediaClassName`). **Tanpa keadaan kosong:** bila belum ada berkas komponen tidak dirender sama sekali (revisi pengguna: "better gausah ada 'belum ada gambar' ... karena udah ada dropzone langsung") — dropzone di bawahnya sudah menjadi penanda, jadi teks "Belum ada gambar."/"Kosong"/"Belum ada berkas." dihapus dari semua titik. **Preview tunggal terpusat:** bagan ukuran (satu berkas) menampilkan kartu terpusat dalam pembungkus `flex justify-center`, dan preview tiap varian memakai kartu **sama persis** sesuai permintaan pengguna; bukti refund juga sama (lebar kartu `w-48` — lihat butir ukuran kartu seragam di atas). Penggantian: kartu galeri produk (`ImageUploader`), placeholder "Kosong" (`VariantImagePicker`), bukti refund (`AdminOrderActions` — sebelumnya tidak punya preview sama sekali), dan "Belum ada berkas." (`AssetPicker`, ukuran logo/favicon/banner ditentukan `BrandSettingsForm`).
 
-**Bukti implementasi (2026-10-15):** `src/components/ui/image-dropzone.tsx` dibuat (kotak `border-dashed`, ikon `Upload` berlingkar `muted`, teks "Pilih berkas atau tarik dan lepas ke sini.", sub-teks tipe per endpoint, tombol "Browse Image" jalan keyboard; dragover menonjol `border-primary bg-muted/50`; unggahan berjalan `uploading` nonaktif + tombol "Mengunggah..."; galat tetap lewat `FormErrorAlert`). Keempat pemakai ditukar: `ImageUploader`, `VariantImagePicker`, `AdminOrderActions` (bukti refund), `AssetPicker` (dipakai `BrandSettingsForm`). Verifikasi: `tsc` exit 0, `pnpm lint` 0 error, uji browser `/admin/products/new` — 3 dropzone tampil, tombol lama hilang, dragover menyala, drop PNG valid mengunggah sukses (URL `.ufs.sh` muncul di pratinjau galeri), galat berkas rusak tampil lewat `FormErrorAlert`. Uji layar sentuh: sama seperti sebelumnya (klik kotak membuka dialog file). Rincian bukti: `docs/04` bagian 10.
+**Bukti implementasi (2026-10-15):** `src/components/ui/image-dropzone.tsx` dibuat (kotak `border-dashed`, ikon `Upload` berlingkar `muted`, teks "Pilih berkas atau tarik dan lepas ke sini.", sub-teks tipe per endpoint, tombol "Browse Image" jalan keyboard; dragover menonjol `border-primary bg-muted/50`; unggahan berjalan `uploading` nonaktif + tombol "Mengunggah..."; galat tetap lewat `FormErrorAlert`). Keempat pemakai ditukar: `ImageUploader`, `VariantImagePicker`, `AdminOrderActions` (bukti refund), `AssetPicker` (dipakai `BrandSettingsForm`). Verifikasi: `tsc` exit 0, `pnpm lint` 0 error, uji browser `/admin/products/new` — 3 dropzone tampil, tombol lama hilang, dragover menyala, drop PNG valid mengunggah sukses (URL `.ufs.sh` muncul di pratinjau galeri), galat berkas rusak tampil lewat `FormErrorAlert`. Uji layar sentuh: sama seperti sebelumnya (klik kotak membuka dialog file). 
 **Status tambahan 2026-10-15 — dropzone disembunyikan saat slot penuh (TERIMPLEMENTASI 2026-10-15):** keputusan pengguna: "kayaknya gua pengen dropzone dihapus jika gambar pada add product detail sudah penuh/dropzone sudah disable ... daripada cuma disable, di hide saja" (contoh: galeri utama penuh — bukan sekadar dropzone nonaktif, tapi hilang sama sekali sampai salah satu gambar dihapus). Perilaku berlaku untuk **semua dropzone yang sebelumnya berstatus disabled karena penuh**: galeri produk (maksimal `MAX_PRODUCT_IMAGES`), slot informasi/bagan ukuran (maks 1), gambar varian per baris varian (maks 1), bukti refund (maks 1), dan aset brand (logo/favicon per slot, banner). Aturannya:
 
 - **Slot penuh → dropzone tidak dirender** (bukan `disabled`): kotak dropzone hilang dari DOM, yang tersisa kartu preview gambarnya (atau daftar preview galeri). Tidak ada kotak abu-abu yang mati memenuhi form.
@@ -171,7 +178,7 @@ Bentuk yang diidamkan (komponen konfirmasi visual mengikuti referensi pengguna):
 - **Setelah Hapus salah satu gambar → dropzone muncul kembali** di tempatnya (transisi langsung di klien, tanpa reload).
 - Sub-teks "Galeri penuh (N gambar). Hapus salah satu untuk mengganti." dan "Sudah ada gambar. Hapus dulu untuk mengganti." yang menemani dropzone **disabled jadi tidak diperlukan lagi** — hilang bersama dropzonnya; informasi "hapus dulu" cukup tersirat dari tombol Hapus di kartu preview.
 - Kondisi mengunggah (nonaktif + "Mengunggah..."), dragover, dan galat `FormErrorAlert` tetap persis seperti aturan 1C — hanya keputusan tampil/sembunyi yang berubah.
-- **Penerimaan:** isi galeri sampai batas → dropzone tidak ada di DOM (`querySelector` kotak `border-dashed` = nol untuk slot itu), preview tetap utuh; hapus satu gambar → dropzone tampil lagi tanpa reload; slot single (varian/bagan/refund) berisi satu gambar → dropzone hilang, setelah Hapus muncul lagi; nol perubahan pada server Uploadthing.
+- **Penerimaan:** isi galeri sampai batas → dropzone tidak ada di DOM (`querySelector` kotak `border-dashed` = nol untuk slot itu), preview tetap utuh; hapus satu gambar → dropzone tampil lagi tanpa reload; slot single (varian/bagan/refund) berisi satu gambar → dropzone hilang, setelah Hapus muncul lagi; nol perubahan pada server Uploadthing. **Bukti verifikasi kode (2026-10-16, sesi dokumentasi):** keempat pemakai memakai pola `url ? null : <dropzone>` — `ImageUploader` (komentar baris 12 dan blok render baris 118: "Slot penuh → dropzone tidak dirender sama sekali (aturan 1C)"), `VariantImagePicker:56`, `AdminOrderActions:101`, `AssetPicker:47`. Rincian: `docs/04` bagian 10 dan bagian 17 (TASK-116).
 
 **Bukti implementasi (2026-10-15):** keempat pemakai dropzone mengganti `disabled={penuh}` menjadi render bersyarat: `ImageUploader` (`urls.length < max`), `VariantImagePicker` (`url ? null`), `AdminOrderActions` (bukti refund), `AssetPicker` (aset brand) — sub-teks "Sudah ada gambar..."/"Galeri penuh..." gugur, prop `disabled` pada `ImageDropzone` tidak lagi dipakai pemakai mana pun. Verifikasi: `tsc` exit 0, `pnpm lint` 0 error (12 warning lama), uji browser `/admin/products/new` — slot kosong menampilkan dropzone, setelah satu berkas terunggah dropzone hilang dari DOM dan hanya kartu preview + tombol Hapus tersisa, klik Hapus memunculkan dropzone lagi tanpa reload, konsol bersih. Rincian bukti: `docs/04` bagian 10.
 
@@ -198,6 +205,48 @@ Bentuk yang diidamkan (komponen konfirmasi visual mengikuti referensi pengguna):
 
 
 ---
+
+## 1D. Aturan toast notification aplikasi (pengganti pesan sistem) — belum diimplementasikan
+
+Aturan bersama untuk pola pesan umpan balik di seluruh sistem (storefront, admin, site-admin). **Status: belum diimplementasikan** (dokumentasi dulu, 2026-10-15). Keputusan pengguna: "gua pengen menggunakan toast notification/message untuk menggantikan hampir seluruh pesan di sistem" — **rincian implementasi (varian toast, posisi, durasi, gaya, daftar titik yang diganti) akan dilampirkan pengguna pada saat mau implementasi**, jadi bagian ini sengaja dibiarkan ringkas dan TIDAK menentukan pilihan visual.
+
+Ketentuan dasar yang berlaku sejak sekarang sampai implementasi datang:
+
+- **Sasaran: hampir semua pesan sistem** — sukses, gagal, peringatan, dan info — berpindah dari pola sebaris/inline (`FormErrorAlert`, pesan kecil di bawah tombol, dan sejenisnya) menjadi toast global satu komponen (misal `ui/toast.tsx` shadcn atau `sonner`; diputus saat implementasi).
+- **Yang TIDAK diganti:** pesan validasi per-field di form (tetap inline dekat input, tetap dari skema `zod`), empty state (pesan kosong seperti "keranjang kosong"), dialog konfirmasi (aturan bagian 1B), dan pesan yang memang konten halaman (mis. badge "Stok habis"). Di luar pengecualian itu, anggap semua titik pesan kandidat toast.
+- **Inventaris titik dibuat saat implementasi**: daftar kejadian (berhasil dibuat keranjang, gagal OTP, produk tersimpan, bukti refund terkirim, dan seterusnya) diambil dari pemacek `FormErrorAlert` dan pesan sukses yang ada hari ini, lalu dipetakan satu per satu; pemetaan dicatat di bagian ini atau `docs/04` bagian 10 sebelum eksekusi.
+- **Kontrak tampilan menunggu lampiran pengguna** — butir terbuka yang sengaja tidak dipastikan di sini: komponen (toast shadcn vs sonner), posisi di layar, jumlah maksimum bertumpuk, durasi tampil, apakah boleh membawa aksi utama (undo/tautan), dan perilaku saat navigasi halaman.
+- **Aksesibilitas:** toast terbaca pembaca layar (`aria-live`/role `status`), bisa ditutup manual, tidak memotong fokus pengguna; pesan yang terikat posisi form (mis. galat field) tetap inline bila toast tidak memadai.
+
+Tindak lanjut: tunggu lampiran detail dari pengguna, lalu bagian ini boleh dipecah menjadi spek implementasi (task + AC) sebelum dieksekusi; status berubah menjadi "Terimplementasi" hanya setelah bukti di `docs/04`.
+
+
+## 1E. Aturan skeleton dan indikator loading halaman — belum diimplementasikan
+
+Aturan bersama untuk keadaan "sedang memuat" di seluruh halaman (storefront, admin, site-admin). **Status: belum diimplementasikan** (dokumentasi dulu, 2026-10-16). Dipicu pertanyaan pengguna: "skeletonnya bawaan atau bukan, karena kalo bukan maka harus ada penyesuaian agar banyak halaman yang memerlukannya." Jawaban audit: **skeleton bukan bawaan Next.js** — Next hanya menyediakan mekanismenya (fallback `Suspense` yang tampil saat konten di-stream, dan segmen `loading.tsx`), sedangkan tampilan skeleton-nya sendiri ditulis tangan per halaman. Karena itu baru ada di sedikit titik dan halaman lain memerlukan penyesuaian.
+
+**Hasil audit 2026-10-16 (kondisi sekarang):**
+
+- **Sudah punya skeleton (3 titik):** halaman utama `src/app/(storefront)/page.tsx` (`ProductGridSkeleton`, 8 kartu placeholder) sebagai fallback `Suspense` grid rekomendasi; katalog `src/app/(storefront)/products/page.tsx` (`ProductsSkeleton`: baris judul + 8 kartu) sebagai fallback `Suspense` pembungkus seluruh isi halaman; `src/components/layout/Header.tsx` (3 fallback kecil: logo `h-9 w-9`, nama brand `h-9 w-24`, search `h-9 w-64`). `MaintenanceBanner` di layout storefront juga dibungkus `Suspense` tetapi fallback-nya `null` (tanpa tampilan, bukan skeleton).
+- **Belum ada skeleton:** semua halaman lain — detail produk `/products/[slug]`, `/cart`, `/checkout`, `/orders` beserta detail/invoice/tracking, `/track-order`, `/profile` beserta addresses, seluruh halaman auth, dan seluruh admin/site-admin. Tidak ada satu pun berkas `loading.tsx` di seluruh `src/app`.
+- **Perilaku tanpa skeleton (yang dirasakan pengguna):** pada hard load, halaman menampilkan keadaan kosong sampai render server siap — pada `/products` terukur: skeleton sudah ada di byte 3.432 sedangkan konten asli baru muncul di byte 57.569, jadi halaman ber-skeleton menampilkan placeholder lebih dulu sementara halaman tanpa skeleton mengosongkan layar. Pada navigasi klien, halaman lama tetap tampil sampai payload baru siap, tanpa penanda apa pun (Next.js tidak punya indikator navigasi/progres bawaan).
+
+**Ketentuan saat diimplementasikan:**
+
+- **Sasaran:** setiap halaman yang membaca data request-time (cookie/sesi, `searchParams`, query database) wajib menampilkan tampilan sementara yang mencerminkan kerangka halaman itu, bukan layar kosong.
+- **Bentuk skeleton:** meniru kerangka halaman aslinya (judul, baris filter/aksi, kartu atau kolom placeholder `animate-pulse`) dengan **ukuran sama seperti konten aslinya** agar tidak ada lompatan tata letak saat konten datang; gaya mengikuti pola yang sudah ada (`bg-muted/40`, `rounded-xl border border-border`, tinggi kartu `h-72`) supaya seragam dengan homepage dan katalog.
+- **Mekanisme per halaman, dua pilihan bawaan Next:** (a) `Suspense` per bagian — bagian yang datanya lambat dipecah sendiri sehingga judul/aksi tampil duluan sementara bagian berat (grid, tabel) yang menunggu; (b) `loading.tsx` per route — satu skeleton untuk seluruh halaman. Pilihan dicatat per halaman saat implementasi; isi skeleton tetap ditulis tangan pada kedua kasus.
+- **Shell tetap tampil:** header, footer, dan layout tidak ikut skeleton — hanya isi `<main>` (pola katalog sekarang).
+- **Prioritas tahap awal (storefront):** `/cart`, `/checkout`, `/orders` (+ halaman detail), `/products/[slug]`, dan `/profile` — halaman yang paling terasa lambat karena membaca sesi lalu query. Admin/site-admin dan halaman auth menyusul; untuk auth cukup penanda tombol (`LoginForm`/`RegisterForm` sudah memakai label "Memproses..." + tombol nonaktif saat submit) sehingga kebutuhannya berbeda dari skeleton halaman.
+- **Aksesibilitas:** skeleton bersifat `aria-hidden` atau wadahnya memakai `aria-busy="true"`, supaya pembaca layar tidak membaca kotak placeholder sebagai konten.
+
+**Pertanyaan terbuka:**
+
+- Perlu indikator global untuk navigasi klien (mis. garis progres tipis di atas layar) sebagai pelengkap skeleton, atau cukup skeleton per halaman?
+- Detail produk `/products/[slug]`: skeleton penuh meniru layout galeri + kolom informasi (lebih banyak pekerjaan) atau versi sederhana saja?
+- Admin/site-admin masuk tahap berapa, mengingat saat ini semua halaman admin tanpa skeleton?
+
+Tindak lanjut: saat disetujui, pecah menjadi task per kelompok halaman di `docs/04` beserta bukti verifikasinya; status bagian ini berubah menjadi "Terimplementasi" hanya setelah bukti terisi di `docs/04`. Mengikuti pola 1D: dokumentasi dulu, menunggu persetujuan eksekusi.
 
 ## <a name="auth-01"></a>AUTH-01 ├óΓé¼ΓÇ¥ Guest OTP Verification
 
@@ -626,14 +675,23 @@ Schema: `loginSchema` (`src/lib/auth/validation.ts`), dipakai di `authorize(cred
 **Status:** terimplementasi (2026-10-15, UI direvisi atas masukan pengguna). Validasi Zod, unique konstrain, dan pesan benturan sudah ada sejak implementasi PROD-01; petunjuk format SKU di form admin kini berupa ikon info di samping label SKU tiap baris varian (`ProductForm`): diklik/tahan membuka popover berisi aturan karakter, batas 64 karakter, keunikan global, dan format disarankan "inisial produk - kode produk - varian" dengan contoh `KP-30S-M` (Kaos Polos 30s, ukuran M; disingkat pola `INISIAL-PROD-VARIAN`) — menggantikan teks bantuan panjang yang merusak tata letak form. Komponen baru `src/components/ui/popover.tsx` (Radix `@radix-ui/react-popover`, gaya shadcn). Tanpa perubahan API/skema. Bukti: `docs/04` bagian 10 (baris 2026-10-15 "Hint format SKU di form admin").
 **Catatan unggahan (Uploadthing):**
 
-- Alur: klien mengunggah lebih dulu lewat `useUploadThing` ke endpoint `productImage` di `/api/uploadthing`; server hanya menyimpan URL hasil unggah, bukan berkas. Tiga pemakai endpoint ini: galeri produk lewat `ImageUploader` (hingga 4 berkas), bagan ukuran lewat `ImageUploader max={1}`, dan gambar varian lewat `VariantImagePicker` (satu berkas per baris varian).
+- Alur: klien mengunggah lebih dulu lewat `useUploadThing` ke endpoint `productImage` di `/api/uploadthing`; server hanya menyimpan URL hasil unggah, bukan berkas. Tiga pemakai endpoint ini: galeri produk lewat `ImageUploader` (hingga 5 berkas), bagan ukuran lewat `ImageUploader max={1}`, dan gambar varian lewat `VariantImagePicker` (satu berkas per baris varian).
 - Batas endpoint: maksimal 5 berkas per permintaan unggah, 4MB per berkas, `accept="image/*"` di klien. Gerbang `STORE_ADMIN` ├óΓé¼ΓÇ¥ tanpa sesi atau role lain menjawab `403 FORBIDDEN` (`src/lib/uploadthing/core.ts`).
 - Batas 4MB menggantikan 5MB spesifikasi karena Uploadthing hanya menerima ukuran kelipatan pangkat dua (keputusan `docs/04` bagian 10, 2026-10-09).
 - Galat unggah di klien menampilkan "Gagal mengunggah gambar, coba lagi"; tombol unggah bisa dipakai ulang (bagian 8).
 - Endpoint terpisah `refundProof` (bukti refund manual, ORDER-06): gambar, maksimal 1 berkas 4MB, gerbang `STORE_ADMIN` sama.
 - Status uji: gerbang terverifikasi `403`/`200` sejak PH-01. Unggah berkas nyata endpoint `productImage` **terverifikasi 2026-10-14** lewat UI admin: PNG 247 byte ΓåÆ `POST /api/uploadthing?actionType=upload&slug=productImage` `200` ΓåÆ `PUT sea1.ingest.uploadthing.com` `200` ΓåÆ URL `https://jqvuhozget.ufs.sh/f/...` disajikan `200 image/png 247 bytes`. Batas endpoint ikut terbukti (5MB ΓåÆ `400 FileSizeMismatch`, 5 berkas ΓåÆ `400 FileCountMismatch`), dan gerbang di produksi tanpa sesi ΓåÆ `403`. Bukti: `docs/04` bagian 4.5.
-- Status uji endpoint `refundProof` **terverifikasi 2026-10-14** dengan berkas nyata: sesi Store Admin ΓåÆ `POST /api/uploadthing?actionType=upload&slug=refundProof` `200` (presigned) ΓåÆ `PUT sea1.ingest.uploadthing.com` (multipart, field `file`) `200` ΓåÆ URL `https://jqvuhozget.ufs.sh/f/...` disajikan `200 image/png 247 bytes`; dua berkas dalam satu permintaan ΓåÆ `400 FileCountMismatch`; tanpa sesi di produksi ΓåÆ `403`. `PUT` dengan badan mentah (`Content-Type: image/png`) ditolak `415` ΓÇö ingest hanya menerima `multipart/form-data`. Jalur UI lengkap pernah berjalan: baris refund `FS-20261013-87S2YV` berstatus `COMPLETED` dengan `proofUrl` asli yang tersaji `200 image/png 22910 bytes`. Bukti: `docs/04` bagian 9.4.
-**Status tambahan 2026-10-15 — kapasitas galeri 5 gambar utama (TERIMPLEMENTASI 2026-10-15):** keputusan pengguna: jumlah gambar utama produk dinaikkan dari **4 menjadi 5** ("tambahin 'belum implmentasi' untuk 5 gambar utama (saat ini 4)"). Galeri produk dibatasi konstanta `MAX_PRODUCT_IMAGES` (`src/lib/products/validation.ts`) sebagai sumber tunggal: dipakai skema Zod `images` (`.max(MAX_PRODUCT_IMAGES, \`Maksimal ${MAX_PRODUCT_IMAGES} gambar\`)`) sekaligus `maxFileCount` endpoint Uploadthing `productImage` (`src/lib/uploadthing/core.ts`) lewat import yang sama. **Yang diterapkan:** (a) konstanta `4 → 5` (satu baris, ikut menaikkan plafon endpoint dan pesan validasi otomatis "Maksimal 5 gambar"); (b) `ImageUploader` galeri (default `max`) ikut naik, dan sejak aturan "dropzone disembunyikan saat slot penuh" teks keadaan penuh tidak lagi dirender (dropzone hilang saat gambar ke-5 terisi); (c) tata letak thumbnail galeri di halaman detail storefront: baris thumbnail memuat **gambar selain yang sedang tampil** (keputusan lanjutan 2026-10-15 — lihat status tambahan "strip thumbnail tanpa gambar aktif" di bagian 1C) sehingga jumlah kotak selalu = jumlah gambar − 1; grid `grid-cols-4` untuk ≤4 kotak dan `grid-cols-5` saat tepat 5 kotak supaya tidak ada sisa menggantung; (d) redaksi `docs/01` PRD 3.1.A ("1 wajib + 4 opsional = maksimal 5 gambar") dan teks "hingga 5 berkas" di butir catatan unggahan bagian ini disesuaikan; (e) bukti uji lama (2026-10-14: 5 berkas → `400 FileCountMismatch` pada plafon 4) tidak berlaku lagi — diulang dengan 5 berkas sukses dan 6 berkas ditolak. Tidak ada perubahan skema Prisma/`ProductImage` (baris gambar tidak berbatas jumlah per model), tidak ada endpoint baru. Penerimaan: unggah 5 gambar utama lewat form admin lolos validasi Zod dan endpoint; dropzone galeri hilang saat slot ke-5 terisi; kelima gambar tampil pada galeri detail storefront; ke-6 gambar ditolak dengan pesan "Maksimal 5 gambar".
+- Status uji endpoint `refundProof` **terverifikasi 2026-10-14** dengan berkas nyata: sesi Store Admin ΓåÆ `POST /api/uploadthing?actionType=upload&slug=refundProof` `200` (presigned) ΓåÆ `PUT sea1.ingest.uploadthing.com` (multipart, field `file`) `200` ΓåÆ URL `https://jqvuhozget.ufs.sh/f/...` disajikan `200 image/png 247 bytes`; dua berkas dalam satu permintaan ΓåÆ `400 FileCountMismatch`; tanpa sesi di produksi ΓåÆ `403`. `PUT` dengan badan mentah (`Content-Type: image/png`) ditolak `415` ΓÇö ingest hanya menerima `multipart/form-data`. Jalur UI lengkap pernah berjalan: baris refund `FS-20261013-87S2YV` berstatus `COMPLETED` dengan `proofUrl` asli yang tersaji `200 image/png 22910 bytes`. 
+**Status tambahan 2026-10-15 — kapasitas galeri 5 gambar utama (TERIMPLEMENTASI 2026-10-15):** keputusan pengguna: jumlah gambar utama produk dinaikkan dari **4 menjadi 5** ("tambahin 'belum implmentasi' untuk 5 gambar utama (saat ini 4)"). Galeri produk dibatasi konstanta `MAX_PRODUCT_IMAGES` (`src/lib/products/validation.ts`) sebagai sumber tunggal: dipakai skema Zod `images` (`.max(MAX_PRODUCT_IMAGES, \`Maksimal ${MAX_PRODUCT_IMAGES} gambar\`)`) sekaligus `maxFileCount` endpoint Uploadthing `productImage` (`src/lib/uploadthing/core.ts`) lewat import yang sama. **Yang diterapkan:** (a) konstanta `4 → 5` (satu baris, ikut menaikkan plafon endpoint dan pesan validasi otomatis "Maksimal 5 gambar"); (b) `ImageUploader` galeri (default `max`) ikut naik, dan sejak aturan "dropzone disembunyikan saat slot penuh" teks keadaan penuh tidak lagi dirender (dropzone hilang saat gambar ke-5 terisi); (c) tata letak thumbnail galeri di halaman detail storefront: baris thumbnail memuat **gambar selain yang sedang tampil** (keputusan lanjutan 2026-10-15 — lihat status tambahan "strip thumbnail tanpa gambar aktif" di bagian 1C) sehingga jumlah kotak selalu = jumlah gambar − 1; grid `grid-cols-4` untuk ≤4 kotak dan `grid-cols-5` saat tepat 5 kotak supaya tidak ada sisa menggantung; (d) redaksi `docs/01` PRD 3.1.A ("1 wajib + 4 opsional = maksimal 5 gambar") dan teks "hingga 5 berkas" di butir catatan unggahan bagian ini disesuaikan; (e) bukti uji lama (2026-10-14: 5 berkas → `400 FileCountMismatch` pada plafon 4) tidak berlaku lagi — diulang dengan 5 berkas sukses dan 6 berkas ditolak. Tidak ada perubahan skema Prisma/`ProductImage` (baris gambar tidak berbatas jumlah per model), tidak ada endpoint baru. Penerimaan: unggah 5 gambar utama lewat form admin lolos validasi Zod dan endpoint; dropzone galeri hilang saat slot ke-5 terisi; kelima gambar tampil pada galeri detail storefront; ke-6 gambar ditolak dengan pesan "Maksimal 5 gambar". **Bukti verifikasi kode (2026-10-16, sesi dokumentasi):** `MAX_PRODUCT_IMAGES = 5` (`src/lib/products/validation.ts:20`) sebagai sumber tunggal — pesan Zod "Maksimal 5 gambar" dan `maxFileCount` endpoint `productImage` ikut otomatis lewat import di `src/lib/uploadthing/core.ts`; galeri storefront memakai `ProductShowcase` (carousel + thumbnail), tidak bergantung grid 4. Tanpa perubahan skema Prisma. Rincian: `docs/04` bagian 10 dan bagian 17 (TASK-115).
+
+**Status tambahan 2026-10-15 — hapus gambar produk: konfirmasi + cek silang referensi + bersihkan berkas Uploadthing (BELUM diimplementasikan):** keputusan pengguna: "tambah cek silang sekali itu seperti confirm dialog? make sense, sekalian memberikan informasi simpel kalau gambar akan benar-benar terhapus. tambahkan di belum diimplementasikan". Kondisi saat ini: admin menghapus gambar (galeri/bagan ukuran/gambar varian lewat tombol Hapus di form) hanya menghapus URL dari daftar — **berkasnya tetap tersimpan di Uploadthing**; repo tidak memakai `UTApi` sama sekali (tidak ada `deleteFiles` di mana pun), jadi file lama jadi orphan. Rencana perbaikan berlapis:
+
+- **Lapis 1 — konfirmasi di UI:** sebelum baris gambar hilang, tampilkan `ConfirmDialog` (aturan bagian 1B, di atas shadcn AlertDialog) berisi pesan sederhana bahwa tindakan ini menghapus gambar **secara permanen dari penyimpanan**, bukan hanya dari form — tombol destruktif "Hapus Gambar" + "Batal"; Escape/klik latar = batal.
+- **Lapis 2 — cek silang di server:** sebelum memanggil `UTApi.deleteFiles([url])`, query sekali apakah URL yang sama masih dipakai entitas lain — `ProductImage.url` produk lain (termasuk role `INFO`) dan `ProductVariant.imageUrl` mana pun. Kalau ada yang masih menunjuk URL itu: **file tidak dihapus** (cukup barisnya lepas dari produk ini), log catatan, permintaan tetap sukses. Kalau referensi nol: `deleteFiles` dijalankan.
+- **Urutan aman:** update hapus baris gambar dulu (transaksi tersimpan) baru `deleteFiles` — kalau panggilan Uploadthing gagal/gangguan jaringan, gambar tetap terhapus dari produk dan file lama tersisa sebagai orphan, **permintaan tidak ikut gagal** (log server saja).
+- **Ketergantungan baru:** `UTApi` dari `@uploadthing/utapi` (kunci server Uploadthing di env server; tidak ada di klien).
+- **Penerimaan:** klik Hapus pada gambar muncul konfirmasi dengan teks permanen; setelah konfirmasi, baris hilang dari form dan `UTApi.deleteFiles` terpanggil (bukti: file tak lagi menyaji `200` di dashboard/UFS Uploadthing); URL yang kebetulan masih dipakai varian/gambar lain tetap hidup dan terhapus dari produk saja; kegagalan Uploadthing tidak merusak simpan produk.
+Bukti: `docs/04` bagian 9.4.
 
 ### 5. Alur berhasil
 
@@ -850,7 +908,7 @@ Bukti `docs/04` bagian 4.x: TASK-13 ("Selesai ΓÇö `/products/kaos-polos-katun
 
 Modul: MOD-PROD (tampilan storefront). Dipicu permintaan pengguna 2026-10-15: halaman detail produk saat ini hanya menampilkan galeri gambar utama produk (`Product.images`, maks 4); gambar per varian (`ProductVariant.imageUrl`, diunggah lewat `VariantImagePicker` di PROD-01) tidak pernah tampil ke pembeli selain sebagai thumbnail keranjang, sehingga pembeli tidak bisa melihat tampilan varian yang sebenarnya ia pilih. Tujuannya: bila pembeli memilih varian (radio di `AddToCartForm`), gambar besar di galeri langsung berganti menampilkan gambar varian terpilih; galeri dibuat seperti carousel (satu gambar besar + kontrol geser + thumbnail).
 
-**Status: spek ditulis 2026-10-15, BELUM diimplementasikan** (pola "dokumen dulu", keputusan pengguna). Status berubah menjadi "Terimplementasi" hanya setelah task implementasi selesai dan bukti terisi di `docs/04`.
+**Status: terimplementasi 2026-10-15** (spek ditulis dan dikerjakan hari yang sama; bukti `docs/04` bagian 10 - baris "PROD-06 gambar varian di galeri detail + tautan bagan ukuran dialog").
 
 ### 2. Prasyarat dan pemicu
 
@@ -906,7 +964,7 @@ Tidak ada input baru. Varian tanpa `imageUrl` tidak menimbulkan galat — galeri
 - **Alt text:** `{productName}` - `{variantName}` untuk gambar varian; `{productName}` untuk gambar utama.
 - Tanpa `dangerouslySetInnerHTML`; gambar lewat `next/image` dengan URL Uploadthing yang sudah dipakai galeri saat ini.
 
-**Status tambahan 2026-10-15 — bagan ukuran bergaya tautan + dialog (TERIMPLEMENTASI 2026-10-15, satu paket dengan galeri varian):** keputusan pengguna berikutnya: tampilan bagan ukuran di detail produk mengikuti pola *BackLink* (teks tautan kecil `text-sm`, garis bawah saat diarahkan) dan ditempatkan **di kanan bawah tombol "Tambah ke Keranjang"** (di bawah `AddToCartForm`, rata kanan). Sekarang ini bagan ukuran dirender section penuh di bawah grid (bagian "Bagan Ukuran" dengan H2) — itu dihapus saat implementasi. Ketika tautan "Lihat bagan ukuran" diklik, muncul **dialog** (`ui/dialog.tsx` yang sudah dipakai CART-05: fokus terjebak, Escape/backdrop = tutup) berisi gambar bagan ukuran (`object-contain`, bisa scroll bila panjang); tanpa re-render halaman maupun navigasi menuju gambar penuh. Konsisten dengan tautan bernama sama di dialog varian CART-05 ("Lihat bagan ukuran & detail lengkap") yang membuka halaman detail — di halaman detail inilah tautan baru ini muncul, jadi jalannya lengkap: keranjang kartu → halaman detail → tautan → dialog bagan. Butir penerimaan tambahan (menyertai AC-PROD-06-01..05): detail dengan gambar `SIZE_CHART` menampilkan tautan di kanan bawah `AddToCartForm` dan tautan itu membuka dialog dengan gambar bagan; detail tanpa bagan ukuran tidak menampilkan tautan sama sekali; section "Bagan Ukuran" penuh di bawah grid lenyap. AC-PROD-06-04 di atas ("bagan tetap terpisah dari carousel") ditinjau ulang oleh implementasi ini — bagan tetap bukan slide carousel, tetapi kotaknya bukan lagi section penuh.
+**Status tambahan 2026-10-15 — bagan ukuran bergaya tautan + dialog (TERIMPLEMENTASI 2026-10-15, satu paket dengan galeri varian):** keputusan pengguna berikutnya: tampilan bagan ukuran di detail produk mengikuti pola *BackLink* (teks tautan kecil `text-sm`, garis bawah saat diarahkan) dan ditempatkan **di kanan bawah tombol "Tambah ke Keranjang"** (di bawah `AddToCartForm`, rata kanan). Sekarang ini bagan ukuran dirender section penuh di bawah grid (bagian "Bagan Ukuran" dengan H2) — itu dihapus saat implementasi. Ketika tautan "Lihat bagan ukuran" diklik, muncul **dialog** (`ui/dialog.tsx` yang sudah dipakai CART-05: fokus terjebak, Escape/backdrop = tutup) berisi gambar bagan ukuran (`object-contain`, bisa scroll bila panjang); tanpa re-render halaman maupun navigasi menuju gambar penuh. Konsisten dengan tautan bernama sama di dialog varian CART-05 ("Lihat bagan ukuran & detail lengkap") yang membuka halaman detail — di halaman detail inilah tautan baru ini muncul, jadi jalannya lengkap: keranjang kartu → halaman detail → tautan → dialog bagan. Butir penerimaan tambahan (menyertai AC-PROD-06-01..05): detail dengan gambar `SIZE_CHART` menampilkan tautan di kanan bawah `AddToCartForm` dan tautan itu membuka dialog dengan gambar bagan; detail tanpa bagan ukuran tidak menampilkan tautan sama sekali; section "Bagan Ukuran" penuh di bawah grid lenyap. AC-PROD-06-04 di atas ("bagan tetap terpisah dari carousel") ditinjau ulang oleh implementasi ini — bagan tetap bukan slide carousel, tetapi kotaknya bukan lagi section penuh. **Catatan PROD-08 (2026-10-16):** peran gambar `SIZE_CHART` berganti nama jadi `INFO` dan slotnya menjadi "Informasi Tambahan" dengan label kustom, jadi teks tautan dan judul dialog di atas mengikuti `Product.infoLabel` (default "Informasi Tambahan") — bukan lagi selalu "bagan ukuran".
 
 ### 10. Kriteria penerimaan
 
@@ -939,6 +997,108 @@ Tidak ada input baru. Varian tanpa `imageUrl` tidak menimbulkan galat — galeri
 
 **Rujukan kode (saat ini):** `src/app/(storefront)/products/[slug]/page.tsx` (galeri statis); `src/components/cart/AddToCartForm.tsx` (radio varian); `src/components/admin/VariantImagePicker.tsx` (sumber `imageUrl`); `src/lib/cart/queries.ts` (fallback `imageUrl` di thumbnail keranjang).
 
+## <a name="prod-07"></a>PROD-07 — Seksi Editorial Detail Produk (VideoHero, ProductStory, Lookbook)
+
+### 1. Identitas dan tujuan
+
+Modul: MOD-PROD (tampilan storefront + form admin). Dipicu permintaan pengguna 2026-10-15: halaman detail produk ingin punya tiga seksi editorial bergaya situs fashion — **VideoHero** (banner video produk full-width di bawah grid, pada posisi section bagan ukuran saat ini), **ProductStory** (dua kolom: gambar editorial + narasi produk), dan **Lookbook** (galeri foto gaya hidup, 4 foto) — sebagaimana gambar referensi pengguna. **Setiap seksi bisa dihidupkan/mati terpisah (customisable, opsional)**: admin mengisi hanya yang ingin dipakai — VideoHero saja, atau ProductStory + Lookbook, atau VideoHero + Lookbook, atau tidak sama sekali; tidak wajib mengisi ketiganya, dan seksi tanpa data tidak dirender sama sekali.
+
+**Status: terimplementasi 2026-10-15** (spek ditulis dan dikerjakan di hari yang sama; bukti `docs/04` bagian 10). Tiga pertanyaan terbuka bagian 13 diputus saat implementasi: sumber video = unggah berkas Uploadthing `videoHero` (plafon 64 MB), autoplay dikontrol admin per produk (`Product.videoHeroAutoplay`), dan ProductStory tanpa `storyText` jatuh ke `description` produk.
+
+### 2. Prasyarat dan pemicu
+
+- Form produk admin (PROD-01) menambah kelompok input opsional: banner hero (pilih salah satu — gambar atau video), gambar + teks narasi, unggahan lookbook.
+- Skema butuh penambahan (migrasi Prisma): `Product.videoHeroUrl String?`, `Product.videoHeroAutoplay Boolean @default(true)`, `Product.heroImageUrl String?`, `Product.storyText String?`, nilai enum baru `ImageRole`: `STORY` (maks 1) dan `LOOKBOOK` (maks 4) di `ProductImage`. Endpoint Uploadthing baru untuk berkas video bila jalur unggah dipilih.
+- Tidak ada perubahan alur keranjang/pesanan; seksi murni tampilan.
+
+### 3. Entitas terkait
+
+- `Product` (kolom baru di atas), `ProductImage` (role baru), konfigurasi Uploadthing (`src/lib/uploadthing/core.ts`).
+- Storefront membaca relasi yang sudah ada (`getPublishedProductBySlug`) dengan filter role.
+
+### 4. Input, validasi, kegagalan (data)
+
+| Input | Validasi | Pesan |
+| --- | --- | --- |
+| videoHeroUrl | URL valid; sumber diizinkan (Uploadthing `videoHero` atau sematan YouTube — diputus saat implementasi, bagian 13) | "URL video tidak valid" |
+| heroImageUrl | URL valid (alternatif video untuk banner hero; hanya satu sumber yang tersimpan) | "URL gambar hero tidak valid" |
+| videoHeroAutoplay | boolean (kontrol admin; hanya berlaku untuk banner video) | - |
+| storyText | teks bebas maks 2000 karakter (aturan karakter kontrol bagian 1A) | "Narasi maksimal 2000 karakter" |
+| Story/Lookbook | tipe gambar sesuai endpoint Uploadthing gambar yang ada | pesan "Gagal unggah" yang sudah ada |
+
+Tampilan storefront tidak punya input; semua read-only.
+
+### 5. Alur berhasil (tampilan storefront)
+
+| Langkah | Hasil |
+| --- | --- |
+| Buka detail produk | Seksi dirender sesuai data, urutan tetap: (1) Banner hero full-width di bawah grid pada posisi section bagan ukuran saat ini (bagian beli tetap teratas seperti sekarang — TANPA digeser ke atas halaman) berupa gambar atau video dengan rasio panorama 4:1 di layar lebar (16:9 di ponsel), (2) ProductStory dua kolom (gambar rasio 16:9 di kiri, teks kanan) setelahnya, (3) Lookbook paling bawah dengan susunan editorial (foto utama membentang di kiri + foto pendamping di kanan, rasio lanskap serupa banner hero). Ketiganya di bawah area galeri+beli, bukan di atas produk detail |
+| Admin mengisi semua | Ketiga seksi tampil berurutan tanpa menggeser konten beli yang sudah ada |
+| Admin mengisi sebagian | Hanya seksi yang berisi data yang tampil |
+| Admin tidak mengisi | Halaman persis seperti saat ini (tanpa perubahan visual) |
+
+### 6. Output dan perubahan data
+
+- Admin mengubah: `Product.videoHeroUrl`, `Product.videoHeroAutoplay`, `Product.heroImageUrl`, `Product.storyText`, baris `ProductImage` role `STORY`/`LOOKBOOK`.
+- Storefront read-only; tanpa tabel/API baru selain endpoint unggahan video.
+
+### 7. Alur alternatif
+
+- Lookbook kurang dari 4 foto: grid menyusut rapi (1-3 foto tetap boleh).
+- Video gagal dimuat (URL mati): fallback visual bingkai `bg-muted`, tanpa mematikan halaman (pola PROD-06).
+- Produk DRAFT/arsip: hanya seksi yang datanya ada yang dirender; tidak ada kerangka kosong.
+
+### 8. Perilaku kegagalan
+
+| Kondisi | Sumber | Respons |
+| --- | --- | --- |
+| URL video rusak/tidak bisa diputar | elemen video/iframe | Fallback visual tanpa galat besar; log server |
+| `storyText` kosong tetapi gambar STORY ada | render | Seksi tetap tampil berisi gambar saja (dan sebaliknya) |
+| Admin menyimpan tanpa mengisi opsional apa pun | `productSchema` | Simpan tetap lolos; semua field opsional tidak blok |
+
+### 9. Perilaku UI
+
+- **VideoHero:** elemen `<video>` (autoplay muted loop `playsInline`, tanpa suara; poster `aspect-video`) atau sematan iframe YouTube — full-width, diposisikan di bawah grid pada posisi section bagan ukuran saat ini (BUKAN di atas halaman; bagian galeri+beli tetap teratas), tanpa tombol overlay.
+- **ProductStory:** grid dua kolom (gambar `aspect-square` kiri, teks `whitespace-pre-line` kanan) mengikuti referensi pengguna; judul kecil opsional memakai nama produk.
+- **Lookbook:** grid gambar 4 kolom (1-2 kolom di layar kecil), `object-cover`, lazy load.
+- Semua lewat `next/image`/URL yang sudah di-allowlist; tanpa `dangerouslySetInnerHTML`.
+- Form admin (PROD-01) menaruh tiga kelompok baru di bawah bagian Bagan Ukuran dengan label jelas "opsional".
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-PROD-07-01 | Produk tanpa ketiga isian | Buka detail | Halaman sama seperti saat ini, tanpa seksi kosong |
+| AC-PROD-07-02 | Produk dengan banner hero video | Buka detail | Video tampil di bawah grid (posisi section bagan ukuran saat ini), full-width, rasio panorama 4:1 di layar lebar |
+| AC-PROD-07-03 | Produk dengan narasi + gambar | Buka detail | Dua kolom gambar+teks tampil setelah bagian beli (gambar rasio lanskap 16:9, tinggi kedua kolom sejajar) |
+| AC-PROD-07-04 | Produk dengan 4 foto lookbook | Buka detail | Susunan editorial tampil setelah ProductStory: foto utama membentang + tiga pendamping, rasio lanskap serupa VideoHero |
+| AC-PROD-07-05 | Admin mengisi sebagian | Simpan lalu buka detail | Hanya seksi yang diisi yang tampil |
+| AC-PROD-07-06 | Produk dengan banner hero gambar | Buka detail | Gambar tampil di posisi dan rasio yang sama dengan banner video (4:1 di layar lebar); gambar diprioritaskan bila kedua sumber terisi |
+| AC-PROD-07-07 | Admin memilih jenis banner di form | Pilih Gambar/Video/Tanpa banner | Hanya uploader jenis terpilih yang tampil; pilihan baru mengosongkan sumber lain (tidak ada dua banner bersaing) |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Lengkap | video hero + narasi 2 paragraf + gambar STORY + 4 foto LOOKBOOK | Ketiga seksi berurutan | AC-02..04 |
+| Hanya narasi | `storyText` + gambar STORY, tanpa video/lookbook | Hanya ProductStory | AC-03, AC-05 |
+| Kosong | produk isian lama | Tampilan lama | AC-01 |
+
+### 12. Batas fitur
+
+- **Termasuk:** tiga seksi opsional per produk, migrasi kolom/enum, form admin opsional.
+- **Tidak termasuk:** ulasan/review pembeli, produk terkait/rekomendasi, penjadwalan tayang, seksi per kategori/global, A/B layout, perubahan alur beli.
+- **Ketergantungan:** PROD-01 (form), PROD-03 (halaman detail), konfigurasi Uploadthing (endpoint video), migrasi Prisma.
+
+### 13. Pertanyaan terbuka
+
+- Sumber video hero: unggah berkas via Uploadthing (butuh endpoint + plafon ukuran video, diputus berapa) atau cukup sematan URL YouTube — keputusan dicatat `docs/04` bagian 10 saat implementasi.
+- Autoplay: selalu autoplay-mute (KISS) atau boleh dikontrol admin.
+- Apakah ProductStory boleh memakai `description` yang sudah ada bila admin tidak mengisi `storyText` (menghindari duplikasi isi) — keputusan pengguna.
+
+**Rujukan kode (saat ini):** `src/app/(storefront)/products/[slug]/page.tsx` (detail); `src/lib/products/validation.ts` (schema produk); `src/lib/uploadthing/core.ts` (endpoint gambar); `src/components/admin/ImageUploader.tsx` (pola unggah).
+
+---
 ---
 ## <a name="prod-04"></a>PROD-04 ΓÇö Category Management (Store Admin)
 
@@ -1223,6 +1383,8 @@ Schema: `brandSchema` / `brandUpdateSchema` (`src/lib/brands/validation.ts`), me
 | Referensi PRD | PRD 3.1.B (Shopping Cart) |
 | Referensi SDD | SDD 4.3 (MOD-CART), CartItem schema |
 
+**Status tambahan 2026-10-16 — tombol "Buat Pesanan" (semula "Checkout") di halaman detail produk (TERIMPLEMENTASI).** Permintaan pengguna: halaman detail mendapat tombol kedua di samping "Tambah ke Keranjang" yang langsung menuju checkout. Perilaku: `POST /api/cart` dengan kuantitas dari input Jumlah (jalur CART-01 yang sama), lalu `router.push("/checkout?variantIds=<variantId>")` — pola dan tujuan identik dengan tombol "Beli" di dialog varian kartu (CART-05, AC-CART-05-03). Kedua tombol nonaktif saat varian terpilih habis atau ada aksi berjalan; di layar sempit keduanya turun ke baris sendiri (baris aksi `flex-wrap`). Tautan informasi tambahan (PROD-08) ikut dirapatkan dari 20px jadi 8px di bawah baris tombol (keputusan pengguna 2026-10-16). **Revisi label (2026-10-16):** label tombol kedua diganti dari "Checkout" jadi "Buat Pesanan" (permintaan pengguna: "ganti ke buat pesanan") — perilaku tidak berubah, teks menunggu tetap "Memproses...", dan konsisten dengan label submit form checkout ("Buat Pesanan" di `/checkout`). Label ringkasan keranjang ("Checkout (N item)") dan tombol dialog varian ("Beli") tidak diubah.
+
 ### 2. Prasyarat dan pemicu
 
 - **Prasyarat:** None (public)
@@ -1280,7 +1442,7 @@ Schema: `brandSchema` / `brandUpdateSchema` (`src/lib/brands/validation.ts`), me
 ### 9. Perilaku UI
 
 - **Halaman:** Product detail, product card
-- **Elemen:** Variant selector, quantity input, "Add to Cart" button, cart badge
+- **Elemen:** Variant selector, quantity input, "Add to Cart" button, tombol "Buat Pesanan" (lihat status tambahan 2026-10-16), cart badge
 
 | Kondisi | Tampilan | Tindakan |
 | --- | --- | --- |
@@ -1662,7 +1824,7 @@ Dua tambahan 2026-10-15 (massukan pengguna kedua dan ketiga, keputusan `docs/04`
 
 ### 2. Prasyarat dan pemicu
 
-- Layar memakai `ProductCard` dengan `canShop = true` (Guest/Customer).
+- Layar memakai `ProductCard`; `canShop` berasal dari `getCartAccess()`. Guest/Customer (dan tanpa sesi) -> `canShop = true`, tombol aktif; role lain mis. admin -> `canShop = false`, blok aksi tetap dirender dengan tombol dalam keadaan **disabled** (revisi pengguna 2026-10-16; sebelumnya blok aksi tidak dirender sama sekali).
 - Data varian sudah disertakan server saat render (`ProductWithRelations.variants`), jadi tidak ada API baru.
 - Komponen dialog tersedia (`src/components/ui/dialog.tsx`, Radix).
 - **Stok efektif:** halaman beranda/katalog membaca kuantitas keranjang pembeli (`getCartQuantities` ΓÇö guest Redis / customer `CartItem`) sekali per render dan meneruskannya ke kartu.
@@ -1707,11 +1869,11 @@ Pada produk satu varian berstok-efektif, langkah 1 langsung ke langkah 3 tanpa d
 | Stok varian berkurang saat dialog terbuka | `POST /api/cart` | `400 INSUFFICIENT_STOCK`, pesan tampil di dalam dialog, dialog tetap terbuka |
 | Semua varian stok 0 | ΓÇö | Tombol "Stok habis" disabled, tanpa navigasi |
 | Semua unit varian sudah di keranjang pembeli | ΓÇö | Tombol "Keranjang" aktif; klik menuju halaman keranjang dengan highlight, tanpa permintaan ke server |
-| Role bukan pembeli | ΓÇö | Tombol tidak dirender |
+| Role bukan pembeli | - | Tombol tetap dirender dalam keadaan disabled di seluruh keadaan (revisi pengguna 2026-10-16; sebelumnya tidak dirender); klik tidak berbuat apa pun, tanpa navigasi maupun permintaan ke server |
 
 ### 9. Perilaku UI
 
-- **Kartu:** dua tombol `sm` sejajar ("Keranjang" outline, "Beli" default); keadaan penuh di keranjang diganti satu tombol outline "Keranjang".
+- **Kartu:** dua tombol `sm` sejajar ("Keranjang" outline, "Beli" default); keadaan penuh di keranjang diganti satu tombol outline "Keranjang". Untuk role bukan pembeli (canShop false) kedua tombol itu - termasuk tombol keadaan penuh - dirender dalam keadaan disabled.
 - **Dialog** (`VariantPickerDialog`, `max-w-md`): judul "Pilih Varian"; ringkasan gambar 64px + nama + harga varian terpilih; daftar varian radio dengan harga dan keterangan (`Stok {efektif}` / "Stok habis" / "Sudah di keranjang" untuk yang sudah di keranjang penuh); CTA "Keranjang" dan "Beli" (nonaktif bila varian terpilih tidak berstok efektif atau pending); `FormErrorAlert`; tautan "Lihat bagan ukuran & detail lengkap" hanya bila produk punya gambar `SIZE_CHART`.
 - **Halaman keranjang:** parameter `hilite=<variantId>` (dipisah koma bila beberapa) membuat baris `CartItemRow` yang cocok di-highlight (latar `bg-accent/40` + cincin `ring-2 ring-primary`) dan digulir ke tengah pandangan saat pertama tampil; parameter tidak memengaruhi pengecekan item untuk checkout.
 - Pilihan kembali ke varian pertama yang tersedia setiap dialog dibuka ulang (remount lewat `key`, bukan setState dalam effect).
@@ -1731,6 +1893,7 @@ Pada produk satu varian berstok-efektif, langkah 1 langsung ke langkah 3 tanpa d
 | AC-CART-05-09 | Escape / backdrop | Tutup dialog | Tanpa perubahan keranjang |
 | AC-CART-05-10 | Semua unit varian sudah di keranjang (stok gudang > 0, stok efektif 0) ΓÇö termasuk unit stok terakhir | Klik tombol kartu | Satu tombol "Keranjang" aktif; klik menuju `/cart?hilite=<variantId>`, baris item varian itu di-highlight dan digulir ke pandangan; tanpa permintaan tulis ke server |
 | AC-CART-05-11 | Varian yang semua unitnya sudah di keranjang pembeli | Lihat daftar dialog | Baris disabled berlabel "Sudah di keranjang"; CTA mati bila varian terpilih demikian; baris berstok efektif lain menampilkan `Stok {efektif}` |
+| AC-CART-05-12 | Login sebagai role bukan pembeli (Store Admin / Site Admin) | Buka beranda atau katalog | Kartu tetap menampilkan tombol "Keranjang" dan "Beli" dalam keadaan disabled (juga tombol keadaan penuh dan "Stok habis"); klik tidak berbuat apa pun, tanpa dialog, navigasi, maupun permintaan ke server |
 
 ### 11. Contoh data
 
@@ -5782,9 +5945,499 @@ Daftar dibatasi **20 entri terbaru** (urut terbaru dulu); entri yang lebih lama 
 - Judul dan deskripsi tiap kejadian memakai diksi paling lumrah (keputusan pengguna 2026-10-11) dan boleh diganti kapan saja ├óΓé¼ΓÇ¥ teks acuan di bagian 9. Daftar dibatasi 20 entri terbaru. Sumber waktu memakai kolom yang sudah ada (tanpa migrasi).
 - Keputusan pengguna 2026-10-11: email verifikasi perubahan email (CUST-03) **selalu dikirim** dan tidak tunduk pada preferensi di dialog ini (sama seperti email set/reset password).
 
+
+## <a name="admin-dash-01"></a>ADMIN-DASH-01 — Modernisasi Dashboard Store Admin
+
+### 1. Identitas dan tujuan
+
+Modul: MOD-ADMIN. Dashboard saat ini di `/admin` menampilkan empat ringkasan operasional dan jumlah pesanan per status. Tujuan peningkatan ini: memberi Store Admin ringkasan yang lebih modern dan bisa ditindaklanjuti, tanpa menjadikan dashboard pengganti laporan lengkap.
+
+**Status: spek ditulis 2026-10-15, BELUM diimplementasikan.** Ini dokumentasi cakupan awal; detail visual (gaya grafik, warna, layout final) dapat diputuskan saat implementasi.
+
+### 2. Prasyarat dan pemicu
+
+- Store Admin login membuka `/admin`; akses tetap mengikuti guard/layout admin yang sudah ada.
+- Ringkasan dan tindakan mengarah ke halaman operasional terkait; sumber laporan yang sudah ada dipakai ulang bila definisi datanya cocok.
+- Fitur ini hanya mengubah dashboard. Laporan lengkap tetap berada di `/admin/reports`.
+
+### 3. Hak akses
+
+| Aktor | Hak |
+| --- | --- |
+| Store Admin | Melihat ringkasan untuk tokonya dan membuka tautan tindakan |
+| Role lain / tanpa sesi | Mengikuti perlindungan akses admin yang sudah berlaku; tidak mendapat data dashboard |
+
+### 4. Input dan filter
+
+| Input | Validasi/perilaku |
+| --- | --- |
+| Periode | Pilihan cepat: hari ini, 7 hari, 30 hari; rentang tanggal khusus opsional |
+| Perubahan periode | Memperbarui KPI, grafik, pesanan terbaru, dan produk terlaris secara konsisten |
+| Rentang khusus tidak valid | Tolak atau fallback aman; jangan menjalankan query dengan tanggal tidak valid/terbalik |
+
+Zona waktu dan apakah batas tanggal mencakup hari kalender penuh diputuskan sebelum implementasi, lalu dicatat di `docs/04` bagian 10. Default awal yang disarankan: 30 hari terakhir, agar selaras dengan dashboard saat ini.
+
+### 5. Alur berhasil
+
+| Langkah | Hasil |
+| --- | --- |
+| Store Admin membuka dashboard | Periode default tampil beserta KPI dan ringkasan terkini |
+| Admin memilih periode cepat / rentang khusus | Semua panel berbasis periode diperbarui memakai rentang yang sama |
+| Admin memilih kartu tindakan atau pesanan | Berpindah ke daftar/detail terkait |
+| Admin memilih tautan laporan lengkap | Membuka `/admin/reports` |
+
+### 6. Isi dashboard
+
+1. **Filter periode** — hari ini, 7 hari, 30 hari, serta rentang tanggal khusus.
+2. **Kartu KPI + perbandingan tren** — nilai penjualan, jumlah transaksi, rata-rata nilai pesanan, dan jumlah pesanan menunggu pembayaran; tampilkan perubahan dibanding periode sebelumnya yang setara. Definisi nilai penjualan mengikuti REPORT-01 (pesanan dibayar, tidak dibatalkan); rata-rata = nilai penjualan dibagi transaksi, dengan keadaan kosong yang aman saat transaksi nol.
+3. **Grafik tren** — grafik penjualan dan jumlah pesanan per hari dalam periode terpilih; label/tip menampilkan tanggal dan nilai. Rentang yang sangat panjang boleh dikelompokkan setelah keputusan implementasi.
+4. **Perlu tindakan** — pintasan berjumlah untuk pesanan perlu dikirim (PROCESSING), pengajuan pembatalan (CANCEL_REQUESTED), dan stok menipis, masing-masing membuka daftar terkait. Pengingat refund hanya ditambahkan bila alur/status refund yang ada menunjukkan tindakan admin yang masih tertunda.
+5. **Pesanan terbaru** — daftar ringkas 5–10 pesanan terbaru: nomor pesanan, pembeli, total, status, waktu; setiap baris membuka detail pesanan.
+6. **Produk terlaris** — 5 produk teratas pada periode berdasarkan unit terjual, dengan jumlah unit dan nilai penjualan; nama membuka produk terkait bila rute admin tersedia.
+
+### 7. Data dan aturan agregasi
+
+- Gunakan ulang definisi laporan penjualan / kinerja produk dari REPORT-01 agar angka dashboard konsisten dengan `/admin/reports`.
+- Jumlah pesanan per status tetap tersedia sebagai ringkasan/pintasan seperti dashboard saat ini.
+- Tren membandingkan periode terpilih dengan periode sebelumnya yang sama panjang; periode kosong atau tanpa data menampilkan nol/keadaan kosong, bukan error.
+- Untuk pesanan terbaru, periode filter tidak menyembunyikan daftar operasional kecuali keputusan implementasi menetapkan demikian; label panel harus menjelaskan cakupannya.
+- Query tetap melalui Prisma dan data hanya untuk konteks toko yang berhak diakses; tanpa raw SQL.
+
+### 8. Perilaku gagal dan keadaan kosong
+
+| Kondisi | Tampilan/perilaku |
+| --- | --- |
+| Belum ada penjualan pada periode | KPI nol, grafik keadaan kosong yang jelas, tanpa pembagian nol |
+| Tidak ada pesanan terbaru | Empty state ringkas |
+| Tidak ada produk terjual | Empty state pada panel produk terlaris |
+| Satu panel gagal dimuat | Tampilkan fallback/error yang tidak menghilangkan panel lain bila memungkinkan; jangan tampilkan data palsu sebagai nol tanpa penanda |
+| Rentang filter tidak valid | Pesan validasi yang jelas dan tidak menjalankan query rentang invalid |
+
+### 9. Perilaku UI
+
+- Urutan yang disarankan: filter periode → KPI → grafik + perlu tindakan → pesanan terbaru + produk terlaris.
+- Tata letak responsif; tabel/list tetap dapat dibaca pada layar sempit tanpa overflow halaman.
+- Grafik memiliki label yang dapat dipahami tanpa mengandalkan warna saja, legenda/tooltip yang jelas, serta fallback aksesibel bila grafik tidak dapat dirender.
+- Kartu tindakan dan baris pesanan punya affordance klik/fokus keyboard yang jelas.
+- Pilihan pustaka grafik dan detail visual diputuskan saat implementasi; jangan menambah dependensi sebelum dibutuhkan.
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-ADMIN-DASH-01-01 | Store Admin login | Buka `/admin` | Filter periode, KPI, grafik, daftar tindakan, pesanan terbaru, produk terlaris tampil |
+| AC-ADMIN-DASH-01-02 | Ada data pada periode | Pilih periode berbeda | KPI dan grafik berubah konsisten mengikuti periode |
+| AC-ADMIN-DASH-01-03 | Ada data pembanding | Lihat kartu KPI | Perubahan terhadap periode sebelumnya yang setara ditampilkan |
+| AC-ADMIN-DASH-01-04 | Ada pesanan PROCESSING/CANCEL_REQUESTED atau stok menipis | Buka panel tindakan | Jumlah benar dan setiap pintasan menuju daftar terkait |
+| AC-ADMIN-DASH-01-05 | Ada pesanan | Klik baris pesanan terbaru | Detail pesanan yang benar terbuka |
+| AC-ADMIN-DASH-01-06 | Ada item terjual pada periode | Buka panel produk terlaris | Maksimal 5 produk diurut berdasarkan unit terjual |
+| AC-ADMIN-DASH-01-07 | Periode tanpa penjualan/pesanan | Buka dashboard | Keadaan nol/kosong informatif; tanpa NaN atau error |
+| AC-ADMIN-DASH-01-08 | Layar sempit | Buka dashboard | Semua panel tetap terbaca dan dapat digunakan |
+| AC-ADMIN-DASH-01-09 | User bukan Store Admin | Akses dashboard | Perlindungan akses tetap berlaku dan data tidak bocor |
+
+### 11. Batas fitur
+
+- **Termasuk:** modernisasi halaman dashboard Store Admin, filter periode, KPI/tren, grafik, tindakan, pesanan terbaru, produk terlaris.
+- **Tidak termasuk:** mengganti/menghapus `/admin/reports`, ekspor laporan, notifikasi realtime, target/forecast bisnis, perbandingan lintas toko, atau perubahan workflow pesanan.
+- **Ketergantungan:** REPORT-01, ORDER-07, data stok produk, halaman admin produk/pesanan yang sudah ada.
+
+### 12. Pertanyaan terbuka
+
+- Rentang periode kustom: batas kalender menurut zona waktu toko atau zona waktu browser?
+- Pesanan terbaru selalu global-terbaru atau mengikuti periode yang dipilih?
+- Apakah perlu kartu metrik refund setelah definisi status refund pending dikonfirmasi?
+- Pustaka grafik dan visual final dipilih saat implementasi.
+
+**Rujukan kode saat ini:** `src/app/admin/page.tsx` (dashboard), `src/lib/orders/admin.ts` (jumlah status), `src/lib/reports/queries.ts` (agregat laporan), `src/app/admin/reports/page.tsx`.
+
 ---
 
-**Status:** Spesifikasi Fitur v2.4 - PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) **terimplementasi dan Disetujui** (2026-10-11, pengguna: "approve" - bukti `docs/04` bagian 15.5) beserta revisi UI CUST-01/CUST-02. Bagian 1A (aturan karakter input semua field, v2.1) terimplementasi di commit `40dcb41`. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`). Ditambah 2026-10-15: CART-05 (dialog pemilihan varian dari kartu produk + stok efektif TASK-114) - **Terimplementasi** (spesifikasi ditulis lalu dikerjakan di hari yang sama; bukti `docs/04` bagian 16.4; keputusan di bagian 10 dan 16). Ditambah 2026-10-15: 17 spesifikasi rinci (AUTH-02/03, PROD-03/04/05, VOUCH-01/02, NOTIF-01, INV-01, SHIP-02/03, ORDER-05..08, REPORT-01, CONFIG-01) ditulis retroaktif dari kode terimplementasi - utang dokumentasi bagian rinci di catatan indeks bagian 1 tuntas. Ditambah 2026-10-15 malam: PROD-07 (seksi editorial VideoHero/ProductStory/Lookbook) ditulis baru dan PROD-06 mendapat status tambahan (bagan ukuran bergaya tautan + dialog di kanan bawah tombol beli); PROD-06 beserta status tambahannya **terimplementasi 2026-10-15** (bukti `docs/04` bagian 16), PROD-07 masih belum diimplementasikan. Ditambahkan ADMIN-DASH-01 (modernisasi dashboard Store Admin), status belum diimplementasikan.
+## <a name="prod-08"></a>PROD-08 — Informasi Tambahan Produk (ganti "SIZE_CHART", label kustom)
+
+### 1. Identitas dan tujuan
+
+Modul: MOD-PROD (form admin + storefront). Dipicu permintaan pengguna 2026-10-15: slot gambar "Bagan Ukuran" saat ini terlalu sempit namanya — pada produk yang tidak butuh size chart, slot itu diproyeksikan untuk keterangan tambahan lain (bahan yang digunakan, efek/cara perawatan, dan sejenisnya). Dibutuhkan nama yang universal plus label judul yang bisa dikustomisasi admin per produk.
+
+**Status: terimplementasi 2026-10-16** (spek ditulis 2026-10-15, dikerjakan 2026-10-16 sebagai TASK-117; bukti `docs/04` bagian 10). Keputusan pengguna: nama role baru **`INFO`**, default label **"Informasi Tambahan"**, label bisa diubah admin saat add/edit produk.
+
+**Status tambahan 2026-10-16 (TERIMPLEMENTASI, satu paket dengan tautan + dialog PROD-06).** Bagian 5 dan bagian 9 baris "section tampil di bawah grid" **tidak berlaku lagi**: storefront tidak merender section penuh, melainkan tautan kecil di kanan bawah form beli yang membuka dialog (PROD-06). Yang dipakai dari spek ini: slot di form admin berjudul **"Informasi Tambahan (opsional)"** dengan input "Label judul (opsional)" di atas slot gambar (maks 40 karakter; input dibatasi `maxLength` di UI, sedangkan penolakan "Label maksimal 40 karakter" tetap dijaga Zod di API), role gambar `INFO`, kolom `Product.infoLabel`, dan **judul tautan + judul dialog mengikuti label** (`infoLabel ?? "Informasi Tambahan"`). Pertanyaan terbuka bagian 13 soal teks tautan CART-05 diputus **opsi A (ikut label)**: "Lihat `<label>` & detail lengkap" — label dialirkan `ProductCard` → `ProductCardActions` → `VariantPickerDialog`. Field kode `sizeChartUrl` ikut di-rename jadi `infoUrl` (keputusan pengguna 2026-10-16) supaya identifier tidak menyesatkan; kontrak Uploadthing dan jumlah slot (maks 1) tidak berubah. Migrasi enum memakai `ALTER TYPE ... RENAME VALUE` sehingga baris gambar `SIZE_CHART` yang sudah ada otomatis menjadi `INFO` tanpa drop/backfill.
+
+### 2. Prasyarat dan pemicu
+
+- Form add/edit produk admin (PROD-01) punya section yang saat ini berjudul "Bagan Ukuran" dengan slot gambar maksimal 1.
+- Perubahan skema (migrasi Prisma):
+  - Rename nilai enum `ImageRole.SIZE_CHART` → `INFO` (migrasi `ALTER TYPE ... RENAME VALUE`, data baris lama ikut).
+  - Kolom baru `Product.infoLabel String?` (nullable, tanpa default) — menyimpan label judul kustom.
+- Tidak ada perubahan endpoint Uploadthing, struktur `ProductImage`, atau alur keranjang/pesanan.
+
+### 3. Entitas terkait
+
+- `ProductImage` (`role: INFO`, sebelumnya `SIZE_CHART`), `Product.infoLabel` (baru), `ProductForm` (form admin), halaman detail `/(storefront)/products/[slug]`, tautan di dialog CART-05.
+
+### 4. Input, validasi, kegagalan (data)
+
+| Input | Validasi | Pesan |
+| --- | --- | --- |
+| infoLabel (teks label) | trim, maks 40 karakter, karakter kontrol dibersihkan (aturan bagian 1A) | "Label maksimal 40 karakter" |
+| infoLabel kosong | diperbolehkan (opsional) | Fallback ke default "Informasi Tambahan" |
+| Gambar slot | mengikuti aturan yang ada (endpoint, plafon, dropzone bagian 1C) | "Gagal unggah" yang sudah ada |
+
+### 5. Alur berhasil
+
+| Langkah | Hasil |
+| --- | --- |
+| Admin buka add/edit produk | Section tampil berjudul "Informasi Tambahan", berisi input label (opsional, placeholder "Informasi Tambahan") + slot gambar maksimal 1 (dropzone, disabled saat terisi) |
+| Admin isi label lalu simpan | `Product.infoLabel` tersimpan; `ProductImage` slot disimpan dengan `role: INFO` |
+| Admin simpan tanpa label | `infoLabel = null` |
+| Buka detail produk dengan gambar INFO | Section tampil di bawah grid (posisi section bagan ukuran saat ini), judul memakai label produk (atau "Informasi Tambahan" bila null) — **digantikan 2026-10-16:** tautan "Lihat <label>" di kanan bawah form beli membuka dialog (PROD-06), bukan section penuh |
+| Admin hapus gambarnya saja | Section tidak dirender; label tetap tersimpan |
+
+### 6. Output dan perubahan data
+
+- **Diubah:** `Product.infoLabel`; baris `ProductImage.role` memakai `INFO` (bukan `SIZE_CHART`).
+- **Tidak diubah:** kontrak Uploadthing, jumlah slot (maks 1), posisi section di halaman detail, perilaku tautan dialog CART-05 selain teksnya.
+
+### 7. Alur alternatif
+
+- Produk tanpa gambar `INFO`: section tidak dirender apa pun isi `infoLabel`-nya.
+- Produk dengan gambar tapi tanpa label: judul default "Informasi Tambahan".
+- Data lama (gambar `SIZE_CHART` sudah ada): setelah rename enum, baris menjadi `INFO` otomatis dan tampil persis seperti sebelumnya dengan judul default.
+
+### 8. Perilaku kegagalan
+
+| Kondisi | Sumber | Respons |
+| --- | --- | --- |
+| Label > 40 karakter / karakter kontrol | validasi Zod di form | "Label maksimal 40 karakter", simpan ditolak |
+| Gambar slot sudah ada, admin unggah lagi | UI | Dropzone disabled (aturan 1C), ganti = Hapus dulu |
+| Referensi kode masih memuat `SIZE_CHART` saat implementasi setengah jalan | build/lint | Gagal build → tuntaskan ganti seluruh pemakaian (`AddToCartForm`, halaman PROD-03, queries) dalam satu task |
+
+### 9. Perilaku UI
+
+- **Form admin:** judul section "Bagan Ukuran" → **"Informasi Tambahan"**; tambah satu input teks "Label judul (opsional)" di atas slot gambar; helper text menjelaskan fungsinya (mis. "Bahan, perawatan, size chart — tampil sebagai judul section di halaman produk").
+- **Storefront:** judul section = `infoLabel ?? "Informasi Tambahan"`; isi (gambar) dan posisi tidak berubah — **direvisi 2026-10-16:** judulnya jadi teks tautan "Lihat <label>" dan judul dialog (bukan judul section; posisi tetap di kanan bawah form beli).
+- **Dialog CART-05:** teks tautan "Lihat bagan ukuran & detail lengkap" — opsi A: mengikuti label ("Lihat <label> & detail lengkap"); opsi B: tetap generik. Putuskan saat implementasi dan catat di `docs/04` bagian 10. **Diputus 2026-10-16: opsi A.**
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-PROD-08-01 | Produk baru, label diisi "Bahan & Perawatan" | Simpan lalu buka detail | Section tampil berjudul "Bahan & Perawatan" |
+| AC-PROD-08-02 | Produk dengan gambar INFO, tanpa label | Buka detail | Section tampil berjudul "Informasi Tambahan" |
+| AC-PROD-08-03 | Produk lama (gambar `SIZE_CHART` sebelum migrasi) | Buka detail setelah migrasi | Tampil sama seperti sebelumnya, judul default |
+| AC-PROD-08-04 | Admin isi 41 karakter | Simpan | Ditolak "Label maksimal 40 karakter" |
+| AC-PROD-08-05 | Admin upload gambar | Buka form edit lagi | Gambar tampil pada slot, dropzone disabled, label terisi kembali |
+
+### 11. Contoh data
+
+| Skenario | Data | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Size chart | label null, gambar `INFO` | Judul "Informasi Tambahan", gambar tampil | AC-02, AC-03 |
+| Bahan | label "Bahan & Perawatan", gambar `INFO` | Judul kustom | AC-01 |
+| Kosong | tanpa gambar | Section hilang | bagian 7 |
+
+### 12. Batas fitur
+
+- **Termasuk:** rename role, kolom label, judul kustom di form + storefront + (opsional) tautan CART-05.
+- **Tidak termasuk:** multiple slot gambar informasi (masih maks 1), field teks isi (bukan gambar), label per kategori, perubahan posisi section.
+- **Ketergantungan:** PROD-01 (form), PROD-03 (halaman detail), CART-05 (tautan), 1C (dropzone).
+
+### 13. Pertanyaan terbuka
+
+- Teks tautan di dialog CART-05 ikut label atau tetap generik (bagian 9) — **diputus 2026-10-16: ikut label (opsi A).**
+- Maksimum slot gambar informasi: tetap 1 atau 2-3 (mis. size chart + bahan berdampingan) — bila nanti butuh, slot tambahan adalah keputusan terpisah.
+- Label perlu ikut tampil di tabel daftar produk admin — rekomendasi: tidak (KISS).
+
+**Rujukan kode (saat ini):** `prisma/schema.prisma` (enum `ImageRole`); `src/lib/products/mutations.ts` (penyusunan gambar slot); `src/lib/products/validation.ts` (`sizeChartUrl`); `src/components/admin/ProductForm.tsx` (section); `src/app/(storefront)/products/[slug]/page.tsx` (render section); `src/components/cart/VariantPickerDialog.tsx` (tautan CART-05).
+
+---
+
+## <a name="prod-09"></a>PROD-09 — Varian Berbasis Opsi (kombinasi ukuran/warna)
+
+### 1. Identitas dan tujuan
+
+Modul: MOD-PROD (form admin, katalog, detail produk, keranjang, checkout, pesanan). Dipicu permintaan pengguna 2026-10-16 setelah melihat produk sandal gunung perlu 12 baris varian untuk enam ukuran × dua warna: pola saat ini meminta admin memasukkan satu baris datar untuk setiap kombinasi, sehingga bertambah cepat dan mudah ada kombinasi yang terlewat.
+
+**Status: SPEK DITULIS 2026-10-16, BELUM DIIMPLEMENTASIKAN.** Kode, skema, migrasi, dan data tidak diubah oleh penulisan spek ini. Rekomendasi pola: admin mendefinisikan opsi dan nilainya; sistem membentuk kombinasi sebagai varian konkret. Varian konkret tetap diperlukan karena SKU, stok, harga, berat, dan gambar bisa berbeda untuk setiap kombinasi.
+
+### 2. Prasyarat dan pemicu
+
+- PROD-01 yang ada menggunakan `ProductVariant` datar; setiap baris memiliki SKU unik global, harga, stok, berat, serta gambar opsional.
+- Produk dapat mempunyai satu atau lebih opsi, misalnya `Ukuran: 39, 40, 41, 42, 43, 44` dan `Warna: Hitam, Hijau`.
+- Hanya kombinasi yang memang dibuat/diaktifkan admin yang dijual; generator kombinasi tidak boleh memaksa semua kombinasi matematis tersedia bila sebagian tidak diproduksi.
+- Opsi/nilai opsi adalah cara menyusun dan menampilkan varian, bukan pengganti identitas varian yang sudah dipakai CartItem/OrderItem.
+
+### 3. Entitas terkait dan arah desain
+
+Rancangan relasional yang direkomendasikan (nama final dapat disesuaikan saat implementasi):
+
+- `ProductOption`: `id`, `productId`, `name`, `sortOrder` (contoh: Ukuran, Warna).
+- `ProductOptionValue`: `id`, `optionId`, `value`, `sortOrder` (contoh: 39, Hitam).
+- Relasi nilai opsi ke varian (mis. `ProductVariantOptionValue`): satu `ProductVariant` memilih tepat satu nilai dari setiap opsi produk yang dipakainya. Kombinasi nilai untuk satu produk harus unik.
+- `ProductVariant` tetap menyimpan `sku`, `price`, `stock`, `weightGram`, `imageUrl`; atribut kombinasi dapat diambil lewat relasi opsi. `variant.name` lama tetap tersedia selama transisi dan untuk snapshot/kompatibilitas, tidak dijadikan sumber untuk mem-parsing opsi.
+- Kunci kombinasi harus memiliki constraint/validasi server agar dua varian produk yang sama tidak mempunyai pilihan opsi identik.
+
+Alternatif JSON atau menyimpan `Size`/`Color` sebagai kolom tetap tidak dipilih sebagai default: struktur relasional lebih mudah memvalidasi nilai, membuat kombinasi unik, dan diperluas ke opsi lain tanpa migrasi kolom per jenis.
+
+### 4. Input admin dan validasi
+
+| Input | Validasi yang direncanakan | Perilaku |
+| --- | --- | --- |
+| Nama opsi | wajib, trim, unik dalam satu produk, panjang dibatasi | Contoh `Ukuran`, `Warna` |
+| Nilai opsi | minimal satu nilai per opsi, trim, unik tanpa membedakan spasi pinggir | Contoh `39`, `40`, `Hitam`, `Hijau` |
+| Kombinasi varian | tiap varian memilih satu nilai untuk setiap opsi aktif; kombinasi duplikat ditolak | Tabel kombinasi dibuat otomatis dari nilai opsi, lalu admin dapat mengecualikan kombinasi yang tidak tersedia |
+| SKU | tetap wajib dan unik global; tidak dibuat diam-diam tanpa kontrol admin | Admin mengisi SKU per kombinasi atau memakai generator pratinjau yang tetap dapat diedit |
+| Harga, stok, berat, gambar varian | mengikuti aturan PROD-01 saat ini | Nilai dapat diedit per kombinasi |
+| Batas kombinasi | harus dibatasi dan ditampilkan sebelum generator membuat tabel besar | Nilai maksimum diputus sebelum implementasi; cegah ledakan kombinasi (mis. puluhan/ratusan baris) |
+
+### 5. Alur admin yang direncanakan
+
+1. Admin menambah opsi (mis. Ukuran dan Warna) lalu mengisi nilai masing-masing.
+2. UI menampilkan pratinjau jumlah kombinasi potensial sebelum membuatnya.
+3. Admin memilih apakah membuat seluruh kombinasi atau mengecualikan kombinasi tertentu.
+4. Sistem membentuk satu baris varian per kombinasi terpilih; kolom tabel memuat kombinasi (mis. `39 / Hitam`), SKU, harga, stok, berat, dan gambar.
+5. Admin bisa mengedit SKU/stok/harga/berat/gambar per baris tanpa mengetik ulang nama kombinasi.
+6. Menambah nilai opsi menawarkan pembuatan varian baru yang terbentuk; varian yang sudah ada tidak dihapus atau di-reset otomatis.
+7. Menghapus opsi/nilai atau kombinasi yang sudah dipakai `CartItem`/`OrderItem` mengikuti guard PROD-01: riwayat order tidak boleh rusak, item keranjang tidak boleh terhapus senyap; tampilkan konflik spesifik dan pertahankan baris terkait.
+
+### 6. Perilaku customer yang direncanakan
+
+- Halaman detail memilih opsi bertahap (untuk fashion lazimnya warna lalu ukuran; urutan dapat mengikuti `sortOrder`).
+- Nilai yang tidak mempunyai varian aktif/stok efektif untuk pilihan sebelumnya ditampilkan disabled, bukan bisa dipilih lalu gagal saat submit.
+- Harga/stok/gambar varian diperbarui berdasarkan kombinasi konkret yang cocok.
+- Tombol tambah ke keranjang nonaktif sampai kombinasi valid dipilih; request mengirim `variantId` seperti saat ini, bukan nama opsi buatan klien.
+- Kartu katalog, dialog CART-05, galeri PROD-06, cart, checkout, invoice, dan pesanan tetap beroperasi atas `ProductVariant`/snapshot yang sama. Tampilan opsi hanya menggantikan label datar bila atribut tersedia.
+- Produk satu opsi (mis. warna saja) dan produk tanpa opsi tetap didukung; varian tanpa opsi adalah kompatibilitas bagi produk lama/non-fashion.
+
+### 7. Migrasi dan kompatibilitas data (wajib non-destruktif)
+
+- Tidak mengubah atau membuat ulang `ProductVariant.id` yang ada; `CartItem.variantId` dan `OrderItem.variantId` tetap menunjuk baris yang sama.
+- Tidak menebak atau mem-parse teks `ProductVariant.name` lama seperti `"Size 40 - Hitam"` secara otomatis — format lama tidak konsisten dan parsing dapat salah mengubah data jual.
+- Varian lama tetap sah tanpa atribut opsi; admin dapat mengonversi produk satu per satu melalui alur eksplisit yang mempertahankan SKU/ID dan meminta pemetaan opsi. Bila pemetaan ambigu, pertahankan varian lama apa adanya dan minta admin memilih.
+- Snapshot `OrderItem.variantName`/`sku` tidak ditulis ulang; invoice/riwayat pesanan tetap menampilkan informasi saat transaksi.
+- Migrasi skema harus additive dan dapat di-deploy tanpa menghapus data lama. Backfill opsi hanya dijalankan pada pemetaan yang telah ditinjau/eksplisit.
+- API cart dan order tetap menerima ID varian dan membaca opsi dari database; jangan percaya nama/atribut kombinasi yang dikirim browser.
+
+### 8. Kriteria penerimaan awal
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-PROD-09-01 | Produk baru, opsi Ukuran 6 nilai × Warna 2 nilai | Admin buat kombinasi | Pratinjau 12; sistem membuat maksimal 12 varian, satu per kombinasi terpilih |
+| AC-PROD-09-02 | Sebagian kombinasi tidak dijual | Admin mengecualikan kombinasi | Kombinasi itu tidak dibuat/aktif dan tidak dapat dipilih customer |
+| AC-PROD-09-03 | Kombinasi dibuat | Admin mengisi SKU duplikat | Penyimpanan ditolak oleh aturan SKU global PROD-01 |
+| AC-PROD-09-04 | Customer belum memilih semua opsi | Buka detail | Tombol beli nonaktif; belum ada `variantId` yang bisa ditambahkan |
+| AC-PROD-09-05 | Warna dipilih | Beberapa ukuran tidak punya varian tersedia | Ukuran tidak tersedia disabled; ukuran tersedia tetap dapat dipilih |
+| AC-PROD-09-06 | Kombinasi valid dipilih | Tambah ke keranjang | Varian konkret yang benar (ID/SKU/price/stock) masuk melalui API cart yang ada |
+| AC-PROD-09-07 | Varian lama sudah berada di cart dan order | Migrasi/konversi opsi | ID varian dan referensi tetap; snapshot order tidak berubah |
+| AC-PROD-09-08 | Nama varian lama tidak mengikuti pola baku | Migrasi | Sistem tidak mem-parse otomatis; produk tetap berfungsi sampai admin memetakan secara eksplisit |
+| AC-PROD-09-09 | Kombinasi terpilih masih ada di cart atau order | Admin menghapus kombinasi/nilai | Guard PROD-01 menolak tindakan yang merusak referensi; tidak ada penghapusan senyap |
+| AC-PROD-09-10 | Jumlah nilai menghasilkan kombinasi melebihi batas | Admin meminta generate | Sistem mencegah operasi dan menjelaskan batas sebelum membuat varian |
+
+### 9. Batas cakupan awal
+
+- **Termasuk:** opsi per produk, generator kombinasi terbatas, pengecualian kombinasi, tabel pengelolaan nilai SKU/stok/harga/berat/gambar, pemilih opsi storefront, migrasi additive, kompatibilitas cart/order.
+- **Tidak termasuk tanpa keputusan baru:** inventori per lokasi, matrix import/export spreadsheet, opsi bebas tanpa batas, harga bertingkat per nilai (mis. semua warna punya tambahan harga otomatis), personalisasi teks, swatch gambar per nilai warna yang terpisah dari `ProductVariant.imageUrl`.
+- **Ketergantungan:** PROD-01, PROD-03, CART-01, CART-05, PROD-06, validasi stok/reservasi PH-03, guard varian pada `CartItem`/`OrderItem`.
+
+### 10. Pertanyaan terbuka sebelum implementasi
+
+- Berapa batas opsi per produk, nilai per opsi, dan total kombinasi (rekomendasi awal: 3 opsi, 20 nilai per opsi, 100 kombinasi — wajib dicek dengan admin UX dan batas server)?
+- Apakah UI customer memilih opsi bertahap, atau menampilkan semua kombinasi sebagai daftar (rekomendasi: bertahap; ukuran yang tidak tersedia dinonaktifkan)?
+- Apakah warna perlu swatch warna/gambar per nilai, di samping gambar per varian yang sudah ada?
+- SKU dibuat manual untuk setiap kombinasi atau ada generator pola yang dapat diedit (rekomendasi: generator opsional + edit manual, validasi global tetap)?
+- Saat opsi diubah setelah produk dipakai, bagaimana UI konversi dan konflik referensi ditampilkan?
+- Perlukah UI varian datar lama tetap tersedia untuk produk tanpa opsi (rekomendasi: ya, agar produk sederhana dan migrasi bertahap tidak dipaksa)?
+
+**Rujukan kode saat ini:** `prisma/schema.prisma` (`ProductVariant`, `CartItem`, `OrderItem`); `src/components/admin/ProductForm.tsx`; `src/lib/products/{validation,mutations}.ts`; `src/components/products/AddToCartForm.tsx`; `src/components/cart/VariantPickerDialog.tsx`; `src/lib/cart/`; `src/lib/orders/`.
+
+---
+
+## <a name="credit-01"></a>CREDIT-01 — Saldo Toko (Store Credit: refund ke saldo + pemakaian saat checkout)
+
+### 1. Identitas dan tujuan
+
+Modul: MOD-CREDIT (baru). Dipicu permintaan pengguna 2026-10-15: "gua tertarik sama refund ke saldo toko/store credit deh, buatin implementasinya" (dipilih alur lengkap: "Refund ke saldo + saldo bisa dipakai bayar"); keputusan berikutnya memilih **dokumentasi dulu, eksekusi menyusul setelah approval**. Tujuan: saat refund disetujui, admin bisa memilih mengembalikan dana ke **Saldo Toko** pembeli (tanpa transfer bank, tanpa biaya keluar); saldo lalu bisa dipotong waktu checkout pembelian berikutnya — pola umum web store Indonesia (pengembalian berupa saldo/voucher).
+
+**Status: spek ditulis 2026-10-15, BELUM diimplementasikan** (pola "dokumen dulu", keputusan pengguna). Status berubah hanya setelah implementasi selesai dan bukti terisi di `docs/04`.
+
+### 2. Prasyarat dan pemicu
+
+- Akun **Customer login** — saldo melekat pada `User.id`; **guest checkout tidak punya saldo** (refund guest tetap jalur manual transfer seperti sekarang, ORDER-06).
+- Refund manual ORDER-06 tetap berlaku; fitur ini **menambah satu opsi tujuan**, bukan menggantinya.
+- Tabel baru + kolom `Order.creditUsed`; tanpa perubahan skema pembayaran Xendit.
+
+### 3. Entitas terkait
+
+- **Baru:** `StoreCreditTransaction { id, userId (index), amount Decimal(12,2) signed, type (enum CreditTxType: REFUND_IN | SPEND | ORDER_REVERSAL), orderId? , note?, createdAt }` — saldo = `SUM(amount)` per user (buku besar/ledger, bukan kolom saldo telanjang; setiap perubahan meninggalkan jejak audit).
+- Diubah: `Order.creditUsed Decimal(12,2) @default(0)` — catatan berapa saldo dipakai di pesanan itu.
+- Terkait: ORDER-06 (approve refund), ORDER-01/02 (checkout), PAY-01 (pembuatan pembayaran Xendit).
+
+### 4. Input, validasi, kegagalan (data)
+
+| Input | Validasi | Pesan |
+| --- | --- | --- |
+| Pilihan tujuan refund (admin) | literal `BANK_TRANSFER` \| `STORE_CREDIT`; default `BANK_TRANSFER` | "Pilih tujuan refund" |
+| amount refund ke saldo | sama dengan jumlah refund, > 0, tidak melebihi refund | "Jumlah refund tidak valid" |
+| Pakai saldo (customer, checkout) | angka 0..saldo tersedia, ≤ total belanja sebelum ongkir/voucher | "Saldo tidak mencukupi" |
+| Race (dua checkout bersamaan) | `SELECT ... FOR UPDATE`/transaksi Prisma — saldo tidak boleh negatif | "Saldo tidak mencukupi", checkout ditolak |
+
+### 5. Alur berhasil
+
+| Langkah | Hasil |
+| --- | --- |
+| Admin approve refund dengan tujuan `STORE_CREDIT` | Baris `REFUND_IN` dibuat (amount = refund), saldo pembeli bertambah; **tombol "unggah bukti" gugur** — tidak ada transfer keluar, `proofUrl` boleh null |
+| Customer checkout | Kotak "Gunakan Saldo Toko (Rp …)" (centang, default mati) tersedia bila saldo > 0 |
+| Saldo dipakai | `creditUsed` tercatat di Order, baris `SPEND` dibuat (amount negatif), total yang dibayar via Xendit berkurang |
+| Sisa > 0 | Invoice Xendit untuk sisa, alur PAY-01 sisa berjalan normal |
+| Order dibatalkan setelah dibayar | Proporsi `creditUsed` dikembalikan otomatis lewat baris `ORDER_REVERSAL` (approve pembatalan), proporsi cash tetap jalur manual ORDER-06 |
+| Customer lihat riwayat | Halaman ringkas: saldo sekarang + daftar transaksi (masuk/pakai/balik) |
+
+### 6. Output dan perubahan data
+
+- **Saldo berubah** hanya lewat tiga tipe baris ledger (REFUND_IN, SPEND, ORDER_REVERSAL) — tanpa mutasi langsung.
+- `Order.creditUsed` terisi saat checkout memakai saldo.
+- Email: opsional notifikasi "Saldo masuk Rp …" — diputus saat implementasi (ikuti preferensi CUST-02 bila ada).
+
+### 7. Alur alternatif
+
+- Guest checkout: opsi saldo tidak dirender sama sekali.
+- Saldo 0: kotak pakai saldo tidak tampil.
+- Saldo < total: dipakai sebagian (sisa dibayar Xendit); sisa pembayaran wajib > 0 kecuali keputusan bagian 13.
+- Refund tujuan `BANK_TRANSFER`: perilaku persis ORDER-06 hari ini (bukti wajib).
+
+### 8. Perilaku kegagalan
+
+| Kondisi | Respons |
+| --- | --- |
+| Checkout bersamaan menguras saldo sama | Satu transaksi berhasil; satu ditolak "Saldo tidak mencukupi" (kunci baris saldo dalam transaksi) |
+| Pembatalan order yang tidak pernah pakai saldo | `ORDER_REVERSAL` tidak dibuat (amount 0) |
+| Refund `STORE_CREDIT` untuk guest | Opsi tidak tersedia; admin tetap `BANK_TRANSFER` |
+
+### 9. Perilaku UI
+
+- **Form refund admin (`AdminOrderActions`):** dua pilihan tujuan (radio): "Transfer Bank — wajib unggah bukti" (default, perilaku lama) dan "Saldo Toko — langsung masuk akun pembeli"; memilih Saldo Toko melepas kewajiban bukti, konfirmasi lewat `ConfirmDialog` (bagian 1B) "Dana akan masuk sebagai Saldo Toko pembeli?".
+- **Checkout (`CheckoutForm`):** kotak/cakram "Gunakan Saldo Toko (Rp …)" + angka yang akan dipakai; subtotal/total ikut berkurang sebelum pembuatan invoice Xendit.
+- **Halaman saldo customer** di `/profile` (atau `/profile/credit`): kartu saldo + tabel riwayat.
+- Galat tetap pola 1A/`FormErrorAlert`.
+
+### 10. Kriteria penerimaan
+
+| ID | Kondisi awal | Ketika | Hasil |
+| --- | --- | --- | --- |
+| AC-CREDIT-01-01 | Refund disetujui ke Saldo Toko | Selesai | Saldo bertambah persis jumlah refund; baris `REFUND_IN` ada; tanpa upload bukti |
+| AC-CREDIT-01-02 | Saldo Rp100.000, belanja Rp150.000 + ongkir | Centang pakai saldo | Total ke Xendit Rp50.000 + ongkir; `creditUsed = 100.000`; baris `SPEND` |
+| AC-CREDIT-01-03 | Pesanan poin 02 dibatalkan admin | Approve pembatalan | Saldo kembali Rp100.000 (`ORDER_REVERSAL`); cash tetap manual |
+| AC-CREDIT-01-04 | Guest di checkout | Buka /checkout | Tidak ada opsi saldo |
+| AC-CREDIT-01-05 | Saldo 0 | Buka /checkout | Tidak ada opsi saldo |
+| AC-CREDIT-01-06 | Dua tab checkout bersamaan pakai saldo penuh | Submit bersamaan | Tidak bisa minus; satu sukses satu ditolak |
+| AC-CREDIT-01-07 | Customer | Buka /profile | Saldo + riwayat tampil benar |
+
+### 11. Contoh data
+
+| Skenario | Ledger | Hasil | Kriteria |
+| --- | --- | --- | --- |
+| Refund 75.000 | REFUND_IN +75.000 | Saldo 75.000 | AC-01 |
+| Pakai 50.000 | SPEND -50.000 | Saldo 25.000 | AC-02 |
+| Batal order pemakaian 50.000 | ORDER_REVERSAL +50.000 | Saldo 75.000 | AC-03 |
+
+### 12. Batas fitur
+
+- **Termasuk:** ledger saldo, refund ke saldo (customer login), pemakaian saat checkout, pengembalian otomatis saat pembatalan, riwayat.
+- **Tidak termasuk:** top-up manual admin, kadaluarsa saldo, transfer antar pengguna, penarikan tunai/withdraw, expired promo, refund sebagian per item.
+- **Ketergantungan:** ORDER-06, ORDER-01/02, PAY-01, aturan 1A/1B/1D.
+
+### 13. Pertanyaan terbuka
+
+- **Total nol setelah saldo:** pembelian lunas penuh saldo — pesanan langsung `PAID` tanpa invoice Xendit (rekomendasi KISS) atau tetap lewat invoice Rp0 (gak didukung Xendit, tidak disarankan)? Diputus implementasi, dicatat `docs/04`.
+- Ongkir termasuk pemotongan saldo atau hanya subtotal produk? (rekomendasi: total semua biaya — ongkir+produk−voucher, asal ≥ 0).
+- Nomor invoice/refund menampilkan pemakaian saldo sebagai baris tersendiri.
+- Email notifikasi saldo masuk: ikut preferensi email mana (CUST-02) atau selalu dikirim?
+
+**Rujukan kode (saat ini):** `prisma/schema.prisma` (Refund, Order); `src/components/admin/AdminOrderActions.tsx` (form refund); `src/app/(storefront)/checkout/page.tsx` + `CheckoutForm` (checkout); `src/lib/orders/mutations.ts` (approve refund + pembatalan); `src/lib/payments/xendit.ts` (pembuatan invoice).
+
+---
+
+## <a name="site-06"></a>SITE-06 — Mode Gelap (Dark Theme)
+
+### 1. Identitas dan tujuan
+
+Modul: MOD-CONFIG (lanjutan SITE-05). Dipicu permintaan pengguna 2026-10-15 saat redesign sidebar: "ada trigger untuk ganti theme juga (dummy dulu)". Trigger sudah terpasang di sidebar admin dan site-admin (`ThemeToggle`), tetapi berstatus placeholder: ikon Sun/Moon berputar dan preferensi ditulis ke cookie `flexstore_theme_preview`, sementara **warna tidak berubah apa pun** — `globals.css` belum punya palet varian `.dark`.
+
+**Status: spek ditulis 2026-10-16, BELUM diimplementasikan** (pola "dokumen dulu"; penandaan diminta pengguna 2026-10-16: "ya tandain ke belum implementasi"). Status berubah menjadi "Terimplementasi" hanya setelah task implementasi selesai dan bukti terisi di `docs/04`.
+
+### 2. Prasyarat dan pemicu
+
+- `ThemeToggle` sudah ada dan wiring-nya disiapkan: komentar di `src/components/layout/ThemeToggle.tsx` menyatakan cukup menyetel class pada `<html>` begitu token dark tersedia.
+- Cookie preferensi sudah ditulis (`flexstore_theme_preview`, max-age 1 tahun, SameSite=Lax). Cookie dipilih di atas localStorage (keputusan yang sama dengan sidebar ringkas) karena dibaca server pada request pertama sehingga tanpa flash tema.
+- Pemicu saat ini: tombol "Tema" di sidebar admin dan site-admin.
+
+### 3. Rancangan
+
+- `globals.css` mendapat pasangan varian `.dark` (palet shadcn `dark` bawaan di atas token terang yang sudah ada).
+- Class `dark` pada `<html>`: dibaca dari cookie `flexstore_theme_preview` saat render server (dengan `suppressHydrationWarning` pada `<html>`, praktik bawaan Next.js), lalu diperbarui oleh `ThemeToggle` lewat pengaturan class + penulisan cookie.
+- Karena class menempel di `<html>`, tema berlaku **global**: storefront, admin, dan site-admin dalam satu sakelar.
+- Tanpa perubahan API, skema, atau data.
+
+### 4. Kriteria penerimaan (ringkas)
+
+- Klik "Tema" -> seluruh halaman (storefront, admin, site-admin) berpindah ke palet gelap tanpa reload; muat ulang mempertahankan pilihan lewat cookie; kembali terang memulihkan palet semula.
+- Tidak ada FOUC tema (server sudah mengirim class yang benar sejak HTML pertama).
+
+### 5. Batas fitur
+
+- Bukan personalisasi per halaman — satu preferensi global per peramban.
+- Tidak mengubah warna brand (palet brand SITE-05 tetap terpisah dari terang/gelap).
+
+### 6. Pertanyaan terbuka
+
+- Posisi pemicu pembeli: cukup sidebar admin/site-admin saja, atau tombol juga di header storefront?
+- Palet gelap: shadcn default atau diolah mengikuti warna brand (SITE-05)?
+- Sebelum cookie ada, ikut sistem (`prefers-color-scheme`) atau default terang?
+
+### 7. Berkas yang disentuh (perkiraan)
+
+`src/app/globals.css`, `src/components/layout/ThemeToggle.tsx`, `src/app/layout.tsx` (baca cookie -> class `<html>`), `docs/03` bagian ini.
+
+---
+
+## <a name="wish-01"></a>WISH-01 — Favorit Produk (wishlist versi penuh)
+
+### 1. Identitas dan tujuan
+
+Modul: MOD-CUST. Dipicu permintaan pengguna 2026-10-16: "tambahin fitur dummy whishlist/favorite, tambahini icon love aja di kanan atas tiap card produk", dilanjutkan "maksud gue cukup sampai UI nya aja dulu" — jadi **versi dummy sudah terpasang**, versi penuh belum. PRD mencoret Wishlist dari cakupan MVP (`docs/01`, "Luar cakupan MVP: Wishlist"), sehingga versi penuh berada di antrean pasca-MVP.
+
+**Status: spek ditulis 2026-10-16, BELUM diimplementasikan** (pola "dokumen dulu"; penandaan diminta pengguna 2026-10-16: "ya tandain ke belum implementasi"). Status berubah menjadi "Terimplementasi" hanya setelah task implementasi selesai dan bukti terisi di `docs/04`.
+
+### 2. Kondisi sekarang (dummy — sudah terimplementasi)
+
+- Ikon hati di kanan atas `ProductCard` (`src/components/products/WishlistButton.tsx`): klik toggle outline <-> merah, `aria-pressed`, `aria-label` "Tambah <produk> ke favorit" / "Hapus <produk> dari favorit".
+- Status disimpan di localStorage kunci `flexstore_wishlist` (daftar productId) dan dibaca lewat `useSyncExternalStore` — tanpa API, tanpa tabel, tanpa migrasi. Sifatnya per peramban: tidak sinkron antar perangkat dan hilang bila data situs dibersihkan. Bukti implementasi: `docs/04` bagian 10, baris "Favorit dummy".
+
+### 3. Rancangan versi penuh (belum diimplementasikan)
+
+- Tabel `WishlistItem` (`userId`, `productId`, `createdAt`; unique `(userId, productId)`) + migrasi additive — tidak menyentuh `ProductVariant`/`OrderItem`/keranjang.
+- API: `POST /api/wishlist` (toggle) dan `GET /api/wishlist` (daftar), divalidasi Zod (`productId` wajib) di atas gerbang sesi ala `getCartAccess` (A01/A03, tanpa raw SQL).
+- Halaman daftar favorit di area akun (`/profile/favorit` atau tab tambahan di profil); ikon hati di kartu/detail kini membaca status dari server untuk customer.
+- Setelah login, riwayat favorit tamu digabung ke akun mengikuti pola CART-04 (merge keranjang) — bila pertanyaan terbuka pertama dijawab ya.
+
+### 4. Kriteria penerimaan (ringkas)
+
+- Customer menekan hati di dua perangkat berbeda -> keduanya menampilkan status sama setelah muat ulang.
+- Daftar favorit menampilkan produk yang ditandai; batal dari halaman daftar -> hati di katalog ikut kosong.
+- Tamu tetap bisa menandai (localStorage) tanpa galat.
+
+### 5. Pertanyaan terbuka
+
+- Tamu: localStorage dipertahankan lalu digabung saat login (pola CART-04), atau favorit khusus akun login saja?
+- Perlu badge jumlah favorit di header (bersanding dengan badge keranjang)?
+- Produk non-ACTIF/dihapus dari daftar favorit: disembunyikan otomatis atau ditandai?
+
+### 6. Ketergantungan
+
+AUTH (sesi customer), PROD-02/PROD-03 (kartu dan detail tempat hati dipasang), CART-04 bila merging tamu dipilih.
+
+---
+
+**Status:** Spesifikasi Fitur v2.4 - PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) **terimplementasi dan Disetujui** (2026-10-11, pengguna: "approve" - bukti `docs/04` bagian 15.5) beserta revisi UI CUST-01/CUST-02. Bagian 1A (aturan karakter input semua field, v2.1) terimplementasi di commit `40dcb41`. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`). Ditambah 2026-10-15: CART-05 (dialog pemilihan varian dari kartu produk + stok efektif TASK-114) - **Terimplementasi** (spesifikasi ditulis lalu dikerjakan di hari yang sama; bukti `docs/04` bagian 16.4; keputusan di bagian 10 dan 16). Ditambah 2026-10-15: 17 spesifikasi rinci (AUTH-02/03, PROD-03/04/05, VOUCH-01/02, NOTIF-01, INV-01, SHIP-02/03, ORDER-05..08, REPORT-01, CONFIG-01) ditulis retroaktif dari kode terimplementasi - utang dokumentasi bagian rinci di catatan indeks bagian 1 tuntas. Ditambah 2026-10-15 malam: PROD-07 (seksi editorial VideoHero/ProductStory/Lookbook) ditulis baru dan PROD-06 mendapat status tambahan (bagan ukuran bergaya tautan + dialog di kanan bawah tombol beli); PROD-06 beserta status tambahannya **terimplementasi 2026-10-15** (bukti `docs/04` bagian 16), PROD-07 **terimplementasi 2026-10-15** (bukti `docs/04` bagian 10). Ditambahkan ADMIN-DASH-01 (modernisasi dashboard Store Admin), status belum diimplementasikan. PROD-08 (role `INFO` pengganti `SIZE_CHART` + label kustom default "Informasi Tambahan") ditulis, status belum diimplementasikan. CREDIT-01 (Saldo Toko: refund ke saldo + pemakaian saat checkout) ditulis, status belum diimplementasikan, menunggu approval pengguna. Ditambah 2026-10-16: SITE-06 (Mode Gelap, lanjutan trigger tema placeholder) dan WISH-01 (Favorit Produk versi penuh, dummy UI sudah ada) ditulis dengan status belum diimplementasikan; indeks PROD-08 dan badan PROD-06 dikoreksi karena statusnya basi.
 
 **Next steps:**
 1. (Selesai 2026-10-15) Tulis bagian rinci 17 fitur yang belum berspesifikasi (utang dokumentasi) ΓÇö blok rinci AUTH-02/03, PROD-03/04/05, VOUCH-01/02, NOTIF-01, INV-01, SHIP-02/03, ORDER-05..08, REPORT-01, CONFIG-01 kini ada di dokumen ini
