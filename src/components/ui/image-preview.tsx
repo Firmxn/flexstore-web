@@ -6,7 +6,10 @@
 // (tanpa kartu pembungkus berpadding), jadi seluruh pratinjau gambar admin
 // seragam (keputusan pengguna 2026-10-15). Tanpa keadaan kosong (dropzone di
 // bawahnya sudah menjadi penanda). Ukuran kotak diatur pemanggil lewat
-// `mediaClassName`, dan `className` untuk penempatan (mis. `w-48 mx-auto`).
+// `mediaClassName`, ukuran gambarnya lewat `imageClassName` (mis. informasi
+// tambahan yang mengikuti rasio asli gambar dengan tinggi dibatasi), dan
+// `className`
+// untuk penempatan (mis. `w-48 mx-auto`).
 import { ImageRemoveButton } from "@/components/ui/image-remove-button";
 import { cn } from "@/lib/utils/cn";
 
@@ -17,6 +20,8 @@ type ImagePreviewProps = {
   fit?: "cover" | "contain";
   // Ukuran kotak media; default kotak persegi penuh lebar.
   mediaClassName?: string;
+  // Ukuran gambar di dalam kotak; default memenuhi kotak (`h-full w-full`).
+  imageClassName?: string;
   // Penempatan/ukuran kotak (mis. `w-48 mx-auto`); digabung dengan
   // `mediaClassName` lewat `cn` sehingga kelas yang belakangan menang.
   className?: string;
@@ -28,6 +33,7 @@ export function ImagePreview({
   onClear,
   fit = "cover",
   mediaClassName = "aspect-square w-full",
+  imageClassName,
   className,
 }: ImagePreviewProps) {
   // Tanpa keadaan kosong: bila belum ada berkas, dropzone di bawahnya sudah
@@ -49,7 +55,7 @@ export function ImagePreview({
         src={url}
         alt={alt}
         className={cn(
-          "h-full w-full",
+          imageClassName ?? "h-full w-full",
           fit === "cover" ? "object-cover" : "object-contain",
         )}
       />

@@ -3,7 +3,7 @@
 // Slot unggah gambar di form admin. Pratinjaunya meniru storefront supaya admin
 // langsung melihat bentuk yang diatur (keputusan pengguna 2026-10-15):
 // - `single`  : satu kotak dengan rasio yang sama seperti tampilan storefront
-//               (banner 4:1, narasi 16:9, bagan ukuran rasio asli gambar).
+//               (banner 4:1, narasi 16:9, informasi tambahan rasio asli gambar).
 // - `gallery` : gambar utama besar + strip thumbnail, meniru carousel galeri
 //               halaman detail produk.
 // - `lookbook`: grid editorial yang sama dengan seksi Lookbook storefront —
@@ -30,6 +30,9 @@ type ImageUploaderProps = {
   // Kotak media layout "single": rasio/warna mengikuti tampilan storefront slot
   // yang bersangkutan (dikirim pemanggil).
   mediaClassName?: string;
+  // Ukuran gambar di dalam kotak media (mis. informasi tambahan: rasio asli
+  // gambar dengan tinggi dibatasi).
+  imageClassName?: string;
   fit?: "cover" | "contain";
   // Nama produk untuk teks alternatif pratinjau.
   productName?: string;
@@ -41,6 +44,7 @@ export function ImageUploader({
   max = MAX_PRODUCT_IMAGES,
   layout = "single",
   mediaClassName,
+  imageClassName,
   fit = "cover",
   productName = "Produk",
 }: ImageUploaderProps) {
@@ -73,8 +77,9 @@ export function ImageUploader({
 
   return (
     // Lebar pratinjau mengikuti kartu induknya (tanpa batas lebar sendiri)
-    // supaya sejajar dengan slot lain di form, seperti bagan ukuran yang memakai
-    // `w-full` (keputusan pengguna 2026-10-15, menggantikan batas `max-w-sm`).
+    // supaya sejajar dengan slot lain di form, seperti informasi tambahan yang
+    // memakai `w-full` (keputusan pengguna 2026-10-15, menggantikan batas
+    // `max-w-sm`).
     <div className="flex flex-col gap-3">
       <FormErrorAlert message={error} />
 
@@ -106,6 +111,7 @@ export function ImageUploader({
           className="w-full"
           fit={fit}
           mediaClassName={mediaClassName ?? "aspect-square w-full"}
+          imageClassName={imageClassName}
           onClear={() => removeUrl(urls[0])}
         />
       ) : null}

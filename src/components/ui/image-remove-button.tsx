@@ -2,7 +2,7 @@
 // pratinjau admin (keputusan pengguna 2026-10-15: "image preview (tepatnya
 // tombol hapus) bagan ukuran, varian, dan gambar narasi, gue pengen di samain
 // kayak gambar produk ataupun lookbook"). Dipakai pratinjau galeri, lookbook,
-// dan pratinjau satu gambar (`ImagePreview`: bagan ukuran, narasi, banner,
+// dan pratinjau satu gambar (`ImagePreview`: informasi tambahan, narasi, banner,
 // varian, bukti refund, aset brand). Kotak induknya wajib `relative`.
 // Karena tombolnya menempel di dalam kotak media, tidak ada baris tombol
 // terpisah yang menggeser tata letak kartu.
