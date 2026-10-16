@@ -25,8 +25,12 @@ type SeedProduct = {
   description: string;
   status: ProductStatus;
   categorySlug: string;
-  brandSlug: string;
-  imageSeeds: string[];
+  // Opsional: produk bisa lahir tanpa brand (`Product.brandId` nullable).
+  brandSlug?: string;
+  // Opsional: kosong = produk tanpa gambar placeholder. Pada produk yang
+  // sudah ada, diabaikan oleh seed supaya gambar yang diunggah manual lewat
+  // form admin tidak terhapus saat seed dijalankan ulang.
+  imageSeeds?: string[];
   variants: {
     sku: string;
     name: string;
@@ -118,6 +122,81 @@ const PRODUCTS: SeedProduct[] = [
     imageSeeds: ["tas-selempang-1"],
     variants: [
       { sku: "TS-KNV-STD", name: "Standard - Khaki", price: 129000, stock: 0, weightGram: 500 },
+    ],
+  },
+  // --- Produk tanpa brand & tanpa gambar placeholder ---------------------
+  // Gambar diisi manual oleh admin lewat form produk; `imageSeeds` sengaja
+  // tidak diisi supaya seed ulang tidak menghapus unggahan manual.
+  {
+    name: "Hoodie Zip Fleece",
+    slug: "hoodie-zip-fleece",
+    description:
+      "Hoodie zipper berbahan fleece tebal dengan saku depan dan tali hoodie adjustable. Hangat untuk cuaca dingin.",
+    status: "ACTIVE",
+    categorySlug: "pakaian-pria",
+    variants: [
+      { sku: "HZ-FL-M", name: "Size M - Abu-abu", price: 249000, stock: 14, weightGram: 450 },
+      { sku: "HZ-FL-L", name: "Size L - Abu-abu", price: 249000, stock: 11, weightGram: 470 },
+      { sku: "HZ-FL-XL", name: "Size XL - Hitam", price: 259000, stock: 6, weightGram: 490 },
+    ],
+  },
+  {
+    name: "Dress Casual Lengan Pendek",
+    slug: "dress-casual-lengan-pendek",
+    description:
+      "Dress casual dengan bahan rayon adem dan potongan flowy, cocok untuk acara santai maupun formal kasual.",
+    status: "ACTIVE",
+    categorySlug: "pakaian-wanita",
+    variants: [
+      { sku: "DC-RY-S", name: "Size S - Floral", price: 179000, stock: 9, weightGram: 220 },
+      { sku: "DC-RY-M", name: "Size M - Floral", price: 179000, stock: 12, weightGram: 240 },
+    ],
+  },
+  {
+    name: "Sandal Gunung Strap",
+    slug: "sandal-gunung-strap",
+    description:
+      "Sandal gunung dengan sol karet tebal anti-slip dan tali strap yang bisa disesuaikan. Cocok untuk outdoor maupun harian.",
+    status: "ACTIVE",
+    categorySlug: "sepatu",
+    variants: [
+      // 6 size x 2 warna: satu baris per kombinasi (pola seed lainnya).
+      { sku: "SG-STR-39-BLK", name: "Size 39 - Hitam", price: 139000, stock: 9, weightGram: 550 },
+      { sku: "SG-STR-39-GRN", name: "Size 39 - Hijau", price: 139000, stock: 9, weightGram: 550 },
+      { sku: "SG-STR-40-BLK", name: "Size 40 - Hitam", price: 139000, stock: 10, weightGram: 570 },
+      { sku: "SG-STR-40-GRN", name: "Size 40 - Hijau", price: 139000, stock: 10, weightGram: 570 },
+      { sku: "SG-STR-41-BLK", name: "Size 41 - Hitam", price: 139000, stock: 8, weightGram: 590 },
+      { sku: "SG-STR-41-GRN", name: "Size 41 - Hijau", price: 139000, stock: 7, weightGram: 590 },
+      { sku: "SG-STR-42-BLK", name: "Size 42 - Hitam", price: 139000, stock: 8, weightGram: 610 },
+      { sku: "SG-STR-42-GRN", name: "Size 42 - Hijau", price: 139000, stock: 7, weightGram: 610 },
+      { sku: "SG-STR-43-BLK", name: "Size 43 - Hitam", price: 139000, stock: 6, weightGram: 630 },
+      { sku: "SG-STR-43-GRN", name: "Size 43 - Hijau", price: 139000, stock: 6, weightGram: 630 },
+      { sku: "SG-STR-44-BLK", name: "Size 44 - Hitam", price: 139000, stock: 6, weightGram: 650 },
+      { sku: "SG-STR-44-GRN", name: "Size 44 - Hijau", price: 139000, stock: 6, weightGram: 650 },
+    ],
+  },
+  {
+    name: "Dompet Kulit Minimalis",
+    slug: "dompet-kulit-minimalis",
+    description:
+      "Dompet kulit sintetis desain minimalis dengan banyak slot kartu dan resleting koin.",
+    status: "ACTIVE",
+    categorySlug: "aksesoris",
+    variants: [
+      { sku: "DK-MIN-BRN", name: "Cokelat", price: 99000, stock: 26, weightGram: 120 },
+      { sku: "DK-MIN-BLK", name: "Hitam", price: 99000, stock: 31, weightGram: 120 },
+    ],
+  },
+  {
+    name: "Kaos Oversize Graphic",
+    slug: "kaos-oversize-graphic",
+    description:
+      "Kaos oversize bahan katun combed dengan sablon graphic di bagian depan. Nyaman dan kekinian.",
+    status: "DRAFT",
+    categorySlug: "pakaian-pria",
+    variants: [
+      { sku: "KO-GC-M", name: "Size M - Putih", price: 99000, stock: 20, weightGram: 210 },
+      { sku: "KO-GC-L", name: "Size L - Hitam", price: 99000, stock: 20, weightGram: 230 },
     ],
   },
 ];
@@ -223,16 +302,19 @@ async function seedCatalog() {
 
   for (const product of PRODUCTS) {
     const categoryId = categoryBySlug.get(product.categorySlug);
-    const brandId = brandBySlug.get(product.brandSlug);
+    const brandId = product.brandSlug
+      ? brandBySlug.get(product.brandSlug)
+      : undefined;
 
-    if (!categoryId || !brandId) {
+    if (!categoryId || (product.brandSlug && !brandId)) {
       throw new Error(`Kategori/brand untuk ${product.slug} tidak ditemukan`);
     }
 
     const totalStock = product.variants.reduce((sum, v) => sum + v.stock, 0);
     const minPrice = Math.min(...product.variants.map((v) => v.price));
+    const imageSeeds = product.imageSeeds ?? [];
     const images = {
-      create: product.imageSeeds.map((seed, index) => ({
+      create: imageSeeds.map((seed, index) => ({
         url: imageUrl(seed, index),
         sortOrder: index,
       })),
@@ -249,7 +331,13 @@ async function seedCatalog() {
     });
 
     if (existing) {
-      // Ganti gambar & variant supaya seed bersifat idempotent.
+      // Idempoten TANPA menghapus varian: `OrderItem.variantId` di-Restrict,
+      // jadi deleteMany gagal (P2003) begitu ada pesanan yang menyentuh
+      // varian — dan menghapusnya memang tidak diinginkan karena merusak
+      // riwayat pesanan. Varian di-upsert per SKU (update bila ada, create
+      // bila baru); varian lama yang tidak lagi ada di seed dibiarkan.
+      // Gambar hanya di-reset kalau seed memang menyiapkan `imageSeeds` —
+      // produk tanpa imageSeeds mempertahankan unggahan manual form admin.
       await prisma.product.update({
         where: { id: existing.id },
         data: {
@@ -260,8 +348,21 @@ async function seedCatalog() {
           minPrice,
           categoryId,
           brandId,
-          images: { deleteMany: {}, ...images },
-          variants: { deleteMany: {}, ...variants },
+          images: product.imageSeeds?.length
+            ? { deleteMany: {}, ...images }
+            : undefined,
+          variants: {
+            upsert: product.variants.map((variant) => ({
+              where: { sku: variant.sku },
+              update: {
+                name: variant.name,
+                price: variant.price,
+                stock: variant.stock,
+                weightGram: variant.weightGram,
+              },
+              create: variant,
+            })),
+          },
         },
       });
       console.log(`Produk diperbarui: ${product.slug}`);
@@ -278,7 +379,7 @@ async function seedCatalog() {
         minPrice,
         categoryId,
         brandId,
-        images,
+        images: imageSeeds.length ? images : undefined,
         variants,
       },
     });
