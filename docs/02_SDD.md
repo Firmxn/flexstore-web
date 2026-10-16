@@ -595,7 +595,7 @@ flexstore/
 | Category | Kategori produk | MOD-PROD | id (UUID) | 1 → N Product |
 | Brand | Brand produk | MOD-PROD | id (UUID) | 1 → N Product |
 | Product | Produk dasar | MOD-PROD | id (UUID) | 1 → N ProductImage, 1 → N ProductVariant, N → 1 Category, N → 1 Brand |
-| ProductImage | Gambar produk (peran `GALLERY`/`SIZE_CHART`) | MOD-PROD | id (UUID) | N → 1 Product |
+| ProductImage | Gambar produk (peran `GALLERY`/`INFO`, PROD-08) | MOD-PROD | id (UUID) | N → 1 Product |
 | ProductVariant | Varian (SKU, stok, harga) | MOD-PROD | id (UUID) | N → 1 Product |
 | CartItem | Item keranjang customer | MOD-CART | id (UUID) | N → 1 User, N → 1 ProductVariant |
 | Order | Pesanan (termasuk data pengiriman: `courier`, `trackingNumber`, `shippedAt`, `fulfillment`) | MOD-ORDER | id (UUID) | 1 → N OrderItem, N → 1 User (nullable), 1 → 1 Payment |
