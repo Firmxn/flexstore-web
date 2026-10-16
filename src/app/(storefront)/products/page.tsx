@@ -1,11 +1,10 @@
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { CatalogFilters } from "@/components/products/CatalogFilters";
+import { CatalogFilterBar } from "@/components/products/CatalogFilterBar";
 import { CategoryPills } from "@/components/products/CategoryPills";
 import { Pagination } from "@/components/products/Pagination";
 import { ProductGrid } from "@/components/products/ProductGrid";
-import { Input } from "@/components/ui/input";
 import { getCartAccess, getCartQuantities } from "@/lib/cart";
 import { getCategories } from "@/lib/categories";
 import { getPublishedProducts } from "@/lib/products";
@@ -70,50 +69,23 @@ async function ProductsContent({
 
   return (
     <>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Katalog Produk</h1>
-
-        <form action="/products" className="flex w-full gap-2 sm:w-auto">
-          {filters.category ? (
-            <input type="hidden" name="category" value={filters.category} />
-          ) : null}
-          {preserve.minPrice ? (
-            <input type="hidden" name="minPrice" value={preserve.minPrice} />
-          ) : null}
-          {preserve.maxPrice ? (
-            <input type="hidden" name="maxPrice" value={preserve.maxPrice} />
-          ) : null}
-          {preserve.sort ? (
-            <input type="hidden" name="sort" value={preserve.sort} />
-          ) : null}
-          <Input
-            name="search"
-            placeholder="Cari produk..."
-            defaultValue={filters.search ?? ""}
-            maxLength={200}
-            className="sm:w-64"
-          />
-          <button
-            type="submit"
-            className="inline-flex h-10 shrink-0 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Cari
-          </button>
-        </form>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold tracking-tight">Katalog Produk</h1>
+        </div>
+        <CatalogFilterBar
+          search={filters.search}
+          category={filters.category}
+          minPrice={preserve.minPrice}
+          maxPrice={preserve.maxPrice}
+          sort={filters.sort}
+        />
       </div>
 
       <CategoryPills
         categories={categories}
         activeSlug={filters.category ?? null}
         preserve={preserve}
-      />
-
-      <CatalogFilters
-        search={filters.search}
-        category={filters.category}
-        minPrice={preserve.minPrice}
-        maxPrice={preserve.maxPrice}
-        sort={filters.sort}
       />
 
       <ProductGrid
