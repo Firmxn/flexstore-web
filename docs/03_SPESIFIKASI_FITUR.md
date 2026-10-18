@@ -67,7 +67,7 @@
 | Pasca-MVP | **MOD-CART** | CART-05 | Pemilihan Varian dari Kartu Produk (dialog) | Terimplementasi (2026-10-15, pasca-MVP) | [CART-05](#cart-05) |
 | Pasca-MVP | **MOD-PROD** | PROD-06 | Gambar Varian di Galeri Detail (carousel) | Terimplementasi 2026-10-15 (termasuk status tambahan bagan ukuran dialog) | [PROD-06](#prod-06) |
 | Pasca-MVP | **MOD-PROD** | PROD-07 | Seksi Editorial Detail Produk (VideoHero, ProductStory, Lookbook) | Terimplementasi 2026-10-15 | [PROD-07](#prod-07) |
-| Pasca-MVP | **MOD-ADMIN** | ADMIN-DASH-01 | Modernisasi Dashboard Store Admin | Spek ditulis 2026-10-15, belum diimplementasikan | [ADMIN-DASH-01](#admin-dash-01) |
+| Pasca-MVP | **MOD-ADMIN** | ADMIN-DASH-01 | Modernisasi Dashboard Store Admin | **TERIMPLEMENTASI 2026-10-18** (TASK-119/PH-12) | [ADMIN-DASH-01](#admin-dash-01) |
 | Pasca-MVP | **MOD-PROD** | PROD-08 | Informasi Tambahan Produk (role `INFO`, label kustom) | Terimplementasi 2026-10-16 (TASK-117; bukti `docs/04` bagian 10) | [PROD-08](#prod-08) |
 | Pasca-MVP | **MOD-PROD** | PROD-09 | Varian Berbasis Opsi (kombinasi ukuran/warna) | Spek ditulis 2026-10-16, **BELUM diimplementasikan** | [PROD-09](#prod-09) |
 | Pasca-MVP | **MOD-CREDIT** | CREDIT-01 | Saldo Toko (refund ke saldo + pemakaian saat checkout) | Spek ditulis 2026-10-15, belum diimplementasikan | [CREDIT-01](#credit-01) |
@@ -5953,7 +5953,7 @@ Daftar dibatasi **20 entri terbaru** (urut terbaru dulu); entri yang lebih lama 
 
 Modul: MOD-ADMIN. Dashboard saat ini di `/admin` menampilkan empat ringkasan operasional dan jumlah pesanan per status. Tujuan peningkatan ini: memberi Store Admin ringkasan yang lebih modern dan bisa ditindaklanjuti, tanpa menjadikan dashboard pengganti laporan lengkap.
 
-**Status: spek ditulis 2026-10-15, BELUM diimplementasikan.** Ini dokumentasi cakupan awal; detail visual (gaya grafik, warna, layout final) dapat diputuskan saat implementasi.
+**Status: TERIMPLEMENTASI 2026-10-18 (TASK-119/PH-12, bukti `docs/04` bagian 18.5).** Detail visual mengikuti prototipe mockup Figma (dashboard-v2) yang sudah disepakati; keputusan implementasi tercatat di status tambahan 2026-10-18 di bawah.
 
 ### 2. Prasyarat dan pemicu
 
@@ -6049,7 +6049,15 @@ Zona waktu dan apakah batas tanggal mencakup hari kalender penuh diputuskan sebe
 - Apakah perlu kartu metrik refund setelah definisi status refund pending dikonfirmasi?
 - Pustaka grafik dan visual final dipilih saat implementasi.
 
-**Rujukan kode saat ini:** `src/app/admin/page.tsx` (dashboard), `src/lib/orders/admin.ts` (jumlah status), `src/lib/reports/queries.ts` (agregat laporan), `src/app/admin/reports/page.tsx`.
+**Status tambahan 2026-10-18 - ADMIN-DASH-01 TERIMPLEMENTASI (TASK-119/PH-12 - bukti `docs/04` bagian 18.5):**
+
+- **Integrasi:** prototipe dashboard-v2 (basis visual mockup Figma) dipindahkan ke `/admin` dan disambungkan ke data Prisma lewat modul baru `src/lib/admin/dashboard-queries.ts`; rute `/admin/dashboard-v2` dan `dashboard-mock.ts` dihapus setelah tidak dipakai.
+- **Jawaban pertanyaan terbuka (diputus saat implementasi):** (1) rentang periode memakai batas kalender **Asia/Jakarta (WIB)**, bukan zona browser — konsisten untuk seluruh pengguna; (2) **Pesanan Terbaru global-terbaru** (daftar operasional lintas periode, seperti dasbor lama), sementara KPI/grafik/produk terlaris mengikuti periode terpilih; (3) metrik refund belum ditambahkan (alur refund belum punya status tindakan admin tertunda — pengingat hanya masuk bila muncul); (4) pustaka grafik: **recharts v3** (sudah terpasang) dengan domain Y dinamis dari data.
+- **Definisi angka:** penjualan/transaksi/AOV mengikuti REPORT-01 (non-CANCELED + Payment PAID, batas `createdAt`); perbandingan KPI memakai periode sama panjang sebelumnya; "Menunggu Pembayaran" dihitung dalam periode (pesanan dibuat lalu masih berstatus WAITING_PAYMENT) bukan kumulatif; tindakan (PROCESSING/CANCEL_REQUESTED/stok) kumulatif lintas periode.
+- **Dashboard lama:** ringkasan "Pesanan per Status" (kumulatif seluruh waktu + pintasan) tetap dipertahankan di dasbor baru sesuai prasyarat spek.
+- **Verifikasi:** `tsc`/`lint` exit 0, `pnpm build` exit 0; uji klik: preset 7 Hari mengubah KPI/grafik konsisten, "Lihat detail" membuka `/admin/orders/<UUID>` (AC-05), rentang kustom tidak valid ditolak tanpa query, periode kosong ("Hari Ini") informatif tanpa NaN (AC-07), konsol browser bersih; angka dasbor identik dengan hitungan DB langsung (probe `tsx`: 30 hari IDR 1.607.000/6, 7 hari IDR 149.000/1 vs pembanding 1.458.000/5, tindakan 4/2/1).
+
+**Rujukan kode saat ini:** `src/lib/admin/dashboard-queries.ts` (sumber data dasbor), `src/app/admin/page.tsx` (dashboard), `src/components/admin/dashboard/*.tsx` (panel), `src/lib/orders/admin.ts` (jumlah status), `src/lib/reports/queries.ts` (agregat laporan), `src/app/admin/reports/page.tsx`.
 
 ---
 

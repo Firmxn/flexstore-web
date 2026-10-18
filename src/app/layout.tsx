@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { brandTagline, getBrandSetting } from "@/lib/brand";
 import { brandCssVariables } from "@/lib/brand/palette";
@@ -13,6 +13,14 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+// Inter dipakai khusus scope dashboard-v2 (menyesuaikan mockup Figma yang
+// memakai Inter). Geist tetap font bawaan app; Inter hanya aktif bila sebuah
+// elemen merujuk variabel ini (lihat AdminDashboardPage).
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -44,7 +52,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="id"
       style={cssVariables}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>{children}</AuthProvider>
