@@ -91,6 +91,10 @@ function toBrand(row: BrandSetting): Brand {
       destructiveFg: row.destructiveFg,
       successColor: row.successColor,
       successFg: row.successFg,
+      warningColor: row.warningColor,
+      warningFg: row.warningFg,
+      infoColor: row.infoColor,
+      infoFg: row.infoFg,
     },
     banner: {
       enabled: row.bannerEnabled,

@@ -14,10 +14,10 @@ type GuestOrderNoticeProps = {
 // menonjol supaya guest menyimpannya sebelum meninggalkan halaman.
 export function GuestOrderNotice({ orderNumber, phone }: GuestOrderNoticeProps) {
   return (
-    <section className="flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+    <section className="flex flex-col gap-3 rounded-xl border border-warning/20 bg-warning/10 p-4 text-sm text-foreground">
       <div className="flex flex-col gap-1">
         <h2 className="font-semibold">Simpan data pesanan ini</h2>
-        <p className="text-amber-900">
+        <p className="text-warning-strong">
           Tidak menambahkan notifikasi email, jadi nomor pesanan dan nomor HP di bawah
           ini satu-satunya cara untuk membuka dan melacak pesanan ini lagi.
         </p>
@@ -28,7 +28,7 @@ export function GuestOrderNotice({ orderNumber, phone }: GuestOrderNoticeProps) 
       </div>
       <Link
         href="/track-order"
-        className="w-fit text-xs font-medium text-amber-900 underline underline-offset-4"
+        className="w-fit text-xs font-medium text-warning-strong underline underline-offset-4"
       >
         Buka halaman lacak pesanan
       </Link>
@@ -50,9 +50,9 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-white/70 px-3 py-2">
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-warning/20 bg-card/70 px-3 py-2">
       <span className="flex flex-col">
-        <span className="text-xs text-amber-800">{label}</span>
+        <span className="text-xs text-warning-strong">{label}</span>
         <span className="font-medium">{value}</span>
       </span>
       <Button type="button" variant="outline" size="sm" onClick={handleCopy}>

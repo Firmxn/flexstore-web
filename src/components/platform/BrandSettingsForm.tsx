@@ -6,12 +6,18 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { PALETTE_FIELDS } from "@/lib/brand/palette";
+import {
+  DEFAULT_PALETTE,
+  PALETTE_FIELDS,
+  PALETTE_INFO,
+} from "@/lib/brand/palette";
 import { brandSettingsSchema } from "@/lib/brand/validation";
 import type { BrandFormValues } from "@/lib/brand/view";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { apiRequest, toErrorMessage } from "@/lib/utils/fetcher";
+import { Info } from "lucide-react";
 import { AssetPicker } from "./AssetPicker";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";
 
@@ -190,13 +196,48 @@ export function BrandSettingsForm({ initial }: { initial: BrandFormValues }) {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PALETTE_FIELDS.map((field) => (
             <div key={field.key} className="flex flex-col gap-1">
-              <Label htmlFor={`color-${field.key}`}>{field.label}</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor={`color-${field.key}`}>{field.label}</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                      aria-label={`Ketentuan warna ${field.label}`}
+                    >
+                      <Info className="h-3.5 w-3.5" aria-hidden />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-64 text-xs">
+                    <p className="font-semibold">{field.label}</p>
+                    <p className="mt-1 text-muted-foreground">
+                      {PALETTE_INFO[field.key]}
+                    </p>
+                    <p className="mt-2 flex items-center gap-2 text-muted-foreground">
+                      Bawaan:
+                      <span
+                        aria-hidden
+                        className="inline-block h-3 w-3 shrink-0 rounded border border-border"
+                        style={{
+                          backgroundColor: DEFAULT_PALETTE[field.key],
+                        }}
+                      />
+                      <span className="font-mono">
+                        {DEFAULT_PALETTE[field.key]}
+                      </span>
+                    </p>
+                  </PopoverContent>
+                </Popover>
+              </div>
               <div className="flex items-center gap-2">
                 <input
                   type="color"
                   aria-label={`Pemilih warna ${field.label}`}
+// SITE-07 (TASK-123): slot kosong menampilkan warna bawaan, bukan hitam.
                   className="h-9 w-12 cursor-pointer rounded border border-border bg-background"
-                  value={values[field.key] || "#000000"}
+                  value={values[field.key] || DEFAULT_PALETTE[field.key]}
                   onChange={(event) =>
                     setValue(field.key, event.target.value.toUpperCase())
                   }

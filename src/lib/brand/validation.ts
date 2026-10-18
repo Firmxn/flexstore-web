@@ -77,7 +77,8 @@ export const brandSettingsSchema = z.object({
   faviconUrl: optionalUploadthingUrl,
   footerText: optionalText(300, "Teks footer"),
 
-  // Palet warna (9 grup inti / 15 slot).
+  // Palet warna (19 slot) / SITE-05+07: 15 slot awal + warning/info beserta
+  // foreground-nya.
   primaryColor: optionalHex,
   primaryFg: optionalHex,
   secondaryColor: optionalHex,
@@ -93,6 +94,10 @@ export const brandSettingsSchema = z.object({
   destructiveFg: optionalHex,
   successColor: optionalHex,
   successFg: optionalHex,
+  warningColor: optionalHex,
+  warningFg: optionalHex,
+  infoColor: optionalHex,
+  infoFg: optionalHex,
 
   // Banner homepage.
   bannerEnabled: z.boolean({

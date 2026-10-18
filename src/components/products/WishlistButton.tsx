@@ -85,7 +85,7 @@ export function WishlistButton({
       <Heart
         className={
           active
-            ? "size-4 fill-red-500 text-red-500"
+            ? "size-4 fill-destructive text-destructive"
             : "size-4 text-muted-foreground"
         }
       />

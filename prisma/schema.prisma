@@ -522,7 +522,7 @@ model BrandSetting {
   faviconUrl String?
   footerText String?
 
-  // Palet warna (9 grup inti; token card/popover/input/ring tetap bawaan).
+  // Palet warna (19 slot; token card/popover/input/ring tetap bawaan).
   primaryColor     String?
   primaryFg        String?
   secondaryColor   String?
@@ -538,6 +538,10 @@ model BrandSetting {
   destructiveFg    String?
   successColor     String?
   successFg        String?
+  warningColor     String?
+  warningFg        String?
+  infoColor        String?
+  infoFg           String?
 
   // Banner homepage (hero). `bannerEnabled = false` memakai hero teks default.
   bannerEnabled     Boolean @default(false)

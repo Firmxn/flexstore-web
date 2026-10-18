@@ -37,7 +37,9 @@ export function CancelOrderForm({ orderId }: { orderId: string }) {
 
   if (!open) {
     return (
-      <Button type="button" variant="outline" size="sm" className="bg-red-50 text-red-700 border-red-200 hover:bg-red-100 hover:text-red-700" onClick={() => setOpen(true)}>
+// SITE-07 (TASK-124): tombol batal memakai token destructive (tint 10/20),
+// menggantikan keluarga red-* hardcode agar mengikuti palet brand.
+      <Button type="button" variant="outline" size="sm" className="bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/20 hover:text-destructive" onClick={() => setOpen(true)}>
         Ajukan Pembatalan
       </Button>
     );

@@ -59,7 +59,7 @@ export function ProductCard({
         </Link>
         <p className="text-xs text-muted-foreground flex items-center gap-1">
           {/* Dummy rating — belum ada field rating pada produk, tampilan saja. */}
-          <span className="text-sm text-amber-500">★ 4,5</span>
+          <span className="text-sm text-warning">★ 4,5</span>
           <span className="text-muted-foreground">• Stok {totalStock}</span>
         </p>
 

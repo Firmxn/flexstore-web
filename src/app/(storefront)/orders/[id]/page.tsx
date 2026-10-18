@@ -262,7 +262,7 @@ export default async function OrderDetailPage({
             href={`/orders/${order.id}/tracking`}
             className={cn(
               buttonVariants({ variant: "outline", size: "sm" }),
-              "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-700",
+              "bg-info/10 text-info border-info/20 hover:bg-info/20 hover:text-info",
             )}
           >
             Lihat Pelacakan

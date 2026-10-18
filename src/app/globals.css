@@ -19,6 +19,29 @@
   --destructive-foreground: oklch(0.985 0 0);
   --success: oklch(0.596 0.145 163.225);
   --success-foreground: oklch(0.985 0 0);
+  /* SITE-07 (TASK-124, keputusan pengguna 2026-10-18): token warning/info
+     dibuat untuk menggantikan warna kuning/biru hardcode. Lanjutan keputusan
+     pengguna hari yang sama (dua tahap: "kalo untuk warna success atau danger
+     biasanya bisa dikustom maka dua itu harusnya bisa juga", lalu "success dan
+     destructive punya warna untuk text, harusnya warning dan info juga"):
+     keempat token ini menjadi slot palet (19 slot, kolom `warningColor`/
+     `warningFg`/`infoColor`/`infoFg`), jadi nilai bawaan di bawah ini hanya
+     fallback CSS bila JS layout gagal injek inline style. Dipakai sebagai
+     tint: bg-warning/10 + border-warning/20 + text-warning-strong; pasangan
+     `-foreground` dipakai pemakaian solid bg-warning/bg-info. Bawaan
+     `--warning` = #FACC15 (kuning terang pilihan pengguna 2026-10-18 dari
+     halaman perbandingan visual; riwayat: awal amber-700 "coklat", lalu
+     yellow-700 "masih coklat"). */
+  --warning: oklch(0.8606 0.1731 91.94);
+  /* Varian gelap otomatis untuk pemakaian tulisan pada latar terang (badge,
+     banner) karena --warning bawaan (#FACC15, pilihan pengguna) sangat terang:
+     dari sudut pandang teks kontrasnya hanya 1.49:1. 65% bawaan = kira-kira
+     kontras 4,8-5:1. Mengikuti slot bila Site Admin mengubah --warning. */
+  --warning-strong: color-mix(in oklab, var(--warning) 65%, black);
+  --warning-strong: color-mix(in oklab, var(--warning) 65%, black);
+  --warning-foreground: #202725;
+  --info: oklch(0.488 0.243 264.376);
+  --info-foreground: oklch(0.985 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -44,6 +67,11 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-strong: var(--warning-strong);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

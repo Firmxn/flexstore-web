@@ -104,7 +104,7 @@ export function CatalogFilterBar({
           <button
             type="button"
             onClick={clearSearch}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-0 hover:text-red-500 transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-0 hover:text-destructive transition-colors"
             aria-label="Hapus pencarian"
           >
             <X className="size-4" />
