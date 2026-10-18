@@ -72,6 +72,7 @@
 | Pasca-MVP | **MOD-PROD** | PROD-09 | Varian Berbasis Opsi (kombinasi ukuran/warna) | Spek ditulis 2026-10-16, **BELUM diimplementasikan** | [PROD-09](#prod-09) |
 | Pasca-MVP | **MOD-CREDIT** | CREDIT-01 | Saldo Toko (refund ke saldo + pemakaian saat checkout) | Spek ditulis 2026-10-15, belum diimplementasikan | [CREDIT-01](#credit-01) |
 | Pasca-MVP | **MOD-CONFIG** | SITE-06 | Mode Gelap (dark theme — trigger tema saat ini placeholder) | Spek ditulis 2026-10-16, **BELUM diimplementasikan** | [SITE-06](#site-06) |
+| Pasca-MVP | **MOD-CONFIG** | SITE-07 | Palet Warna Bawaan Tampil + Konsolidasi Token Warna (default hijau tone dashboard; 19 slot pasca-tahap 3) | Spek ditulis 2026-10-17, **Terimplementasi 2026-10-18** (TASK-123 + TASK-124; bukti `docs/04` bagian 17.4) | [SITE-07](#site-07) |
 | Pasca-MVP | **MOD-CUST** | WISH-01 | Favorit Produk (wishlist versi penuh; dummy UI sudah ada) | Spek ditulis 2026-10-16, **BELUM diimplementasikan** | [WISH-01](#wish-01) |
 
 **Phase Checkpoint:**
@@ -6399,6 +6400,113 @@ Modul: MOD-CONFIG (lanjutan SITE-05). Dipicu permintaan pengguna 2026-10-15 saat
 
 ---
 
+## <a name="site-07"></a>SITE-07 — Palet Warna Bawaan Tampil & Konsolidasi Token Warna
+
+Modul: MOD-CONFIG (lanjutan SITE-05, PH-09). Ditulis 2026-10-17 atas permintaan pengguna: "harus ada langkah buat optimalin fungsi dari palet warna ini" dan warna default harus langsung tampil di form kustomisasi agar lebih jelas. **Status: Terimplementasi 2026-10-18 dan **Disetujui** (commit `671f941`: TASK-123 + TASK-124 + slot palet 19 + popover petunjuk berbahasa awam); pertanyaan terbuka #1 ditutup lima tahap - tahap 2..3: `warning`/`info` beserta foreground-nya jadi slot palet ke-16..19 (19 slot); tahap 4-5: revisi bawaan `warningColor` hingga pengguna memilih kuning terang `#FACC15` + varian tulisan otomatis `text-warning-strong` (color-mix); #2 (email) dan #3 (set gelap SITE-06) tetap terbuka. Bukti di `docs/04` bagian 17.4.**
+
+## 1. Latar
+
+- SITE-05 memetakan slot palet (`BrandSetting` `schema.prisma`, `String?`, format `#RRGGBB`) ke CSS variables lewat `brandCssVariables()` (`src/lib/brand/palette.ts`) yang disuntikkan `<html>` di `src/app/layout.tsx`. Sejak SITE-07 (revisi 2026-10-18, lihat bagian 4 catatan render): slot berjumlah **17** (15 slot SITE-05 + `warningColor`/`infoColor` dari keputusan lanjutan pengguna) dan `brandCssVariables()` selalu mengirim seluruhnya — slot terisi memakai kustomisasi admin, slot kosong memakai `DEFAULT_PALETTE` — sehingga warna bawaan benar-benar dirender, bukan lagi jatuh ke oklch `:root` `globals.css` (nilai oklch itu kini hanya fallback CSS bila JS layout gagal). Konsekuensi tercatat: `<html>` selalu memuat 17 inline style, dan kelak SITE-06 (mode gelap) harus memperhitungkan inline style ini karena menimpa aturan `.dark`.
+- Latar 1 (form): `BrandSettingsForm` memakai fallback `values[field.key] || "#000000"` — slot kosong tampil hitam, bukan warna yang benar-benar berlaku. Admin tidak tahu nilai bawaan mana yang sedang dipakai untuk mengubahnya.
+- Latar 2 (cakupan): banyak komponen memakai kelas Tailwind hardcode yang tidak lihat palet brand: `OrderStatusBadge`, badge status di daftar pesanan admin, `CancelOrderForm`, `GuestOrderNotice`, `WishlistButton` (hati `fill-red-500`), `CatalogFilterBar` (`hover:text-red-500`), `MaintenanceBanner`. Kustomisasi palet mengubah tombol/link via token, tetapi warna-warna tersebut tidak ikut.
+- Latar 3 (token di luar palet): `card`, `popover`, `input`, `ring` sengaja tidak masuk slot palet (keputusan SITE-05).
+
+## 2. Keputusan (pengguna, 2026-10-17)
+
+| Butir | Keputusan |
+| --- | --- |
+| Sumber warna bawaan | **Konstanta kode** (`DEFAULT_PALETTE` di `src/lib/brand/palette.ts`, modul bebas Prisma/Next — aman diimpor Client Component). DB tidak disentuh; `BrandSetting` tetap menyimpan kustomisasi admin saja (null = pakai bawaan) |
+| Warna bawaan | **Hijau tone dashboard** (`DASHBOARD_GREEN_DEFAULTS`, `src/lib/admin/dashboard-tokens.ts`) untuk slot yang tersedia; slot di luar itu memakai konversi hex dari oklch bawaan `globals.css` |
+| Cakupan fase | TASK-123 + TASK-124 = fase PH-11 (`docs/04` bagian 17) |
+| Sekali nilai bawaan tampil | Form memakai nilai bawaan sebagai fallback tampilan, simpan tetap null sampai admin mengubah. **Revisi 2026-10-18 (lanjutan pendapat pengguna: "default primarynya hijau? ... kenapa masih hitam seperti di awal? pas milih warna di palette dan di save baru warnanya berubah"):** bawaan kini juga **dirender** — `brandCssVariables()` menggugat slot kosong ke `DEFAULT_PALETTE` sehingga aplikasi tampil hijau tone dashboard sejak awal tanpa harus menyimpan apa pun; sebelumnya slot kosong jatuh ke oklch gelap `:root` sehingga "bawaan" form tidak sama dengan render. Keputusan konsisten dengan tujuan awal SITE-07 ("warna yang benar-benar berlaku") |
+
+## 3. Konstanta `DEFAULT_PALETTE`
+
+Satu sumber kebenaran di `src/lib/brand/palette.ts`. Nilai dari `DASHBOARD_GREEN_DEFAULTS` diambil langsung (primary, foreground/muted/border/accent); slot yang tidak ada di fallback itu memakai konversi OKLCH → sRGB hex dari nilai bawaan `globals.css` (secondary oklch 0.97/0.205, destructive oklch 0.577 0.245 27.325, success oklch 0.596 0.145 163.225).
+
+| Slot | Nilai bawaan |
+| --- | --- |
+| `primaryColor` | `#36745B` |
+| `primaryFg` | `#FFFFFF` |
+| `secondaryColor` | `#F5F5F5` |
+| `secondaryFg` | `#171717` |
+| `accentColor` | `#EDF4EF` |
+| `accentFg` | `#202725` |
+| `backgroundColor` | `#FCFCFD` |
+| `foregroundColor` | `#202725` |
+| `mutedColor` | `#F3F4F4` |
+| `mutedFg` | `#77807B` |
+| `borderColor` | `#E7EAE8` |
+| `destructiveColor` | `#E7000B` |
+| `destructiveFg` | `#FFFFFF` |
+| `successColor` | `#009966` |
+| `successFg` | `#FFFFFF` |
+| `warningColor` | `#FACC15` |
+| `warningFg` | `#202725` |
+| `infoColor` | `#1447E6` |
+| `infoFg` | `#FFFFFF` |
+
+Catatan (perbarui 2026-10-18, tiga tahap + dua revisi bawaan): slot berjumlah **19**; `warningColor`/`infoColor` ditambahkan sesuai keputusan pengguna (bagian 6 tahap 2, migrasi `20261017184206_brand_warning_info_slots`), lalu `warningFg`/`infoFg` menyusul dengan migrasi `20261018063829_brand_warning_info_fg_slots` (tahap 3: mengikuti pola pasangan warna+teks destructive/success). Revisi bawaan `warningColor` dua kali: `#BB4D00` (amber-700) dianggap "coklat", diganti `#A65F00` (yellow-700) dan tetap dinilai "masih coklat", akhirnya pengguna memilih **kuning terang `#FACC15`** (kandidat G halaman perbandingan visual; kontras sebagai teks hanya 1.49:1), sehingga teks badge/banner memakai varian gelap otomatis `--warning-strong` = `color-mix(in oklab, var(--warning) 65%, black)` (kontras ~4,8-5,5:1, mengikuti kustomisasi admin). Bawaan `warningFg` ikut `#FFFFFF` → `#202725` karena latar kuning terang (satu-satunya fg bawaan gelap; pemakai tunggal yang terlihat kuning terang tetap bintang rating `text-warning` di kartu produk). `card`, `popover`, `input`, `ring` tetap di luar palet (keputusan lama SITE-05). Konversi OKLCH → sRGB dihitung dengan rumus standar (inverse OKLab → LMS → linear sRGB → gamma). `#E7000B` sama dengan red-600 Tailwind v4; `#009966` adalah konversi hex dari success oklch bawaan; `#1447E6` konversi hex blue-700.
+
+## 4. Perilaku form `/site-admin/brand`
+
+**TASK-123.**
+
+- Tampilan: slot kosong mencapai nilai bawaan — `values[field.key] || DEFAULT_PALETTE[field.key]` menggantikan fallback `#000000` sekarang.
+- Simpan: semantik tidak berubah — slot yang tidak disentuh tetap tersimpan `""`/null = pakai bawaan; admin bisa mengubah dan menyimpan warna kustom dimana pun.
+- "Atur Ulang Palet": saat ini mengosongkan semua slot; perilaku tidak berubah, hanya tampilan yang kembali menunjukkan warna bawaan (bukan lagi hitam).
+- **Render (revisi 2026-10-18 atas pendapat pengguna):** slot kosong juga dikirim ke `<html>` dengan nilai `DEFAULT_PALETTE` lewat `brandCssVariables()` — aplikasi memakai warna bawaan hijau tone dashboard saat palet belum diatur, dan kustomisasi admin tetap menang bila ada. Efek samping tercatat: `<html>` selalu memuat 19 inline variabel (kelak memengaruhi rancangan SITE-06 mode gelap).
+- **Popover petunjuk slot (tambahan pengguna 2026-10-18, "berikan juga popover di setiap palette warna biar user tau warna apa yang mereka ubah"):** setiap slot palet punya tombol ikon `Info` di samping label yang membuka popover dengan pola serupa popover "Ketentuan SKU" di `ProductForm` (komponen `ui/popover`, trigger ikon kecil `h-5 w-5`, konten `w-64 text-xs`): judul label slot, penjelasan "dipakai buat apa" dari `PALETTE_INFO` (`src/lib/brand/palette.ts`, sumber tunggal), dan pratinjau bawaan berupa swatch mini + nilai hex `DEFAULT_PALETTE`. Revisi atas pendapat pengguna: teks `PALETTE_INFO` ditulis dalam **bahasa awam** tanpa kode status/kolom database. Tanpa perubahan skema/DB; murni tampilan form.
+- Modul `helpdesk` dan "ilustrasi warna"? tidak ada. **Perbarui dua tahap 2026-10-18:** (a) awal TASK-123 tidak ada perubahan skema; (b) lanjutan keputusan pengguna → ada migrasi additive `20261017184206_brand_warning_info_slots` (`warningColor`/`infoColor`), tanpa perubahan kolom lama. Bukti: uji UI + `tsc`/`lint` + uji Zod/DB roundtrip (bagian 10 `docs/04`).
+
+## 5. Konsolidasi warna hardcode ke token (TASK-124)
+
+Seluruh komponen pemberit warna status/info/peringatan agar mengikuti token CSS variables:
+
+| Berkas | Warna saat ini hardcode | Token |
+| --- | --- | --- |
+| `src/components/orders/OrderStatusBadge.tsx` | `bg-amber-100`, `bg-blue-100`, `bg-green-100`, `bg-red-100`, separator lainnya per status | `destructive` = merah, `success` = hijau, status netral = `muted`; warna kuning/biru menunggu keputusan terbuka #1 |
+| Badge status di daftar pesanan admin | Mengikuti `OrderStatusBadge` | Sama |
+| `src/components/orders/CancelOrderForm.tsx` | `bg-red-50 text-red-700 border-red-200` | `destructive/10 text-destructive border-destructive/20` |
+| `src/components/orders/GuestOrderNotice.tsx` | `bg-amber-50 text-amber-950 border-amber-200` | Menunggu keputusan #1 |
+| `src/components/products/WishlistButton.tsx` | `fill-red-500 text-red-500` | `fill-destructive text-destructive` |
+| `src/components/products/CatalogFilterBar.tsx` | `hover:text-red-500` | `hover:text-destructive` |
+| `src/components/layout/MaintenanceBanner.tsx` | `bg-amber-50 border-amber-300` | Menunggu keputusan #1 |
+| Kotak teks lain kuning/biru | Inventarisasi saat eksekusi (`grep` `bg-amber-*`, `bg-blue-*`, `bg-green-*`, `bg-red-*`, `text-amber-*`, dst. di `src/`) | Mengikuti tabel token |
+
+Aturan: 1 kelas `*-{warna}-{100..950}` mengikuti token yang semantically closest: merah = `destructive`, hijau = `success`, hitam/abu-abu = `muted`/`fg`, kuning/biru = token `warning`/`info` (keputusan #1 lima tahap; tahap 2..3 menjadikannya slot palet ke-16..19 lengkap dengan pasangan foreground, bisa dikustom Site Admin; tahap 4-5 merevisi bawaan warning hingga `#FACC15`, dengan tulisan memakai varian gelap otomatis `text-warning-strong`).
+
+**Realisasi TASK-124 (2026-10-18)** — hasil `grep` inventarisasi penuh menemukan dua file di luar tabel atas (ditandai "Kotak teks lain"): tombol Pelacakan biru di `src/app/(storefront)/orders/[id]/page.tsx` → `info/10 text-info border-info/20 hover:bg-info/20`, dan bintang rating `text-amber-500` di `ProductCard` → `text-warning`. Peta final `OrderStatusBadge`: `WAITING_PAYMENT` + `CANCEL_REQUESTED` → `warning` (oranye ikut kuning — "menunggu tindakan"), `PROCESSING` + `SHIPPED` → `info` (indigo ikut biru), `COMPLETED` → `success`, `CANCELED` → `destructive`. `GuestOrderNotice`: teks prosa `text-foreground`, aksen `border-warning/20 bg-warning/10 text-warning`; sub-kartu salinan `bg-card/70` (ganti `bg-white/70`). `MaintenanceBanner` → `border-warning/20 bg-warning/10 text-warning`. `CancelOrderForm` + hover versi (tint 10/20). Lukisan `email` (`src/emails/*`) tetap hardcode — pertanyaan #2 masih terbuka. Ruang `dashboard-v2` (prototipe ADMIN-DASH-01, belum di-commit) tidak tersentuh — scope PH-12.
+
+## 6. Pertanyaan terbuka
+
+1. Warna kuning/biru (status `WAITING_PAYMENT` kuning, `PROCESSING` biru, `SHIPPED` biru) — token cukup memakai `secondary`/`muted`, atau kasih slot `warning`/`info` baru di palet? **Ditutup 2026-10-18 dua tahap.**
+   - **Tahap 1 (keputusan pengguna, opsi "Token CSS warning+info"):** token `--warning` (oklch 0.555 0.163 48.998 = amber-700) + `--info` (oklch 0.488 0.243 264.376 = blue-700) beserta `-foreground` putih di `globals.css`; pola pemakaian tint `bg-{token}/10` + `border-{token}/20` + `text-{token}`.
+   - **Tahap 2 (keputusan pengguna, "kalo untuk warna success atau danger biasanya bisa dikustom maka dua itu harusnya bisa juga"):** keduanya diangkat menjadi slot palet — kolom `warningColor`/`infoColor` di `BrandSetting` (migrasi `20261017184206_brand_warning_info_slots`), slot ke-16/17 (`PALETTE_FIELDS` label "Warning"/"Info"), nilai bawaan `DEFAULT_PALETTE` = konversi hex oklch yang sama (`#BB4D00`, `#1447E6`; konversi tervalidasi dengan reproduksi `#E7000B`/`#009966`). Zod `optionalHex` untuk keduanya; Site Admin kini bisa kustom warning/info dari form. Awalnya `warningFg`/`infoFg` dianggap belum perlu (fg `--*-foreground` tetap putih dari `globals.css`, belum ada pemakai solid).
+   - **Tahap 3 (revisi pengguna, "success dan destructive punya warna untuk text, harusnya warning dan info juga"):** `warningFg`/`infoFg` juga diangkat menjadi slot (slot ke-18/19, migrasi `20261018063829_brand_warning_info_fg_slots`), sehingga palet 19 slot dengan pasangan warna+teks lengkap mengikuti pola destructive/success. Bawaan fg keduanya `#FFFFFF` (pemakaian solid `bg-warning`/`bg-info`); pemakaian tint tetap memakai token warna itu sendiri sebagai teks.
+   - **Tahap 4 (revisi pengguna, "warna default untuk warning sepertinya kurang terasa kuning, lebih ke coklat"):** bawaan `warningColor` diubah dari `#BB4D00` (amber-700, hue oranye) ke `#A65F00` (yellow-700 Tailwind v4, `oklch(0.554 0.135 66.442)`) — kulit kuning emas, bukan brown. Tanpa migrasi (ini perubahan nilai bawaan di `DEFAULT_PALETTE` + token `--warning` `globals.css`, bukan skema). Kandidat yang lebih terang (yellow-600 `#D18700`) ditolak karena kontras teks hanya 2.87:1 di latar terang dan 2.94:1 dengan fg putih.
+   - **Tahap 5 (revisi lanjutan, "kuning #A65F00 masih terlalu coklat" → pengguna memilih kandidat G "#FACC15 kuning paling terang" dari halaman perbandingan visual yang ditunjukkan):** bawaan `warningColor` = `#FACC15`, token `--warning` = `oklch(0.8606 0.1731 91.94)` (= hex itu). Konsekuensi: sebagai teks kontrasnya hanya 1.49:1, sehingga dipakai tekstual memakai varian gelap otomatis **`--warning-strong` = `color-mix(in oklab, var(--warning) 65%, black)`** (kelas `text-warning-strong`) — mengikuti kustomisasi admin, jadi warna slot apa pun tetap menghasilkan teks terbaca. Komponen teks warning dipindah ke `text-warning-strong` (`OrderStatusBadge`, `MaintenanceBanner`, `GuestOrderNotice`); satu-satunya pemakai warna terang yang tersisa adalah bintang rating (`text-warning` di `ProductCard`, sengaja). Bawaan `warningFg` diubah `#FFFFFF` → `#202725` (teks di atas latar kuning sangat terang; satu-satunya fg bawaan gelap). Tanpa migrasi.
+   - **Popover berbahasa awam (revisi atas "status pada popover juga pakai bahasa user awam jangan penulisan untuk developer"):** teks `PALETTE_INFO` ditulis ulang tanpa kode status/kolom database (`WAITING_PAYMENT` dsb. diganti "pesanan yang masih menunggu", dst.).
+2. Email (`src/emails/*`, warna hex inline) mengikuti palet web? CATATAN: email client tidak membaca CSS variables root page — alternatifnya hanya inline style yang dibentuk dari data palet DB di server saat mengirim email. Belum diputuskan.
+3. Set warna bawaan kedua untuk mode gelap (SITE-06) didesain sekaligus di TASK-123 atau menyusul SITE-06?
+
+## 7. AC (draf, final saat implementasi)
+
+| AC | Aksi | Skenario | Hasil yang diharapkan |
+| --- | --- | --- | --- |
+| AC-SITE-07-01 | Buka `/site-admin/brand`, palet belum diatur | Site Admin | Slot palet tampil warna bawaan tabel bagian 3 (19 slot pasca-tahap 3; bukan hitam `#000000`) |
+| AC-SITE-07-02 | Ubah `primaryColor` ke `#B91C1C` lalu simpan | Buka storefront + `/admin` | Tombol/link merah (AC-SITE-05-02 tetap); slot lain masih bawaan |
+| AC-SITE-07-03 | Tekan "Atur Ulang Palet" lalu simpan | Buka form | Slot tampil warna bawaan; `BrandSetting` kolom palet kembali `null` |
+| AC-SITE-07-04 | TASK-124 selesai, ubah `primaryColor` | Buka halaman storefront + admin | Badge status, banner maintenance, notifikasi guest, hati favorit, tombol batal mengikuti warna token (`destructive`/`success`/`muted`) |
+| AC-SITE-07-05 | `grep` hardcode warna pasca-TASK-124 | Cari `bg-(amber|blue|green|red)-` di `src/` | Tidak ada di komponen yang telah dikonsolidasi (kecuali alasan yang didokumenkan) |
+
+## 8. TASK
+
+| ID | Isi | Spek |
+| --- | --- | --- |
+| TASK-123 | `DEFAULT_PALETTE` + perilaku tampilan/simpan/reset form brand | bagian 2, 3, 4 |
+| TASK-124 | Konsolidasi komponen hardcode ke token | bagian 5 |
+
 ## <a name="wish-01"></a>WISH-01 — Favorit Produk (wishlist versi penuh)
 
 ### 1. Identitas dan tujuan
@@ -6437,7 +6545,7 @@ AUTH (sesi customer), PROD-02/PROD-03 (kartu dan detail tempat hati dipasang), C
 
 ---
 
-**Status:** Spesifikasi Fitur v2.4 - PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) **terimplementasi dan Disetujui** (2026-10-11, pengguna: "approve" - bukti `docs/04` bagian 15.5) beserta revisi UI CUST-01/CUST-02. Bagian 1A (aturan karakter input semua field, v2.1) terimplementasi di commit `40dcb41`. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`). Ditambah 2026-10-15: CART-05 (dialog pemilihan varian dari kartu produk + stok efektif TASK-114) - **Terimplementasi** (spesifikasi ditulis lalu dikerjakan di hari yang sama; bukti `docs/04` bagian 16.4; keputusan di bagian 10 dan 16). Ditambah 2026-10-15: 17 spesifikasi rinci (AUTH-02/03, PROD-03/04/05, VOUCH-01/02, NOTIF-01, INV-01, SHIP-02/03, ORDER-05..08, REPORT-01, CONFIG-01) ditulis retroaktif dari kode terimplementasi - utang dokumentasi bagian rinci di catatan indeks bagian 1 tuntas. Ditambah 2026-10-15 malam: PROD-07 (seksi editorial VideoHero/ProductStory/Lookbook) ditulis baru dan PROD-06 mendapat status tambahan (bagan ukuran bergaya tautan + dialog di kanan bawah tombol beli); PROD-06 beserta status tambahannya **terimplementasi 2026-10-15** (bukti `docs/04` bagian 16), PROD-07 **terimplementasi 2026-10-15** (bukti `docs/04` bagian 10). Ditambahkan ADMIN-DASH-01 (modernisasi dashboard Store Admin), status belum diimplementasikan. PROD-08 (role `INFO` pengganti `SIZE_CHART` + label kustom default "Informasi Tambahan") ditulis, status belum diimplementasikan. CREDIT-01 (Saldo Toko: refund ke saldo + pemakaian saat checkout) ditulis, status belum diimplementasikan, menunggu approval pengguna. Ditambah 2026-10-16: SITE-06 (Mode Gelap, lanjutan trigger tema placeholder) dan WISH-01 (Favorit Produk versi penuh, dummy UI sudah ada) ditulis dengan status belum diimplementasikan; indeks PROD-08 dan badan PROD-06 dikoreksi karena statusnya basi.
+**Status:** Spesifikasi Fitur v2.4 - PH-07, PH-08 (SITE-00..SITE-04), dan PH-09 (SITE-05) terimplementasi dan **Disetujui** (2026-10-11); CUST-03 + NOTIF-02 (Phase 10) **terimplementasi dan Disetujui** (2026-10-11, pengguna: "approve" - bukti `docs/04` bagian 15.5) beserta revisi UI CUST-01/CUST-02. Bagian 1A (aturan karakter input semua field, v2.1) terimplementasi di commit `40dcb41`. Indeks dan bagian status diselaraskan dengan kode pada 2026-10-11 (PH-08 commit `f01a6d2`, PH-09 commit `1da2b3a`). Ditambah 2026-10-15: CART-05 (dialog pemilihan varian dari kartu produk + stok efektif TASK-114) - **Terimplementasi** (spesifikasi ditulis lalu dikerjakan di hari yang sama; bukti `docs/04` bagian 16.4; keputusan di bagian 10 dan 16). Ditambah 2026-10-15: 17 spesifikasi rinci (AUTH-02/03, PROD-03/04/05, VOUCH-01/02, NOTIF-01, INV-01, SHIP-02/03, ORDER-05..08, REPORT-01, CONFIG-01) ditulis retroaktif dari kode terimplementasi - utang dokumentasi bagian rinci di catatan indeks bagian 1 tuntas. Ditambah 2026-10-15 malam: PROD-07 (seksi editorial VideoHero/ProductStory/Lookbook) ditulis baru dan PROD-06 mendapat status tambahan (bagan ukuran bergaya tautan + dialog di kanan bawah tombol beli); PROD-06 beserta status tambahannya **terimplementasi 2026-10-15** (bukti `docs/04` bagian 16), PROD-07 **terimplementasi 2026-10-15** (bukti `docs/04` bagian 10). Ditambahkan ADMIN-DASH-01 (modernisasi dashboard Store Admin), status belum diimplementasikan. PROD-08 (role `INFO` pengganti `SIZE_CHART` + label kustom default "Informasi Tambahan") ditulis, status belum diimplementasikan. CREDIT-01 (Saldo Toko: refund ke saldo + pemakaian saat checkout) ditulis, status belum diimplementasikan, menunggu approval pengguna. Ditambah 2026-10-16: SITE-06 (Mode Gelap, lanjutan trigger tema placeholder) dan WISH-01 (Favorit Produk versi penuh, dummy UI sudah ada) ditulis dengan status belum diimplementasikan; indeks PROD-08 dan badan PROD-06 dikoreksi karena statusnya basi. Ditambah 2026-10-18: SITE-07 **terimplementasi** (TASK-123 + TASK-124; bukti `docs/04` bagian 17.4; pertanyaan terbuka #1 ditutup lima tahap — tahap slot-nya `warning`/`info` beserta foreground-nya menjadi slot palet ke-16..19, migrasi `20261017184206_brand_warning_info_slots` + `20261018063829_brand_warning_info_fg_slots`, palet 19 slot; tahap lainnya merevisi bawaan `warningColor` sampai pengguna memilih kuning terang `#FACC15` (riwayat: amber-700 → yellow-700 → FACC15) dengan tulisan badge otomatis digelapkan `text-warning-strong`).
 
 **Next steps:**
 1. (Selesai 2026-10-15) Tulis bagian rinci 17 fitur yang belum berspesifikasi (utang dokumentasi) ΓÇö blok rinci AUTH-02/03, PROD-03/04/05, VOUCH-01/02, NOTIF-01, INV-01, SHIP-02/03, ORDER-05..08, REPORT-01, CONFIG-01 kini ada di dokumen ini
