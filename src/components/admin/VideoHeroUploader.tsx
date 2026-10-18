@@ -2,8 +2,11 @@
 
 // PROD-07 — unggah video hero produk (endpoint `videoHero`, plafon 64MB)
 // plus sakelar autoplay yang dikontrol admin (keputusan pengguna docs/04).
+// TASK-118 Lapis 1: menghapus video juga lewat dialog konfirmasi — berkasnya
+// ikut dihapus permanen dari penyimpanan (bukan hanya lepas dari form).
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";
 import { useUploadThing } from "@/lib/uploadthing/client";
 
@@ -20,6 +23,7 @@ export function VideoHeroUploader({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const { startUpload, isUploading } = useUploadThing("videoHero", {
     onClientUploadComplete: (files) => {
@@ -67,10 +71,20 @@ export function VideoHeroUploader({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => onUrlChange("")}
+              onClick={() => setConfirming(true)}
             >
               Hapus video
             </Button>
+            <ConfirmDialog
+              open={confirming}
+              onOpenChange={setConfirming}
+              title="Hapus video dari penyimpanan?"
+              description="Video akan dihapus permanen dari penyimpanan, bukan hanya dilepas dari form. Tindakan ini tidak bisa dibatalkan."
+              confirmLabel="Hapus Video"
+              onConfirm={async () => {
+                onUrlChange("");
+              }}
+            />
           </div>
         </div>
       ) : (

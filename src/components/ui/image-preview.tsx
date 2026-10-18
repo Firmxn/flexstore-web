@@ -25,6 +25,11 @@ type ImagePreviewProps = {
   // Penempatan/ukuran kotak (mis. `w-48 mx-auto`); digabung dengan
   // `mediaClassName` lewat `cn` sehingga kelas yang belakangan menang.
   className?: string;
+  // TASK-118 Lapis 1: bila diisi, tombol Hapus membuka dialog konfirmasi
+  // (aturan 1B) sebelum `onClear` dijalankan — dipakai form produk supaya
+  // admin sadar berkasnya ikut hilang dari penyimpanan. Tanpa prop ini
+  // (mis. aset brand, bukti refund) perilaku tidak berubah.
+  confirm?: { title: string; description: string };
 };
 
 export function ImagePreview({
@@ -35,6 +40,7 @@ export function ImagePreview({
   mediaClassName = "aspect-square w-full",
   imageClassName,
   className,
+  confirm,
 }: ImagePreviewProps) {
   // Tanpa keadaan kosong: bila belum ada berkas, dropzone di bawahnya sudah
   // menjadi penanda — komponen ini hanya membingkai gambar yang sudah ada.
@@ -61,7 +67,7 @@ export function ImagePreview({
       />
 
       {onClear ? (
-        <ImageRemoveButton label="Hapus gambar" onClick={onClear} />
+        <ImageRemoveButton label="Hapus gambar" onClick={onClear} confirm={confirm} />
       ) : null}
     </div>
   );

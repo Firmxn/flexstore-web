@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { ImageDropzone } from "@/components/ui/image-dropzone";
 import { ImagePreview } from "@/components/ui/image-preview";
+import { IMAGE_DELETE_CONFIRM } from "@/components/ui/image-remove-button";
 import { Label } from "@/components/ui/label";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";
@@ -49,6 +50,7 @@ export function VariantImagePicker({
         alt="Gambar varian"
         className="w-48 mx-auto"
         onClear={url ? () => onChange("") : undefined}
+        confirm={IMAGE_DELETE_CONFIRM}
       />
 
       {/* Slot terisi → dropzone disembunyikan (aturan 1C); penggantian lewat

@@ -1,5 +1,10 @@
 import { prisma } from "@/lib/db/prisma";
 import type { ProductInput } from "./validation";
+import {
+  cleanupRemovedProductUploads,
+  collectProductUploadUrls,
+  type ProductUploadSource,
+} from "./upload-cleanup";
 
 function calculateTotalStock(variants: { stock: number }[]) {
   return variants.reduce((sum, variant) => sum + variant.stock, 0);
@@ -109,18 +114,22 @@ export class VariantInCartError extends Error {
   }
 }
 
-export function updateProduct(id: string, input: ProductInput) {
+export async function updateProduct(id: string, input: ProductInput) {
   const fields = productScalars(input);
+
+  // TASK-118: snapshot referensi berkas LAMA diisi di dalam transaksi (baris
+  // harus dibaca sebelum dihapus); cleanup jalan setelah transaksi tersimpan.
+  let previous: ProductUploadSource | null = null;
 
   // Query berjalan berurutan lewat koneksi jauh (Supabase); transaksi default
   // 5 detik hangus saat menyimpan produk dengan banyak varian/gambar.
-  return prisma.$transaction(async (tx) => {
-    const existing = await tx.productVariant.findMany({
+  const product = await prisma.$transaction(async (tx) => {
+    const existingVariants = await tx.productVariant.findMany({
       where: { productId: id },
     });
-    const bySku = new Map(existing.map((variant) => [variant.sku, variant]));
+    const bySku = new Map(existingVariants.map((variant) => [variant.sku, variant]));
     const keptSkus = new Set(input.variants.map((variant) => variant.sku));
-    const removed = existing.filter((variant) => !keptSkus.has(variant.sku));
+    const removed = existingVariants.filter((variant) => !keptSkus.has(variant.sku));
 
     if (removed.length > 0) {
       const removedIds = removed.map((variant) => variant.id);
@@ -168,6 +177,28 @@ export function updateProduct(id: string, input: ProductInput) {
       }
     }
 
+    // TASK-118: snapshot referensi berkas LAMA sebelum barisnya dihapus —
+    // jadi basis hitung URL yang lepas setelah transaksi tersimpan. Gambar
+    // varian lama ikut: barisnya bisa hilang (SKU dibuang) atau ganti URL.
+    const beforeProduct = await tx.product.findUnique({
+      where: { id },
+      select: {
+        videoHeroUrl: true,
+        heroImageUrl: true,
+        images: { select: { url: true } },
+      },
+    });
+    if (beforeProduct) {
+      previous = {
+        videoHeroUrl: beforeProduct.videoHeroUrl,
+        heroImageUrl: beforeProduct.heroImageUrl,
+        images: beforeProduct.images,
+        variants: existingVariants.map((variant) => ({
+          imageUrl: variant.imageUrl,
+        })),
+      };
+    }
+
     await tx.productImage.deleteMany({ where: { productId: id } });
 
     return tx.product.update({
@@ -179,11 +210,42 @@ export function updateProduct(id: string, input: ProductInput) {
       include: { images: true, variants: true },
     });
   }, { timeout: 15_000, maxWait: 10_000 });
+
+  // Task-118 Lapis 2: hapus berkas URL lama dari Uploadthing — dilakukan
+  // SETELAH transaksi tersimpan supaya baris baru sudah terbaca saat cek
+  // silang; kegagalan Uploadthing hanya log, simpan produk tidak ikut gagal.
+  if (previous) {
+    const stillUsed = new Set(collectProductUploadUrls(product));
+    const removed = collectProductUploadUrls(previous).filter(
+      (url) => !stillUsed.has(url),
+    );
+    await cleanupRemovedProductUploads(removed, "updateProduct");
+  }
+  return product;
 }
 
-export function deleteProduct(id: string) {
+export async function deleteProduct(id: string) {
+  // TASK-118: kaskade FK menghapus ProductImage & ProductVariant, jadi URL
+  // berkasnya harus disnapshot SEBELUM penghapusan.
+  const before = await prisma.product.findUnique({
+    where: { id },
+    select: {
+      videoHeroUrl: true,
+      heroImageUrl: true,
+      images: { select: { url: true } },
+      variants: { select: { imageUrl: true } },
+    },
+  });
+
   // ProductImage & ProductVariant ikut terhapus (onDelete: Cascade).
-  return prisma.product.delete({ where: { id } });
+  await prisma.product.delete({ where: { id } });
+
+  if (before) {
+    await cleanupRemovedProductUploads(
+      collectProductUploadUrls(before),
+      "deleteProduct",
+    );
+  }
 }
 
 export function countCartItemsForProduct(productId: string) {

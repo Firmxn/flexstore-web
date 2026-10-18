@@ -19,6 +19,7 @@ import { Lookbook } from "@/components/products/MediaContentSections";
 import { MAX_PRODUCT_IMAGES } from "@/lib/products/validation";
 import { useUploadThing } from "@/lib/uploadthing/client";
 import { FormErrorAlert } from "@/components/ui/form-error-alert";
+import { IMAGE_DELETE_CONFIRM } from "@/components/ui/image-remove-button";
 import { cn } from "@/lib/utils/cn";
 
 type ImageUploaderProps = {
@@ -88,6 +89,7 @@ export function ImageUploader({
           urls={urls}
           productName={productName}
           onRemove={removeUrl}
+          confirm={IMAGE_DELETE_CONFIRM}
         />
       ) : null}
 
@@ -99,6 +101,7 @@ export function ImageUploader({
             <ImageRemoveButton
               label={`Hapus foto lookbook ${index + 1}`}
               onClick={() => removeUrl(url)}
+              confirm={IMAGE_DELETE_CONFIRM}
             />
           )}
         />
@@ -113,6 +116,7 @@ export function ImageUploader({
           mediaClassName={mediaClassName ?? "aspect-square w-full"}
           imageClassName={imageClassName}
           onClear={() => removeUrl(urls[0])}
+          confirm={IMAGE_DELETE_CONFIRM}
         />
       ) : null}
 
@@ -137,10 +141,13 @@ function GalleryPreview({
   urls,
   productName,
   onRemove,
+  confirm,
 }: {
   urls: string[];
   productName: string;
   onRemove: (url: string) => void;
+  // TASK-118 Lapis 1: Hapus lewat `ImageRemoveButton` — dialog konfirmasi.
+  confirm?: { title: string; description: string };
 }) {
   const [active, setActive] = useState(0);
   const index = Math.min(active, urls.length - 1);
@@ -164,6 +171,7 @@ function GalleryPreview({
         <ImageRemoveButton
           label="Hapus gambar utama"
           onClick={() => onRemove(current)}
+          confirm={confirm}
         />
       </div>
 
@@ -192,6 +200,7 @@ function GalleryPreview({
               <ImageRemoveButton
                 label={`Hapus gambar ${itemIndex + 1}`}
                 onClick={() => onRemove(url)}
+                confirm={confirm}
                 className="right-[9px] top-[9px]"
               />
             </div>
