@@ -17,7 +17,6 @@ import {
   Copy,
   Ellipsis,
   Eye,
-  Filter as FilterIcon,
   Search,
 } from "lucide-react";
 import {
@@ -34,8 +33,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -46,7 +43,6 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  TABLE_HEAD_PLAIN,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils/cn";
 import { formatRupiah } from "@/lib/utils/format";
@@ -71,18 +67,19 @@ const STATUS_BADGE: Record<OrderStatus, SoftVariant> = {
   CANCELED: "softNeutral",
 };
 
-// Sentinel "semua" untuk filter (dipakai tab status dan menu status pembayaran).
-const ALL = "ALL" as const;
-
-// Tab filter status pesanan — selaras mockup ADMIN-DASH-01:
-// "Semua / Diproses / Menunggu / Dibatalkan". Satu tab bisa mencakup lebih dari
-// satu status (mis. "Dibatalkan" = permintaan batal maupun sudah dibatalkan).
-type TabKey = "ALL" | "PROCESSING" | "WAITING_PAYMENT" | "CANCELED";
+// Tab filter status pesanan — pengganti card "Pesanan per Status" (keputusan
+// pengguna 2026-10-18: fungsi kumulatif+shortcut dipadatkan ke sini, tanpa card
+// terpisah yang tumpang tindih). Angka tab kumulatif seluruh waktu dari server
+// (`statusTotals`); filternya menerapkan ke baris terbaru yang dimuat.
+// "Dibatalkan" mencakup permintaan batal maupun sudah dibatalkan.
+type TabKey = "ALL" | "WAITING_PAYMENT" | "PROCESSING" | "SHIPPED" | "COMPLETED" | "CANCELED";
 
 const ORDER_TABS: { key: TabKey; label: string; statuses: OrderStatus[] }[] = [
   { key: "ALL", label: "Semua", statuses: [] },
-  { key: "PROCESSING", label: "Diproses", statuses: ["PROCESSING"] },
   { key: "WAITING_PAYMENT", label: "Menunggu", statuses: ["WAITING_PAYMENT"] },
+  { key: "PROCESSING", label: "Diproses", statuses: ["PROCESSING"] },
+  { key: "SHIPPED", label: "Dikirim", statuses: ["SHIPPED"] },
+  { key: "COMPLETED", label: "Selesai", statuses: ["COMPLETED"] },
   {
     key: "CANCELED",
     label: "Dibatalkan",
@@ -146,16 +143,21 @@ export function RecentOrdersTable({
   description,
   viewAllHref,
   viewAllLabel = "Lihat semua pesanan",
+  statusTotals,
 }: {
   orders: RecentOrderRow[];
   title: string;
   description?: string;
   viewAllHref: string;
   viewAllLabel?: string;
+  // Jumlah pesanan per status KUMULATIF SELURUH WAKTU (Record<OrderStatus,
+  // number> dari server, `countOrdersByStatus`). Angka badge tab sumber aslinya;
+  // filtering tetap terhadap baris terbaru yang dimuat. Bila tidak disediakan
+  // (server gagal), angka jatuh ke hitungan lokal baris yang dimuat.
+  statusTotals?: Record<string, number>;
 }) {
   const [statusFilter, setStatusFilter] = useState<TabKey>("ALL");
   const [query, setQuery] = useState("");
-  const [paymentFilter, setPaymentFilter] = useState<string>(ALL);
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({
     key: "date",
     dir: "desc",
@@ -163,35 +165,47 @@ export function RecentOrdersTable({
   const [page, setPage] = useState(1);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  // Daftar status pembayaran unik untuk menu Filter (dari data).
-  const paymentMethods = useMemo(
-    () => Array.from(new Set(orders.map((o) => o.paymentMethod))).sort(),
-    [orders],
-  );
-
-  // Hitung per tab SEBELUM difilter status, supaya angka tab = jumlah total
-  // per status pada cakupan pencarian/filter pembayaran saat ini.
+  // Angka badge tab: kumulatif seluruh waktu dari server bila tersedia
+  // (pintasan yang dulu ada di card "Pesanan per Status"); dihitung lokal dari
+  // baris dimuat bila data server tidak ada (fallback, tanpa query ulang).
+  // Angka per tab dihitung SEBELUM difilter status, supaya badge tetap kumulatif
+  // meski tab lain sedang aktif.
   const statusCounts = useMemo(() => {
-    const base = orders.filter(
-      (o) =>
-        (query.trim() === "" ||
-          o.code.toLowerCase().includes(query.trim().toLowerCase()) ||
-          o.buyer.toLowerCase().includes(query.trim().toLowerCase())) &&
-        (paymentFilter === ALL || o.paymentMethod === paymentFilter),
-    );
     const counts: Record<TabKey, number> = {
-      ALL: base.length,
-      PROCESSING: 0,
+      ALL: 0,
       WAITING_PAYMENT: 0,
+      PROCESSING: 0,
+      SHIPPED: 0,
+      COMPLETED: 0,
       CANCELED: 0,
     };
+    if (statusTotals) {
+      for (const n of Object.values(statusTotals)) counts.ALL += n;
+      for (const tab of ORDER_TABS) {
+        if (tab.statuses.length > 0) {
+          counts[tab.key] = tab.statuses.reduce(
+            (sum, status) => sum + (statusTotals[status] ?? 0),
+            0,
+          );
+        }
+      }
+      return counts;
+    }
+    // Fallback dari baris yang dimuat (dipengaruhi pencarian).
+    const base = orders.filter(
+      (o) =>
+        query.trim() === "" ||
+        o.code.toLowerCase().includes(query.trim().toLowerCase()) ||
+        o.buyer.toLowerCase().includes(query.trim().toLowerCase()),
+    );
+    counts.ALL = base.length;
     for (const o of base) {
       for (const tab of ORDER_TABS) {
         if (tab.statuses.includes(o.status)) counts[tab.key] += 1;
       }
     }
     return counts;
-  }, [orders, query, paymentFilter]);
+  }, [statusTotals, orders, query]);
 
   const activeTab = ORDER_TABS.find((t) => t.key === statusFilter) ?? ORDER_TABS[0];
 
@@ -200,7 +214,6 @@ export function RecentOrdersTable({
     const rows = orders.filter(
       (o) =>
         (activeTab.statuses.length === 0 || activeTab.statuses.includes(o.status)) &&
-        (paymentFilter === ALL || o.paymentMethod === paymentFilter) &&
         (q === "" || o.code.toLowerCase().includes(q) || o.buyer.toLowerCase().includes(q)),
     );
     const sorted = [...rows];
@@ -212,7 +225,7 @@ export function RecentOrdersTable({
       sorted.reverse();
     }
     return sorted;
-  }, [orders, activeTab, paymentFilter, query, sort]);
+  }, [orders, activeTab, query, sort]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -239,8 +252,6 @@ export function RecentOrdersTable({
       // Clipboard bisa ditolak oleh browser; abaikan, prototipe tanpa pesan.
     }
   }
-
-  const hasActiveFilter = paymentFilter !== ALL;
 
   return (
     <Card>
@@ -269,7 +280,10 @@ export function RecentOrdersTable({
       </div>
       </CardHeader>
 
-      {/* Toolbar: tab status (kiri) + pencarian/filter (kanan), sebaris. */}
+      {/* Toolbar: tab status (kiri) + pencarian (kanan), sebaris. Dropdown
+          filter pembayaran dihapus (keputusan 2026-10-19, Opsi A: fungsinya
+          tumpang tindih dengan tab status; label info pembayaran tetap di
+          kolom meta baris). */}
       <div className="flex flex-wrap items-center gap-3 px-6 pb-4">
         <Tabs
           value={statusFilter}
@@ -311,46 +325,12 @@ export function RecentOrdersTable({
               className="h-9 pl-8"
             />
           </div>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant={hasActiveFilter ? "default" : "outline"}
-                size="sm"
-                className="h-9"
-              >
-                <FilterIcon className="h-4 w-4" aria-hidden="true" />
-                Filter
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Status pembayaran</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => { setPaymentFilter(ALL); setPage(1); }}>
-                Semua status
-                {paymentFilter === ALL ? (
-                  <span className="ml-auto text-primary" aria-hidden="true">✓</span>
-                ) : null}
-              </DropdownMenuItem>
-              {paymentMethods.map((m) => (
-                <DropdownMenuItem
-                  key={m}
-                  onSelect={() => { setPaymentFilter(m); setPage(1); }}
-                >
-                  {m}
-                  {paymentFilter === m ? (
-                    <span className="ml-auto text-primary" aria-hidden="true">✓</span>
-                  ) : null}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
       </div>
 
       <CardContent className="p-0">
         <Table wrapperClassName="rounded-none border-0">
-          <TableHeader className={TABLE_HEAD_PLAIN}>
+          <TableHeader className="[&_th]:normal-case [&_th]:tracking-normal [&_th]:font-medium">
             <TableRow className="border-t border-border hover:bg-transparent">
               <TableHead className="pl-4">No.</TableHead>
               <TableHead>

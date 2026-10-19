@@ -3,10 +3,20 @@ import { cn } from "@/lib/utils/cn";
 
 export function Table({
   className,
+  wrapperClassName,
   ...props
-}: React.TableHTMLAttributes<HTMLTableElement>) {
+}: React.TableHTMLAttributes<HTMLTableElement> & {
+  /** Kelas untuk pembungkus scroll (mis. "rounded-none border-0" agar tabel
+   *  menyatu dengan card tanpa radius/border sendiri). */
+  wrapperClassName?: string;
+}) {
   return (
-    <div className="w-full overflow-x-auto rounded-lg border border-border">
+    <div
+      className={cn(
+        "w-full overflow-x-auto rounded-lg border border-border",
+        wrapperClassName,
+      )}
+    >
       <table
         className={cn("w-full caption-bottom text-sm", className)}
         {...props}
@@ -21,6 +31,12 @@ export function TableHeader({
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return <thead className={cn("bg-muted/50", className)} {...props} />;
 }
+
+/** Override kepala kolom bergaya "plain" (sentence case, bukan uppercase) untuk
+ *  tabel dasbor — dipakai bersama panel Pesanan Terbaru & Produk Terlaris agar
+ *  gaya dan ukurannya seragam. Ukuran tetap `text-xs` (12px) dari TableHead. */
+export const TABLE_HEAD_PLAIN =
+  "[&_th]:normal-case [&_th]:tracking-normal [&_th]:font-medium";
 
 export function TableBody({
   className,

@@ -13,6 +13,12 @@ const badgeVariants = cva(
           "border-transparent bg-destructive text-destructive-foreground",
         success: "border-transparent bg-success text-success-foreground",
         outline: "border-border text-foreground",
+        // Varian "soft": latar tint halus + teks sewarna, tanpa isian solid.
+        // Dipakai badge status (mis. tabel Pesanan Terbaru) agar selaras mockup.
+        softPrimary: "border-transparent bg-accent text-primary",
+        softNeutral: "border-transparent bg-muted text-muted-foreground",
+        softSuccess: "border-transparent bg-success/10 text-success",
+        softDestructive: "border-transparent bg-destructive/10 text-destructive",
       },
     },
     defaultVariants: { variant: "default" },

@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { AppShell } from "@/components/layout/AppShell";
 import {
   isSidebarCollapsed,
@@ -6,6 +6,7 @@ import {
 } from "@/lib/layout/sidebar-pref";
 import { requireSiteAdminPage } from "@/lib/auth/session";
 import { getBrandSetting } from "@/lib/brand";
+import { buildBreadcrumb } from "@/lib/layout/breadcrumb";
 import { connection } from "next/server";
 
 // SITE-00 (PH-08): area konfigurasi platform, terpisah dari /admin (Store
@@ -32,6 +33,12 @@ export default async function SiteAdminLayout({
     cookieStore.get(SIDEBAR_PREF_COOKIE)?.value,
   );
 
+  // Pathname untuk breadcrumb navbar. Sama seperti /admin: dibaca dari header
+  // request yang disuntikkan `src/proxy.ts`, bukan lewat API server yang tidak
+  // tersedia di Next.js 16.
+  const headerStore = await headers();
+  const currentPath = headerStore.get("x-pathname") ?? "/site-admin";
+
   return (
     <AppShell
       brandName={brand.brandName}
@@ -40,8 +47,8 @@ export default async function SiteAdminLayout({
       badge="Platform"
       variant="site-admin"
       initialCollapsed={initialCollapsed}
-    >
-      {children}
-    </AppShell>
+      breadcrumb={buildBreadcrumb(currentPath, "site-admin")}
+      content={children}
+    />
   );
 }

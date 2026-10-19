@@ -2,8 +2,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Alert } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KpiCards } from "@/components/admin/dashboard/KpiCards";
 import { SalesTrendChart } from "@/components/admin/dashboard/SalesTrendChart";
@@ -20,7 +19,6 @@ import {
 } from "@/lib/admin/dashboard-queries";
 import { dashboardTokens } from "@/lib/admin/dashboard-tokens";
 import { countOrdersByStatus } from "@/lib/orders";
-import { ORDER_STATUS_LABELS } from "@/lib/orders/status";
 import { getBrandSetting } from "@/lib/brand";
 
 // Dasbor modern Store Admin (ADMIN-DASH-01, PH-12): sumber data asli lewat
@@ -28,15 +26,6 @@ import { getBrandSetting } from "@/lib/brand";
 // prototipe dashboard-v2: token brand (SITE-05) disuntikkan di wrapper ini dan
 // font Inter menyesuaikan mockup Figma.
 export const instant = false;
-
-const STATUS_ORDER = [
-  "WAITING_PAYMENT",
-  "PROCESSING",
-  "SHIPPED",
-  "COMPLETED",
-  "CANCEL_REQUESTED",
-  "CANCELED",
-] as const;
 
 // Zona waktu dasbor (keputusan docs/04 bagian 10): Asia/Jakarta.
 const DASH_TZ = "Asia/Jakarta";
@@ -119,14 +108,6 @@ export default async function AdminIndexPage({ searchParams }: PageProps) {
         <PageHeader
           title="Dasbor"
           description="Ringkasan dan hal yang butuh perhatian."
-          action={
-            <Link
-              href="/admin/reports"
-              className={buttonVariants({ variant: "outline", size: "sm" })}
-            >
-              Laporan Lengkap
-            </Link>
-          }
         />
         <Alert variant="destructive">{parsed.error}</Alert>
       </div>
@@ -152,76 +133,70 @@ export default async function AdminIndexPage({ searchParams }: PageProps) {
         title="Dasbor"
         description={`Periode: ${range.label} · zona waktu Jakarta (WIB)`}
         action={
-          <Link
-            href="/admin/reports"
-            className={buttonVariants({ variant: "outline", size: "sm" })}
-          >
-            Laporan Lengkap
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Filter periode menggantikan tombol "Laporan Lengkap" (dihapus
+                atas keputusan pengguna 2026-10-19: hanya mengarah ke halaman
+                laporan, kurang berfungsi). Preset = link server-side. */}
+            <div
+              className="flex items-center rounded-lg border border-border p-0.5"
+              role="group"
+              aria-label="Periode dasbor"
+            >
+              {PRESET_LINKS.map((preset) => {
+                const active = range.preset === preset.key;
+                return (
+                  <Link
+                    key={preset.key}
+                    href={`/admin?preset=${preset.key}`}
+                    aria-pressed={active}
+                    className={
+                      "flex h-[30px] items-center rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
+                      (active
+                        ? ""
+                        : "text-muted-foreground hover:text-foreground")
+                    }
+                    style={
+                      active ? { backgroundColor: colors.primary, color: colors.primaryForeground } : undefined
+                    }
+                  >
+                    {preset.label}
+                  </Link>
+                );
+              })}
+            </div>
+
+            <form
+              method="get"
+              action="/admin"
+              className="flex flex-wrap items-center gap-2"
+            >
+              <label className="sr-only" htmlFor="dashboard-from">
+                Tanggal mulai
+              </label>
+              <Input
+                id="dashboard-from"
+                type="date"
+                name="from"
+                defaultValue={fromKey}
+                className="h-9 w-auto text-xs"
+              />
+              <label className="sr-only" htmlFor="dashboard-to">
+                Tanggal selesai
+              </label>
+              <Input
+                id="dashboard-to"
+                type="date"
+                name="to"
+                defaultValue={toKey}
+                className="h-9 w-auto text-xs"
+              />
+              <Button type="submit" variant="outline" size="sm" className="h-9">
+                Terapkan
+              </Button>
+            </form>
+          </div>
         }
       />
-
-      {/* Filter periode (ADMIN-DASH-01 poin 1): preset cepat (server-side link)
-          + rentang kustom lewat form GET; semua panel mengikuti rentang ini. */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div
-          className="flex items-center rounded-lg border border-border p-0.5"
-          role="group"
-          aria-label="Periode dasbor"
-        >
-          {PRESET_LINKS.map((preset) => {
-            const active = range.preset === preset.key;
-            return (
-              <Link
-                key={preset.key}
-                href={`/admin?preset=${preset.key}`}
-                aria-pressed={active}
-                className={
-                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring " +
-                  (active
-                    ? ""
-                    : "text-muted-foreground hover:text-foreground")
-                }
-                style={
-                  active ? { backgroundColor: colors.primary, color: colors.primaryForeground } : undefined
-                }
-              >
-                {preset.label}
-              </Link>
-            );
-          })}
-        </div>
-
-        <form
-          method="get"
-          action="/admin"
-          className="flex flex-wrap items-center gap-2"
-        >
-          <label className="sr-only" htmlFor="dashboard-from">
-            Tanggal mulai
-          </label>
-          <Input
-            id="dashboard-from"
-            type="date"
-            name="from"
-            defaultValue={fromKey}
-            className="h-9 w-auto text-xs"
-          />
-          <label className="sr-only" htmlFor="dashboard-to">
-            Tanggal selesai
-          </label>
-          <Input
-            id="dashboard-to"
-            type="date"
-            name="to"
-            defaultValue={toKey}
-            className="h-9 w-auto text-xs"
-          />
-          <Button type="submit" variant="outline" size="sm" className="h-9">
-            Terapkan
-          </Button>
-        </form>
-      </div>
 
       {/* Kartu KPI + pembanding periode sebelumnya. */}
       {kpis.status === "fulfilled" ? (
@@ -254,13 +229,16 @@ export default async function AdminIndexPage({ searchParams }: PageProps) {
         )}
       </div>
 
-      {/* Pesanan terbaru: daftar operasional lintas periode. */}
+      {/* Pesanan terbaru: daftar operasional lintas periode. Angka tab status
+          kumulatif seluruh waktu dari server (pengganti card "Pesanan per
+          Status" yang dihapus — keputusan pengguna 2026-10-18). */}
       {recent.status === "fulfilled" ? (
         <RecentOrdersTable
           orders={recent.value}
           title="Pesanan Terbaru"
           description="Pesanan paling baru beserta status pembayarannya."
           viewAllHref="/admin/orders"
+          statusTotals={statusCounts ?? undefined}
         />
       ) : (
         <PanelError title="Panel Pesanan Terbaru" />
@@ -276,30 +254,6 @@ export default async function AdminIndexPage({ searchParams }: PageProps) {
       ) : (
         <PanelError title="Panel Produk Terlaris" />
       )}
-
-      {/* Ringkasan status seluruh pesanan (pintasan, dari dasbor lama). */}
-      <section className="rounded-xl border border-border bg-background p-4">
-        <h2 className="mb-3 font-semibold">Pesanan per Status</h2>
-        {statusCounts ? (
-          <ul className="flex flex-wrap gap-3">
-            {STATUS_ORDER.map((status) => (
-              <li key={status}>
-                <Link
-                  href={`/admin/orders?status=${status}`}
-                  className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm hover:bg-accent"
-                >
-                  <span>{ORDER_STATUS_LABELS[status]}</span>
-                  <Badge variant="secondary">{statusCounts[status] ?? 0}</Badge>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <Alert variant="destructive">
-            Ringkasan status gagal dimuat — muat ulang halaman.
-          </Alert>
-        )}
-      </section>
 
       {/* Footer status data — selaras mockup Figma (footer global halaman). */}
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">

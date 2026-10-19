@@ -49,7 +49,11 @@ function trendToneClass(direction: KpiCardData["trendDirection"]) {
 
 function KpiCardBody({ card }: { card: KpiCardData }) {
   return (
-    <Card className="p-4 flex flex-col justify-between">
+    // h-full: kartu yang dibungkus Link (kartu KPI bersifat shortcut) tetap
+    // mengisi tinggi baris grid sama seperti kartu yang langsung menjadi
+    // child grid — tingginya selalu sejajar meskipun penjelasannya berbeda
+    // banyaknya baris (keputusan review 2026-10-18).
+    <Card className="h-full p-4 flex flex-col justify-between">
       <p className="text-xs text-muted-foreground">{card.label}</p>
       <div className="mt-4 flex items-center gap-3">
         <p className="text-2xl font-bold tracking-tight">
@@ -62,7 +66,8 @@ function KpiCardBody({ card }: { card: KpiCardData }) {
           )}
         >
           <TrendArrow direction={card.trendDirection} />
-          {card.trendLabel}
+          {/* Label "-" saja tidak informatif (ikonnya sudah garis datar). */}
+          {card.trendLabel === "-" ? null : card.trendLabel}
         </span>
       </div>
       <p className="mt-4 text-xs text-muted-foreground">{card.footnote}</p>

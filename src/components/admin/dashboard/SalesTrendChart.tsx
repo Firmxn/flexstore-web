@@ -95,26 +95,32 @@ function TrendTooltip({
   );
 }
 
-// Skala sumbu mengikuti data: ruang atas ~15% dengan batas bawah aman,
-// tanpa NaN saat periode kosong (AC-ADMIN-DASH-01-07).
+// Skala sumbu mengikuti data dengan tangga "bagus" (1, 2, 2.5, 5 x 10^n) dan
+// tickCount 5 supaya angka tick bulat (250.000, 500.000, ...) — bukan tick
+// acak seperti 865.000. Tanpa NaN saat periode kosong (AC-ADMIN-DASH-01-07).
+function niceStepMax(rawMax: number): number {
+  if (rawMax <= 0) return 4;
+  const rawStep = (rawMax * 1.1) / 4;
+  const mag = Math.pow(10, Math.floor(Math.log10(rawStep)));
+  const norm = rawStep / mag;
+  const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag;
+  return step * 4;
+}
+
 function salesMax(series: SalesPoint[]): number {
   const max = Math.max(...series.map((point) => point.sales), 0);
-  return max === 0 ? 1_000_000 : max * 1.15;
+  return max === 0 ? 1_000_000 : niceStepMax(max);
 }
 
 function ordersMax(series: SalesPoint[]): number {
   const max = Math.max(...series.map((point) => point.orders), 0);
-  return Math.max(4, Math.ceil(max * 1.2));
+  return Math.max(4, 4 * Math.ceil((max * 1.1) / 4));
 }
 
-// Label sumbu kiri: jt untuk jutaan, rb untuk ribuan, mentah untuk kecil.
+// Label sumbu kiri: angka rupiah penuh pemisah ribuan (750.000) — keputusan
+// review 2026-10-19: label ringkas "rb/jt" mudah melipat di area sempit.
 function salesTickLabel(value: number): string {
-  if (value >= 1_000_000) {
-    const jt = (Math.round((value / 1_000_000) * 10) / 10).toLocaleString("id-ID");
-    return `${jt} jt`;
-  }
-  if (value >= 1_000) return `${Math.round(value / 1_000)} rb`;
-  return String(Math.round(value));
+  return value.toLocaleString("id-ID");
 }
 
 export function SalesTrendChart({
@@ -155,7 +161,7 @@ export function SalesTrendChart({
                 onClick={() => setRange(opt.key)}
                 aria-pressed={range === opt.key}
                 className={cn(
-                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "flex h-[30px] items-center rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   range === opt.key
                     ? "text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground",
@@ -230,7 +236,7 @@ export function SalesTrendChart({
                 padding={{ left: 30, right: 30 }}
               />
 
-              {/* Sumbu kiri: penjualan (rupiah), skala dari data. */}
+              {/* Sumbu kiri: penjualan (rupiah penuh), skala tick bagus. */}
               <YAxis
                 yAxisId="sales"
                 tick={{ fill: colors.mutedForeground, fontSize: 12 }}
@@ -238,7 +244,7 @@ export function SalesTrendChart({
                 domain={[0, salesDomain]}
                 axisLine={false}
                 tickLine={false}
-                width={44}
+                width={64}
               />
 
               {/* Sumbu kanan: pesanan (unit), skala dari data. */}

@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { AppShell } from "@/components/layout/AppShell";
 import {
   isSidebarCollapsed,
@@ -6,6 +6,7 @@ import {
 } from "@/lib/layout/sidebar-pref";
 import { requireStoreAdminPage } from "@/lib/auth/session";
 import { getBrandSetting } from "@/lib/brand";
+import { buildBreadcrumb } from "@/lib/layout/breadcrumb";
 import { connection } from "next/server";
 
 // Seluruh area admin bergantung pada session, jadi tidak ada gunanya
@@ -30,6 +31,14 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
     cookieStore.get(SIDEBAR_PREF_COOKIE)?.value,
   );
 
+  // Pathname untuk breadcrumb navbar. Dibaca dari header request yang
+  // disuntikkan `src/proxy.ts` — Next.js 16 tidak menyediakan API server untuk
+  // pathname, dan `usePathname` adalah client hook yang tidak bisa dipakai di
+  // layout server. Nilai cadangan hanya untuk saat proxy tidak jalan (mis. unit
+  // test) — di aplikasi nyata proxy selalu menyetelnya.
+  const headerStore = await headers();
+  const currentPath = headerStore.get("x-pathname") ?? "/admin";
+
   return (
     <AppShell
       brandName={brand.brandName}
@@ -38,8 +47,8 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
       badge="Admin"
       variant="admin"
       initialCollapsed={initialCollapsed}
-    >
-      {children}
-    </AppShell>
+      breadcrumb={buildBreadcrumb(currentPath, "admin")}
+      content={children}
+    />
   );
 }

@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/admin/PageHeader";
 import { StoreSettingsForm } from "@/components/admin/StoreSettingsForm";
+import { ThemeSettings } from "@/components/admin/ThemeSettings";
 import { getStoreSettings } from "@/lib/config";
 
 // CONFIG-01 (PH-06): pengaturan toko.
@@ -15,6 +16,7 @@ export default async function AdminSettingsPage() {
         description="Informasi toko, kebijakan, dan opsi ambil di toko."
       />
       <StoreSettingsForm initial={settings} />
+      <ThemeSettings />
     </div>
   );
 }

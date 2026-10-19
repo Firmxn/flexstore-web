@@ -31,7 +31,6 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  TABLE_HEAD_PLAIN,
 } from "@/components/ui/table";
 import { formatRupiah, PRODUCT_STATUS_LABELS } from "@/lib/utils/format";
 import type { ProductStatus } from "@prisma/client";
@@ -99,9 +98,12 @@ export function TopProductsPanel({
       </CardHeader>
 
       <CardContent className="p-0">
-        {/* Heading kolom memakai huruf biasa (tanpa uppercase) — selaras mockup. */}
+        {/* Heading kolom memakai huruf biasa (tanpa uppercase) — selaras mockup.
+            Kelas inline (bukan export ui/table) supaya dasbor tidak bergantung
+            pada kelengkapan ui/table versi yang saat ini ter-commit di repo
+            (deploy 2026-10-19 gagal karena export ui table belum ter-commit). */}
         <Table wrapperClassName="rounded-none border-0">
-          <TableHeader className={TABLE_HEAD_PLAIN}>
+          <TableHeader className="[&_th]:normal-case [&_th]:tracking-normal [&_th]:font-medium">
             <TableRow className="border-t border-border hover:bg-transparent">
               <TableHead className="pl-4">No.</TableHead>
               <TableHead>Produk</TableHead>

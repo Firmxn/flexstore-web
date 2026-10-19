@@ -57,22 +57,39 @@ export function SidebarAccountMenu({
         aria-label={`Menu akun ${name}`}
         onClick={() => setOpen((current) => !current)}
         className={cn(
-          "flex w-full items-center gap-2 rounded-lg border border-border px-2 py-2 hover:bg-accent",
+          "flex w-full items-center gap-2 rounded-lg border border-border px-2 py-2 transition-colors duration-300 ease-out hover:bg-accent",
           collapsed && "lg:justify-center lg:border-transparent lg:bg-transparent lg:px-0",
         )}
       >
         <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-semibold uppercase text-primary-foreground">
           {initialsOf(name)}
         </span>
-        <span className="min-w-0 flex-1 text-left">
-          <span className="block truncate text-sm font-medium">{name}</span>
-          <span className="block truncate text-xs text-muted-foreground">
+        <span
+          className={cn(
+            "min-w-0 flex-1 overflow-hidden text-left",
+            collapsed && "lg:opacity-0",
+          )}
+        >
+          <span
+            className={cn(
+              "block truncate text-sm font-medium",
+              collapsed ? "lg:max-w-0" : "max-w-40",
+            )}
+          >
+            {name}
+          </span>
+          <span
+            className={cn(
+              "block truncate text-xs text-muted-foreground",
+              collapsed ? "lg:max-w-0" : "max-w-40",
+            )}
+          >
             {role}
           </span>
         </span>
         <ChevronUp
           className={cn(
-            "h-4 w-4 shrink-0 text-muted-foreground transition-transform",
+            "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-300",
             open ? "rotate-180" : null,
             collapsed && "lg:hidden",
           )}
